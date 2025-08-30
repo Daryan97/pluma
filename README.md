@@ -1,4 +1,6 @@
-# Pluma
+# Pluma - Blogging Platform
+
+![Pluma Logo](https://ik.imagekit.io/daryandev/Pluma%20-%20Light%2016:9_EsbqpDdyIv?updatedAt=1756539494268)
 
 A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) and [Supabase](https://supabase.com/).
 
@@ -32,15 +34,15 @@ A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) a
 
 4. Setup Supabase:
 
-    [ ] Setup coming soon.
+   - This section will be updated very soon.
 
-5. Start the development server:
+6. Start the development server:
 
     ```bash
     npm run dev
     ```
 
-6. Open your browser and navigate to `http://localhost:5137`.
+7. Open your browser and navigate to `http://localhost:5137`.
 
 ## Deployment
 
