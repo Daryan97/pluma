@@ -1,0 +1,65 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Vite / tooling caches
+.vite
+.cache
+.turbo
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Package manager stores
+.pnpm-store
+npm-packages-offline-cache
+
+# Test & coverage outputs
+coverage
+.nyc_output
+reports
+test-results
+
+# Environment files (keep example/env samples tracked)
+.env
+.env.*
+!example.env
+!.env.example
+
+# Editor directories and files
+.vscode/*
+.idea
+.DS_Store
+Thumbs.db
+ehthumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local history / backups
+.history
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+
+# Deployment artifacts
+.vercel
+.netlify
+firebase-debug.log
+
+# Misc
+Icon?
