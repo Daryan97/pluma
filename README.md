@@ -36,13 +36,13 @@ A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) a
 
    - This section will be updated very soon.
 
-6. Start the development server:
+5. Start the development server:
 
     ```bash
     npm run dev
     ```
 
-7. Open your browser and navigate to `http://localhost:5137`.
+6. Open your browser and navigate to `http://localhost:5137`.
 
 ## Deployment
 
