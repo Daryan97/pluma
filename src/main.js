@@ -53,6 +53,10 @@ fetchBranding(true).then(() => {
         metaDesc.setAttribute('content', projectInfo.description)
     }
     updateFavicon(faviconUrl.value)
+    // Default OG image fallback (favicon as last resort)
+    const ensure = (name, attr='property') => { let el=document.head.querySelector(`${attr==='name'?'meta[name':'meta[property'}="${name}"]`); if(!el){ el=document.createElement('meta'); el.setAttribute(attr,name); document.head.appendChild(el);} return el; };
+    const ogImg = document.head.querySelector('meta[property="og:image"]');
+    if(!ogImg && faviconUrl.value){ const el = document.createElement('meta'); el.setAttribute('property','og:image'); el.content = faviconUrl.value; document.head.appendChild(el);}    
 });
 
 watch([siteName, siteDescription, socialLinks], ([n, d, sl]) => {

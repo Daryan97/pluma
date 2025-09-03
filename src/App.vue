@@ -1,9 +1,7 @@
 <template>
-  <div
-    class="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gr transition-colors duration-300"
-  >
+  <div class="relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
     <Navbar />
-    <main class="p-4">
+    <main>
       <router-view />
     </main>
     <Footer />

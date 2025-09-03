@@ -1,5 +1,7 @@
 <template>
-  <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between w-full">
+  <div
+    class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between w-full"
+  >
     <div class="flex-shrink-0">
       <button
         @click="onBulkDelete"
@@ -10,7 +12,9 @@
         Remove Selected ({{ selectedLength }})
       </button>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full">
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 w-full"
+    >
       <div class="w-full sm:col-span-1">
         <slot name="status" />
       </div>
@@ -27,8 +31,10 @@
   </div>
 </template>
 <script setup>
-import { Icon } from '@iconify/vue';
-const props = defineProps({ selectedLength: { type: Number, required: true } })
-const emit = defineEmits(['bulkDelete'])
-function onBulkDelete(){ emit('bulkDelete') }
+import { Icon } from "@iconify/vue";
+const props = defineProps({ selectedLength: { type: Number, required: true } });
+const emit = defineEmits(["bulkDelete"]);
+function onBulkDelete() {
+  emit("bulkDelete");
+}
 </script>

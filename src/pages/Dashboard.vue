@@ -89,18 +89,32 @@
 
       <TabsContent value="posts" class="space-y-6">
         <div class="flex justify-end">
-          <div class="relative w-full sm:w-80 mb-4">
-            <input
-              v-model="searchQuery"
-              @input="onSearchInput"
-              type="text"
-              placeholder="Search posts..."
-              class="w-full h-9 px-3 pl-10 rounded-md text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-            />
-            <Icon
-              icon="mdi:magnify"
-              class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 text-lg"
-            />
+          <div class="w-full sm:w-80 mb-4">
+            <div
+              class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition"
+            >
+              <Icon
+                icon="mdi:magnify"
+                class="ml-3 text-gray-500 dark:text-gray-300 text-base"
+              />
+              <input
+                v-model="searchQuery"
+                @input="onSearchInput"
+                type="text"
+                placeholder="Search posts..."
+                class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
+                aria-label="Search posts"
+              />
+              <button
+                v-if="searchQuery"
+                @click="clearSearch"
+                type="button"
+                class="mr-1 inline-flex items-center justify-center w-7 h-7 rounded text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-label="Clear search"
+              >
+                <Icon icon="mdi:close-circle" class="text-lg" />
+              </button>
+            </div>
           </div>
         </div>
         <PostsTable
@@ -486,15 +500,16 @@
           :total-pages="pendingTotalPages"
           :loading="loadingPending"
           :pending-count="stats.pendingComments"
+          :total-count="commentsTotalCount"
+          :filter="commentsFilter"
+          v-model:search="pendingSearchQuery"
+          @search="onPendingSearch"
           @refresh="fetchPendingComments(true)"
           @change-page="changePendingPage"
+          @change-filter="setCommentsFilter"
           @approve="approvePendingComment"
-          @delete="
-            (id) =>
-              askConfirmation('Delete this comment?', () =>
-                deletePendingComment(id)
-              )
-          "
+          @unapprove="unapproveComment"
+          @delete="(id) => askConfirmation('Delete this comment?', () => deletePendingComment(id))"
         />
       </TabsContent>
 
@@ -681,6 +696,13 @@ function onSearchInput() {
     currentPage.value = 1;
     fetchDashboard();
   }, 400);
+}
+
+function clearSearch() {
+  searchQuery.value = "";
+  clearTimeout(searchTimeout);
+  currentPage.value = 1;
+  fetchDashboard();
 }
 
 const fetchDashboard = async () => {
@@ -873,77 +895,94 @@ const pendingComments = ref([]);
 const loadingPending = ref(false);
 const pendingPage = ref(1);
 const pendingPageSize = 10;
-const pendingTotal = ref(0);
-const pendingTotalPages = computed(() =>
-  Math.max(1, Math.ceil(pendingTotal.value / pendingPageSize))
-);
+const pendingTotal = ref(0); // total for current filter
+const commentsTotalCount = ref(0); // total for 'all'
+const pendingTotalPages = computed(() => Math.max(1, Math.ceil(pendingTotal.value / pendingPageSize)));
 const pendingSearchQuery = ref("");
+const commentsFilter = ref('all'); // 'all' | 'approved' | 'pending'
 let pendingSearchTimeout = null;
 
+function setCommentsFilter(f){
+  if(['all','approved','pending'].includes(f)){
+    commentsFilter.value = f;
+    pendingPage.value = 1;
+    fetchPendingComments(true);
+  }
+}
+
+function onPendingSearch(){
+  if(pendingSearchTimeout) clearTimeout(pendingSearchTimeout);
+  pendingSearchTimeout = setTimeout(()=>{
+    pendingPage.value = 1;
+    fetchPendingComments(true);
+  }, 300);
+}
+
 async function updatePendingCount() {
-  if (role.value === "admin" || role.value === "author") {
-    const { count } = await supabase
-      .from("comments")
-      .select("id", { count: "exact", head: true })
-      .eq("approved", false);
-    stats.value.pendingComments = count || 0;
+  if (role.value === 'admin' || role.value === 'author') {
+    const { count: pending } = await supabase
+      .from('comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('approved', false);
+    stats.value.pendingComments = pending || 0;
   }
 }
 
 async function fetchPendingComments(clear = false) {
-  if (!(role.value === "admin" || role.value === "author")) return;
+  if (!(role.value === 'admin' || role.value === 'author')) return;
   loadingPending.value = true;
-  if (clear) {
-    pendingComments.value = [];
-  }
+  if (clear) pendingComments.value = [];
   try {
     const from = (pendingPage.value - 1) * pendingPageSize;
     const to = from + pendingPageSize - 1;
-    let query = supabase
-      .from("comments")
-      .select(
-        `id, content, created_at, post:posts(id, title, slug, author_id), author:profiles(id, username, display_name)`,
-        { count: "exact" }
-      )
-      .eq("approved", false)
-      .order("created_at", { ascending: false })
-      .range(from, to);
-    const { data, error, count } = await query;
+    let base = supabase
+      .from('comments')
+      .select(`id, content, created_at, approved, post:posts(id, title, slug, author_id), author:profiles(id, username, display_name)`, { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    // Apply filter
+    if (commentsFilter.value === 'approved') {
+      base = base.eq('approved', true);
+    } else if (commentsFilter.value === 'pending') {
+      base = base.eq('approved', false);
+    }
+
+    const { data, error, count } = await base.range(from, to);
     if (error) {
-      console.error("Fetch pending comments failed", error);
+      console.error('Fetch comments failed', error);
       pendingComments.value = [];
       pendingTotal.value = 0;
     } else {
-      let list = (data || []).map((c) => ({
+      let list = (data || []).map(c => ({
         id: c.id,
         content: c.content,
         created_at: c.created_at,
+        approved: c.approved,
         post: c.post,
-        author: c.author,
+        author: c.author
       }));
-      if (pendingSearchQuery.value.trim() !== "") {
+      if (pendingSearchQuery.value.trim() !== '') {
         const q = pendingSearchQuery.value.toLowerCase();
-        list = list.filter(
-          (c) =>
-            (c.content || "").toLowerCase().includes(q) ||
-            (c.author?.display_name || c.author?.username || "")
-              .toLowerCase()
-              .includes(q) ||
-            (c.post?.title || "").toLowerCase().includes(q)
+        list = list.filter(c =>
+          (c.content || '').toLowerCase().includes(q) ||
+          (c.author?.display_name || c.author?.username || '').toLowerCase().includes(q) ||
+          (c.post?.title || '').toLowerCase().includes(q)
         );
       }
       pendingComments.value = list;
-      if (typeof count === "number") pendingTotal.value = count;
-      const lastPage = Math.max(
-        1,
-        Math.ceil(pendingTotal.value / pendingPageSize)
-      );
+      if (typeof count === 'number') pendingTotal.value = count;
+      const lastPage = Math.max(1, Math.ceil(pendingTotal.value / pendingPageSize));
       if (pendingPage.value > lastPage) {
         pendingPage.value = lastPage;
         return fetchPendingComments();
       }
     }
+
+    // Always update counts
     await updatePendingCount();
+    // total for all comments (only once per fetch or if filter not all)
+    const { count: allCount } = await supabase.from('comments').select('id', { count: 'exact', head: true });
+    commentsTotalCount.value = allCount || 0;
   } finally {
     loadingPending.value = false;
   }
@@ -957,16 +996,19 @@ function changePendingPage(page) {
 }
 
 async function approvePendingComment(id) {
-  const { error } = await supabase
-    .from("comments")
-    .update({ approved: true })
-    .eq("id", id);
+  const { error } = await supabase.from('comments').update({ approved: true }).eq('id', id);
+  if (error) return console.error(error);
+  await fetchPendingComments();
+}
+
+async function unapproveComment(id){
+  const { error } = await supabase.from('comments').update({ approved: false }).eq('id', id);
   if (error) return console.error(error);
   await fetchPendingComments();
 }
 
 async function deletePendingComment(id) {
-  const { error } = await supabase.from("comments").delete().eq("id", id);
+  const { error } = await supabase.from('comments').delete().eq('id', id);
   if (error) return console.error(error);
   await fetchPendingComments();
 }

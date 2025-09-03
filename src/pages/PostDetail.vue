@@ -1,27 +1,28 @@
 <template>
-  <div
-    class="max-w-4xl mx-auto mt-10 border p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow border-gray-200 dark:border-gray-700"
-  >
-    <div v-if="loading" class="flex justify-center items-center py-20">
-      <div
-        class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"
-      ></div>
+  <div class="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10">
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="flex justify-center items-center py-32">
+      <div class="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
     </div>
 
-    <div v-else-if="!post && !loading" class="text-center text-gray-500">
-      Post not found, please check the URL or try again later.
+    <!-- Not Found -->
+    <div v-else-if="!post" class="text-center py-32">
+      <Icon icon="mdi:alert-circle-outline" class="text-5xl text-gray-300 dark:text-gray-600 mb-6" />
+      <p class="text-sm text-gray-500 dark:text-gray-400">Post not found. Please check the URL.</p>
     </div>
 
-    <div v-else-if="post" class="max-w-4xl mx-auto mt-10">
+    <!-- Post Content -->
+    <div v-else>
       <Post :post="post" :user="user" />
-      <Comments
-        v-if="!post.comments_disabled"
-        class="mt-10"
-        :post-id="post.id"
-        :post-author-id="post.author?.id"
-      />
-      <div v-else class="mt-10 text-center text-gray-500">
-        Comments are disabled for this post.
+      <div class="mt-14">
+        <Comments
+          v-if="!post.comments_disabled"
+          :post-id="post.id"
+          :post-author-id="post.author?.id"
+        />
+        <div v-else class="text-center text-gray-500 dark:text-gray-400 text-sm py-10">
+          Comments are disabled for this post.
+        </div>
       </div>
     </div>
   </div>
@@ -29,6 +30,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import { Icon } from "@iconify/vue";
 import { useRoute } from "vue-router";
 import { supabase } from "@/services/supabase";
 import Post from "@/components/Post.vue";
@@ -109,6 +111,8 @@ async function fetchPost() {
     post.value = null;
   } else {
     post.value = data;
+  // Expose for router afterEach JSON-LD (non-reactive assignment)
+  window.__PLUMA_CURRENT_POST = data;
   }
 
   loading.value = false;

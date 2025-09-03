@@ -1,7 +1,14 @@
 <template>
   <nav
-    class="backdrop-blur bg-white/80 dark:bg-gray-900/70 border-b border-gray-200 dark:border-gray-800"
+    class="relative border-b border-gray-200 dark:border-gray-800 overflow-hidden"
   >
+    <!-- Base gradient -->
+    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div>
+    <!-- Light tint / blur overlay (lighter in light mode for visibility) -->
+    <div class="absolute inset-0 -z-10 bg-white/35 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"></div>
+    <!-- Decorative subtle blobs (light mode only) -->
+    <div class="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-200/40 blur-2xl mix-blend-multiply dark:hidden"></div>
+    <div class="pointer-events-none absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl mix-blend-multiply dark:hidden"></div>
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <!-- Logo -->
       <div class="flex items-center gap-2">
@@ -292,11 +299,11 @@
       </div>
     </div>
   </nav>
-  <GlobalSearch v-model="showSearch" />
+  <GlobalSearch v-model="showSearch" :initial-query="initialSearchQuery" />
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import { useThemeStore } from "@/stores/themeStore";
 import { projectInfo } from "@/config/projectInfo";
@@ -309,6 +316,7 @@ import GlobalSearch from "@/components/GlobalSearch.vue";
 import { useRouter } from "vue-router";
 
 const showSearch = ref(false);
+const initialSearchQuery = ref('');
 const theme = useThemeStore();
 const user = ref(null);
 const mobileMenuOpen = ref(false);
@@ -368,6 +376,11 @@ function go(path) {
   router.push(path);
 }
 
+function handleOpenGlobalSearch(e){
+  initialSearchQuery.value = e?.detail?.query || '';
+  showSearch.value = true;
+}
+
 onMounted(() => {
   getUser();
   getCategories();
@@ -410,6 +423,11 @@ onMounted(() => {
     }
   });
   window.addEventListener("profileUpdated", getUser);
+  window.addEventListener('pluma:open-global-search', handleOpenGlobalSearch);
+});
+
+onUnmounted(()=>{
+  window.removeEventListener('pluma:open-global-search', handleOpenGlobalSearch);
 });
 
 const roleLabel = computed(() => {

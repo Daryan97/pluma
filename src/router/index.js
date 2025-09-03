@@ -227,6 +227,33 @@ router.afterEach((to) => {
   const desc = typeof descRaw === 'function' ? descRaw() : descRaw || projectInfo.description;
   const metaTag = document.querySelector('meta[name="description"]');
   if (metaTag) metaTag.setAttribute('content', desc);
+  // Open Graph & Twitter meta
+  const ensure = (name, attr = 'property') => {
+    let el = document.head.querySelector(`${attr === 'name' ? 'meta[name' : 'meta[property'}="${name}"]`);
+    if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); } return el;
+  };
+  ensure('og:title').setAttribute('content', document.title);
+  ensure('og:description').setAttribute('content', desc);
+  ensure('og:type').setAttribute('content', to.name === 'PostDetail' ? 'article' : 'website');
+  ensure('og:site_name').setAttribute('content', projectInfo.name);
+  ensure('twitter:card', 'name').setAttribute('content', 'summary_large_image');
+  ensure('twitter:title', 'name').setAttribute('content', document.title);
+  ensure('twitter:description', 'name').setAttribute('content', desc);
+  // Canonical
+  const canonicalHref = window.location.origin + to.fullPath.split('?')[0];
+  let canonical = document.head.querySelector('link[rel="canonical"]');
+  if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
+  canonical.setAttribute('href', canonicalHref);
+  // Basic JSON-LD (Home & PostDetail)
+  const prior = document.getElementById('ld-primary'); if (prior) prior.remove();
+  let ld = null;
+  if (to.name === 'Home') {
+    ld = { '@context': 'https://schema.org', '@type': 'WebSite', name: projectInfo.name, description: desc, url: canonicalHref };
+  } else if (to.name === 'PostDetail' && window.__PLUMA_CURRENT_POST) {
+    const p = window.__PLUMA_CURRENT_POST;
+    ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title, datePublished: p.created_at, dateModified: p.updated_at || p.created_at, author: p.author?.display_name || p.author?.username || 'Unknown', keywords: (p.tags || []).join(', '), mainEntityOfPage: canonicalHref };
+  }
+  if (ld) { const script = document.createElement('script'); script.id = 'ld-primary'; script.type = 'application/ld+json'; script.textContent = JSON.stringify(ld); document.head.appendChild(script); }
 })
 
 export default router
