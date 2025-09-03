@@ -1,61 +1,61 @@
 <template>
-  <Menu as="div" class="relative inline-block text-left">
-    <MenuButton
-      class="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+  <DropdownMenuRoot v-model:open="open">
+    <DropdownMenuTrigger
+      class="nav-pill data-[state=open]:bg-gray-200 dark:data-[state=open]:bg-gray-700/60"
+      aria-label="Categories menu"
     >
-      <Icon icon="mdi:category" class="text-lg" />
+      <Icon icon="mdi:tag-multiple-outline" class="text-base" />
       <span class="hidden md:inline">Categories</span>
-      <Icon icon="mdi:chevron-down" class="text-lg" />
-    </MenuButton>
-
-    <Transition
-      enter-active-class="transition ease-out duration-100"
-      enter-from-class="transform opacity-0 scale-95"
-      enter-to-class="transform opacity-100 scale-100"
-      leave-active-class="transition ease-in duration-75"
-      leave-from-class="transform opacity-100 scale-100"
-      leave-to-class="transform opacity-0 scale-95"
-    >
-      <MenuItems
-        class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 focus:outline-none z-50"
+      <Icon icon="mdi:chevron-down" class="text-base opacity-70" />
+    </DropdownMenuTrigger>
+    <DropdownMenuPortal>
+      <DropdownMenuContent
+        class="min-w-[220px] max-h-[60vh] overflow-auto p-1.5 rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg focus:outline-none origin-top-right data-[side=bottom]:animate-slideUpAndFade data-[side=top]:animate-slideDownAndFade"
+        :side-offset="8"
+        align="end"
       >
-        <div class="py-1">
-          <MenuItem
-            v-for="category in categories"
-            :key="category.id"
-            v-slot="{ close }"
-            class="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-          >
-            <router-link
-              :to="`/category/${category.name}`"
-              class="flex items-center gap-2"
-              @mouseup.prevent="close"
-            >
-                <Icon icon="mdi:label-outline" class="text-lg" />
-              {{ category.name }}
-            </router-link>
-          </MenuItem>
+        <div class="px-2 pb-1 pt-1.5 sticky top-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-md mb-1 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+          <Icon icon="mdi:tag-multiple" class="text-sm" /> Browse Categories
         </div>
-      </MenuItems>
-    </Transition>
-  </Menu>
+        <DropdownMenuItem
+          v-for="cat in categoriesList"
+          :key="cat.slug || cat.name || 'uncategorized'"
+          class="menu-item"
+          @select="go(cat.slug || cat.name)"
+        >
+          <Icon :icon="cat.id ? 'mdi:tag-outline' : 'mdi:tag-off-outline'" class="text-base opacity-80" />
+          <span class="truncate flex-1">{{ cat.name }}</span>
+          <Icon icon="mdi:chevron-right" class="text-xs opacity-40" />
+        </DropdownMenuItem>
+        <DropdownMenuArrow class="fill-white dark:fill-gray-800" />
+      </DropdownMenuContent>
+    </DropdownMenuPortal>
+  </DropdownMenuRoot>
 </template>
 
 <script setup>
-import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/vue";
-import { Icon } from "@iconify/vue";
-
-function addUncategorizedCategory(categories) {
-  return [{ id: null, name: "Uncategorized" }, ...categories];
-}
-
-function sortCategories(categories) {
-  return categories.sort((a, b) => a.name.localeCompare(b.name));
-}
+import { Icon } from '@iconify/vue'
+import { DropdownMenuArrow, DropdownMenuContent, DropdownMenuItem, DropdownMenuPortal, DropdownMenuRoot, DropdownMenuTrigger } from 'radix-vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
-  categories: Object,
-});
+  categories: { type: Array, default: () => [] }
+})
 
-const categories = sortCategories(addUncategorizedCategory(props.categories));
+const open = ref(false)
+const router = useRouter()
+
+function addUncategorized(list){
+  return [{ id: null, name: 'Uncategorized', slug: 'uncategorized' }, ...list]
+}
+function sortList(list){
+  return [...list].sort((a,b)=> a.name.localeCompare(b.name))
+}
+const categoriesList = computed(()=> sortList(addUncategorized(props.categories || [])))
+
+function go(slug){
+  open.value = false
+  router.push(`/category/${slug}`)
+}
 </script>

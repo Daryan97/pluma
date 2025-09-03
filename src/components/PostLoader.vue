@@ -1,96 +1,111 @@
 <template>
-  <div class="max-w-4xl mx-auto mt-10">
-    <div v-if="posts.length === 0 && loading" class="flex justify-center">
-      <Icon icon="mdi:loading" class="animate-spin text-blue-500" width="48" />
-    </div>
-
-    <div
-      v-if="posts.length === 0 && !loading"
-      class="text-center text-gray-500"
-    >
-      No posts found.
-    </div>
-
-    <div
-      v-for="post in posts"
-      :key="post.id"
-      class="rounded-lg p-4 mb-10 border pb-6 border-gray-200 dark:border bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
-    >
-      <!-- Cover Image with fallback -->
-      <router-link :to="`/posts/${post.slug}`" class="block">
-        <div
-          class="w-full h-64 rounded-t-lg mb-4 overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800"
-        >
-          <img
-            v-if="post.cover_image_url && !imageErrorMap[post.id]"
-            :src="post.cover_image_url"
-            alt="Cover image"
-            class="w-full h-full object-cover"
-            loading="lazy"
-            draggable="false"
-            @dragstart.prevent
-            @error="onImageError(post.id)"
-          />
-          <NoImage v-else />
+  <div class="max-w-5xl mx-auto">
+    <!-- Empty & Loading States -->
+    <div v-if="posts.length === 0 && loading" class="space-y-8">
+      <div v-for="n in 3" :key="n" class="animate-pulse bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm">
+        <div class="h-56 bg-gray-100 dark:bg-gray-700"></div>
+        <div class="p-6 space-y-4">
+          <div class="h-6 w-2/3 bg-gray-200 dark:bg-gray-600 rounded"></div>
+          <div class="flex gap-3">
+            <div class="h-4 w-24 bg-gray-200 dark:bg-gray-600 rounded"></div>
+            <div class="h-4 w-20 bg-gray-200 dark:bg-gray-600 rounded"></div>
+            <div class="h-4 w-28 bg-gray-200 dark:bg-gray-600 rounded"></div>
+          </div>
+          <div class="space-y-2">
+            <div class="h-3 w-full bg-gray-200 dark:bg-gray-600 rounded"></div>
+            <div class="h-3 w-11/12 bg-gray-200 dark:bg-gray-600 rounded"></div>
+            <div class="h-3 w-4/5 bg-gray-200 dark:bg-gray-600 rounded"></div>
+          </div>
+          <div class="h-8 w-28 bg-gray-200 dark:bg-gray-600 rounded"></div>
         </div>
-      </router-link>
-
-      <router-link :to="`/posts/${post.slug}`" class="block hover:underline">
-        <h2 class="text-2xl font-bold mb-1">{{ post.title }}</h2>
-      </router-link>
-      <div class="text-sm text-gray-500 mb-6">
-        <span class="inline-flex items-center">
-          <Icon icon="mdi:account" class="mr-1" />
-          <span class="mr-1">By</span>
-          <router-link
-            :to="`/author/${getAuthorUsername(post.author)}`"
-            class="hover:underline"
-          >
-            {{ getAuthorName(post.author) }}
-          </router-link>
-        </span>
-        <span class="mx-2">|</span>
-        <span class="inline-flex items-center">
-          <Icon icon="mdi:calendar" class="mr-1" />
-          {{ formatDate(post.created_at) }}
-        </span>
-        <span class="mx-2">|</span>
-        <span class="inline-flex items-center">
-          <Icon icon="mdi:folder" class="mr-1" />
-          <router-link
-            :to="`/category/${getCategoryName(post.category)}`"
-            class="hover:underline"
-          >
-            {{ getCategoryName(post.category) }}
-          </router-link>
-        </span>
       </div>
-      <p class="text-gray-700 dark:text-gray-300 mb-2">
-        <Markdown
-          :source="getExcerptMarkdown(post?.content, 100)"
-          class="markdown-content mb-6"
-          ref="markdownContainer"
-        />
-      </p>
-      <router-link
-        :to="`/posts/${post.slug}`"
-        class="text-blue-600 hover:underline"
-      >
-        Read more
-      </router-link>
     </div>
 
-    <!-- This div will be observed for intersection to trigger loading more -->
-    <div ref="loadMoreTrigger" class="h-10"></div>
+    <div v-if="posts.length === 0 && !loading" class="text-center text-gray-500 py-20">
+      <Icon icon="mdi:note-remove" class="block mx-auto text-4xl text-gray-400 mb-3" />
+      <p class="text-sm">No posts found.</p>
+    </div>
 
-    <div v-if="loading && posts.length > 0" class="flex justify-center">
+    <!-- Posts List -->
+    <div class="space-y-12">
+      <article
+        v-for="post in posts"
+        :key="post.id"
+        class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+      >
+        <!-- Media -->
+        <router-link :to="`/posts/${post.slug}`" class="block group">
+          <div class="w-full aspect-[16/8] md:aspect-[16/6] overflow-hidden bg-gray-100 dark:bg-gray-700">
+            <img
+              v-if="post.cover_image_url && !imageErrorMap[post.id]"
+              :src="post.cover_image_url"
+              :alt="post.title"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              loading="lazy"
+              draggable="false"
+              @dragstart.prevent
+              @error="onImageError(post.id)"
+            />
+            <div v-else class="flex items-center justify-center h-full">
+              <NoImage />
+            </div>
+          </div>
+        </router-link>
+
+        <!-- Content -->
+        <div class="p-6 md:p-8">
+          <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium mb-4">
+            <router-link
+              :to="`/category/${post.category?.slug || 'uncategorized'}`"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+            >
+              <Icon icon="mdi:folder" class="text-sm" />
+              {{ getCategoryName(post.category) }}
+            </router-link>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-400">
+              <Icon icon="mdi:calendar" class="text-sm" /> {{ formatDate(post.created_at) }}
+            </span>
+            <router-link
+              :to="`/author/${getAuthorUsername(post.author)}`"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
+            >
+              <Icon icon="mdi:account" class="text-sm" /> {{ getAuthorName(post.author) }}
+            </router-link>
+          </div>
+          <router-link :to="`/posts/${post.slug}`" class="group/title block mb-3">
+            <h2 class="text-xl md:text-2xl font-semibold text-gray-900 dark:text-gray-100 leading-snug group-hover/title:text-blue-600 dark:group-hover/title:text-blue-400 transition-colors">
+              {{ post.title }}
+            </h2>
+          </router-link>
+          <div class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+            <Markdown
+              :source="getExcerptMarkdown(post?.content, 160)"
+              class="markdown-content"
+              ref="markdownContainer"
+            />
+          </div>
+          <div class="flex items-center justify-between">
+            <router-link
+              :to="`/posts/${post.slug}`"
+              class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+            >
+              <Icon icon="mdi:arrow-right" class="text-base" />
+              Read More
+            </router-link>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Intersection trigger -->
+    <div ref="loadMoreTrigger" class="h-12"></div>
+
+    <!-- Loading more indicator -->>
+    <div v-if="loading && posts.length > 0" class="flex justify-center py-8">
       <Icon icon="mdi:loading" class="animate-spin text-blue-500" width="32" />
     </div>
 
-    <div
-      v-if="noMorePosts && posts.length > 0"
-      class="text-center text-gray-500 mt-4"
-    >
+    <div v-if="noMorePosts && posts.length > 0" class="text-center text-gray-500 mt-8 text-sm">
       No more posts.
     </div>
   </div>
@@ -170,34 +185,33 @@ async function loadPosts() {
   var cat_id = null;
   var author_id = null;
 
-  if (
-    props.filterBy === "category" &&
-    props.filterValue &&
-    props.filterValue !== "Uncategorized"
-  ) {
-    const { data: cat, error: catErr } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("name", props.filterValue)
-      .single();
-
-    if (catErr) {
-      loading.value = false;
-      return;
+  if (props.filterBy === 'category' && props.filterValue) {
+    if (props.filterValue.toLowerCase() === 'uncategorized') {
+      cat_id = null;
+    } else {
+      const { data: cat, error: catErr } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('slug', props.filterValue)
+        .single();
+      if (catErr) {
+        loading.value = false;
+        return;
+      }
+      cat_id = cat ? cat.id : null;
     }
-    cat_id = cat ? cat.id : null;
   } else if (props.filterBy === "author" && props.filterValue) {
     const { data: author, error: authorErr } = await supabase
       .from("profiles")
       .select("id")
       .eq("username", props.filterValue)
       .single();
-
-    if (authorErr) {
+    if (authorErr || !author) {
+      noMorePosts.value = true;
       loading.value = false;
       return;
     }
-    author_id = author ? author.id : null;
+    author_id = author.id;
   }
 
   let query = supabase
@@ -211,7 +225,7 @@ async function loadPosts() {
     slug,
     cover_image_url,
     created_at,
-    category:categories ( id, name ),
+  category:categories ( id, name, slug ),
     author:profiles ( id, username, display_name, role )
   `
     )
@@ -219,15 +233,14 @@ async function loadPosts() {
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  if (props.filterBy === "category" && cat_id !== null) {
-    query.eq("category_id", cat_id);
-  } else if (props.filterBy === "author") {
-    query.eq("author_id", author_id);
-  } else if (
-    (props.filterBy === "category" && props.filterValue === "Uncategorized") ||
-    (props.filterBy === "category" && cat_id === null)
-  ) {
-    query.is("category_id", null);
+  if (props.filterBy === 'category' && props.filterValue && props.filterValue.toLowerCase() !== 'uncategorized' && cat_id !== null) {
+    query.eq('category_id', cat_id);
+  } else if (props.filterBy === 'author') {
+    if (author_id) {
+      query.eq('author_id', author_id);
+    }
+  } else if (props.filterBy === 'category' && (props.filterValue.toLowerCase() === 'uncategorized' || cat_id === null)) {
+    query.is('category_id', null);
   }
 
   const { data, error } = await query;
@@ -256,19 +269,7 @@ function handleIntersect(entries) {
 let observer = null;
 
 onMounted(async () => {
-  if (props.filterBy === "author") {
-    const { data: authorProfile, error: authorErr } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("username", props.filterValue)
-      .single();
-    if (authorErr || !["admin", "author"].includes(authorProfile?.role)) {
-      toast.error("Author not found or not authorized");
-      router.back();
-      return;
-    }
-  }
-  loadPosts();
+  await loadPosts();
 
   observer = new IntersectionObserver(handleIntersect, {
     root: null,

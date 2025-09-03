@@ -1,307 +1,413 @@
 <template>
-  <div class="max-w-md mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <h1
+      class="text-3xl font-bold mb-8 text-gray-900 dark:text-white tracking-tight"
+    >
       My Profile
     </h1>
 
-    <!-- Auth User Info -->
-    <section class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
-      <div class="flex justify-between items-center mb-2">
-        <h2
-          class="flex items-center text-lg font-semibold text-gray-700 dark:text-gray-300"
-        >
-          <Icon
-            icon="mdi:shield-account"
-            class="text-xl mr-2 text-gray-600 dark:text-gray-400"
-          />
-          Authentication Details
-        </h2>
-        <button
-          v-if="!emailEdit"
-          @click="startEmailEdit"
-          class="text-sm text-blue-500 hover:underline"
-        >
-          Change Email
-        </button>
-      </div>
-
-      <div v-if="!emailEdit">
-        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <li class="flex items-center gap-2">
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+      <!-- Auth User Info -->
+      <section
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col"
+      >
+        <header class="flex items-center mb-4">
+          <div class="flex items-center gap-2">
             <Icon
-              icon="mdi:identification-card"
-              class="text-base text-gray-500 dark:text-gray-400"
+              icon="mdi:shield-account"
+              class="flex-shrink-0 text-blue-500 dark:text-blue-400 text-xl"
             />
-            <span class="font-medium">ID:</span> {{ authUser.id }}
-          </li>
-          <li class="flex items-center gap-2">
-            <Icon
-              icon="mdi:email-outline"
-              class="text-base text-gray-500 dark:text-gray-400"
-            />
-            <span class="font-medium">Email:</span> {{ authUser.email }}
-          </li>
-          <li class="flex items-center gap-2">
-            <Icon
-              icon="mdi:calendar-check"
-              class="text-base text-gray-500 dark:text-gray-400"
-            />
-            <span class="font-medium">Created At:</span>
-            {{ formatDate(authUser.created_at) }}
-          </li>
-        </ul>
-      </div>
-
-      <div v-else>
-        <form @submit.prevent="saveEmail">
-          <div class="mb-2">
-            <label
-              class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
+            <h2
+              class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
             >
-              New Email:
-            </label>
-            <input
-              v-model="emailAuthInput"
-              type="email"
-              class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
+              Authentication
+            </h2>
           </div>
-          <div class="mt-4 flex space-x-2">
-            <button
-              type="submit"
-              :disabled="savingEmail"
-              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {{ savingEmail ? "Sending…" : "Send Change Request" }}
-            </button>
-            <button
-              type="button"
-              @click="cancelEmailEdit"
-              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
+        </header>
 
-    <!-- Profile Table Info -->
-    <section class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-      <div class="flex justify-between items-center mb-2">
-        <h2
-          class="flex items-center text-lg font-semibold text-gray-700 dark:text-gray-300"
-        >
-          <Icon
-            icon="mdi:account"
-            class="text-xl mr-2 text-gray-600 dark:text-gray-400"
-          />
-          Profile Details
-        </h2>
-        <button
-          v-if="!editMode"
-          @click="startEdit"
-          class="text-sm text-blue-500 hover:underline"
-        >
-          Edit
-        </button>
-      </div>
-
-      <div v-if="!editMode">
-        <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <li class="flex items-center gap-2">
-            <Icon
-              icon="mdi:account-circle"
-              class="text-base text-gray-500 dark:text-gray-400"
-            />
-            <span class="font-medium">Username:</span>
-            {{ profile?.username || "N/A" }}
-          </li>
-          <li class="flex items-center gap-2">
-            <Icon
-              icon="mdi:account-box"
-              class="text-base text-gray-500 dark:text-gray-400"
-            />
-            <span class="font-medium">Display Name:</span>
-            {{ profile?.display_name || "N/A" }}
-          </li>
-        </ul>
-      </div>
-
-      <div v-else>
-        <form @submit.prevent="saveProfile">
-          <div class="mb-2">
-            <label
-              class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
-            >
-              Username:
-            </label>
-            <input
-              v-model="usernameInput"
-              class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              required
-            />
-          </div>
-          <div class="mb-2">
-            <label
-              class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
-            >
-              Display Name:
-            </label>
-            <input
-              v-model="displayNameInput"
-              class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              required
-            />
-          </div>
-          <div class="mt-4 flex space-x-2">
-            <button
-              type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              @click="cancelEdit"
-              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- Avatar Management -->
-    <section class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mt-6">
-      <div class="flex justify-between items-center mb-3">
-        <h2
-          class="flex items-center text-lg font-semibold text-gray-700 dark:text-gray-300"
-        >
-          <Icon
-            icon="mdi:account-circle-outline"
-            class="text-xl mr-2 text-gray-600 dark:text-gray-400"
-          />
-          Avatar
-        </h2>
-      </div>
-
-      <div class="flex items-start gap-6">
-        <div class="flex flex-col items-center gap-2">
-          <div
-            class="w-28 h-28 rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+        <div v-if="!emailEdit">
+          <dl
+            class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300"
           >
-            <img
-              v-if="avatarUrl"
-              :src="avatarUrl"
-              alt="Avatar"
-              class="w-full h-full object-cover"
-            />
-            <Icon v-else icon="mdi:account" class="text-5xl text-gray-400" />
-          </div>
-          <button
-            v-if="avatarUrl && !uploadingAvatar"
-            @click="removeAvatar"
-            class="text-xs text-red-500 hover:underline"
-          >
-            Remove
-          </button>
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:identification-card"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              ID
+            </dt>
+            <dd class="truncate">{{ authUser.id }}</dd>
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:email-outline"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              Email
+            </dt>
+            <dd class="break-all flex items-center gap-3 flex-wrap">
+              <span>{{ authUser.email }}</span>
+              <button
+                v-if="!emailEdit"
+                @click="startEmailEdit"
+                class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Change
+              </button>
+            </dd>
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:key"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              Password
+            </dt>
+            <dd class="flex items-center gap-3">
+              <span class="text-gray-500 dark:text-gray-400 italic"
+                >Hidden</span
+              >
+              <button
+                @click="router.push('/change-password')"
+                class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Change
+              </button>
+            </dd>
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:calendar-check"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              Created
+            </dt>
+            <dd>{{ formatDate(authUser.created_at) }}</dd>
+          </dl>
         </div>
 
-        <div class="flex-1 space-y-3">
-          <div>
-            <input
-              ref="avatarInputRef"
-              type="file"
-              accept="image/*"
-              @change="onAvatarFileChange"
-              class="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600"
-            />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              PNG/JPG/WEBP up to ~2MB recommended.
-            </p>
-          </div>
-
-          <div v-if="avatarPreview" class="flex items-center gap-4">
-            <div
-              class="w-16 h-16 rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700"
-            >
-              <img
-                :src="avatarPreview"
-                alt="Preview"
-                class="w-full h-full object-cover"
+        <div v-else>
+          <form @submit.prevent="saveEmail">
+            <div class="mb-2">
+              <label
+                class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
+                New Email:
+              </label>
+              <input
+                v-model="emailAuthInput"
+                type="email"
+                class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
-            <div class="flex gap-2">
+            <div class="mt-4 flex space-x-2">
               <button
-                @click="uploadAvatar"
-                :disabled="uploadingAvatar"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 text-sm inline-flex items-center gap-2"
+                type="submit"
+                :disabled="savingEmail"
+                class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <Icon
-                  :icon="uploadingAvatar ? 'mdi:loading' : 'mdi:upload'"
-                  :class="uploadingAvatar ? 'animate-spin' : ''"
-                />
-                <span>{{ uploadingAvatar ? "Uploading..." : "Upload" }}</span>
+                {{ savingEmail ? "Sending…" : "Send Change Request" }}
               </button>
               <button
-                @click="cancelAvatarSelection"
-                :disabled="uploadingAvatar"
-                class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500 text-sm"
+                type="button"
+                @click="cancelEmailEdit"
+                class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
                 Cancel
               </button>
             </div>
-          </div>
+          </form>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Linked Accounts -->
-    <section class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mt-8">
-      <h2
-        class="flex items-center text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4"
+      <!-- Profile Table Info -->
+      <section
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col"
       >
-        <Icon
-          icon="mdi:link"
-          class="text-xl mr-2 text-gray-600 dark:text-gray-400"
-        />
-        Linked Accounts
-      </h2>
-
-      <div class="space-y-4">
-        <div class="flex items-center justify-between">
+        <header class="flex justify-between items-center mb-4">
           <div class="flex items-center gap-2">
             <Icon
-              icon="mdi:github"
-              class="text-2xl text-gray-800 dark:text-gray-200"
+              icon="mdi:account"
+              class="flex-shrink-0 text-blue-500 dark:text-blue-400 text-xl"
             />
-            <span class="font-medium text-gray-800 dark:text-gray-200"
+            <h2
+              class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
+            >
+              Profile
+            </h2>
+          </div>
+          <button
+            v-if="!editMode"
+            @click="startEdit"
+            class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            Edit
+          </button>
+        </header>
+
+        <div v-if="!editMode">
+          <dl
+            class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300"
+          >
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:account-circle"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              Username
+            </dt>
+            <dd class="truncate">{{ profile?.username || "N/A" }}</dd>
+            <dt
+              class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
+            >
+              <Icon
+                icon="mdi:account-box"
+                class="text-blue-500 dark:text-blue-400 text-sm"
+              />
+              Display
+            </dt>
+            <dd class="truncate">{{ profile?.display_name || "N/A" }}</dd>
+          </dl>
+        </div>
+
+        <div v-else>
+          <form @submit.prevent="saveProfile">
+            <div class="mb-2">
+              <label
+                class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
+                Username:
+              </label>
+              <input
+                v-model="usernameInput"
+                class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
+            <div class="mb-2">
+              <label
+                class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
+              >
+                Display Name:
+              </label>
+              <input
+                v-model="displayNameInput"
+                class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                required
+              />
+            </div>
+            <div class="mt-4 flex space-x-2">
+              <button
+                type="submit"
+                class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                @click="cancelEdit"
+                class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Avatar Management -->
+      <section
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col md:col-span-2 lg:col-span-1"
+      >
+        <header class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <Icon
+              icon="mdi:account-circle-outline"
+              class="flex-shrink-0 text-blue-500 dark:text-blue-400 text-xl"
+            />
+            <h2
+              class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
+            >
+              Avatar
+            </h2>
+          </div>
+          <button
+            v-if="avatarUrl && !uploadingAvatar"
+            @click="removeAvatar"
+            class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            Remove
+          </button>
+        </header>
+
+        <div class="flex flex-col items-center gap-4">
+          <!-- Hidden file input -->
+          <input
+            ref="avatarInputRef"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onAvatarFileChange"
+          />
+          <div class="relative">
+            <button
+              type="button"
+              @click="avatarInputRef?.click()"
+              class="relative group w-32 h-32 rounded-full overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition"
+            >
+              <img
+                v-if="avatarUrl && !avatarPreview"
+                :src="avatarUrl"
+                alt="Avatar"
+                class="w-full h-full object-cover"
+              />
+              <img
+                v-else-if="avatarPreview"
+                :src="avatarPreview"
+                alt="New Avatar Preview"
+                class="w-full h-full object-cover opacity-90"
+              />
+              <Icon v-else icon="mdi:account" class="text-6xl text-gray-400" />
+              <div
+                class="absolute inset-0 flex flex-col items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition"
+              >
+                <Icon icon="mdi:camera" class="text-white text-xl mb-1" />
+                <span class="text-[11px] tracking-wide font-medium text-white"
+                  >Click to Change</span
+                >
+              </div>
+            </button>
+            <div
+              v-if="avatarPreview"
+              class="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold shadow ring-2 ring-white dark:ring-gray-800 select-none"
+            >
+              Preview
+            </div>
+          </div>
+          <div class="flex gap-2" v-if="avatarPreview">
+            <button
+              @click="uploadAvatar"
+              :disabled="uploadingAvatar"
+              class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <Icon
+                :icon="uploadingAvatar ? 'mdi:loading' : 'mdi:upload'"
+                :class="uploadingAvatar ? 'animate-spin' : ''"
+                class="text-sm"
+              />
+              <span>{{ uploadingAvatar ? "Uploading..." : "Save" }}</span>
+            </button>
+            <button
+              @click="cancelAvatarSelection"
+              :disabled="uploadingAvatar"
+              class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            >
+              <Icon icon="mdi:close" class="text-sm" />
+              <span>Cancel</span>
+            </button>
+          </div>
+          <p
+            v-if="!avatarPreview"
+            class="text-[11px] text-gray-500 dark:text-gray-400"
+          >
+            Click the avatar to upload a new one.
+          </p>
+        </div>
+      </section>
+
+      <!-- Linked Accounts -->
+      <section
+        class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col md:col-span-3 lg:col-span-3"
+      >
+        <header class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <Icon
+              icon="mdi:link"
+              class="flex-shrink-0 text-blue-500 dark:text-blue-400 text-xl"
+            />
+            <h2
+              class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
+            >
+              Linked Accounts
+            </h2>
+          </div>
+        </header>
+        <div class="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <!-- GitHub Tile -->
+          <div
+            class="group relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-5 flex flex-col items-center text-center transition shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500"
+          >
+            <div
+              class="w-14 h-14 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-inner mb-2 ring-1 ring-gray-200 dark:ring-gray-600 group-hover:ring-blue-400 dark:group-hover:ring-blue-500 transition"
+            >
+              <Icon
+                icon="mdi:github"
+                class="text-3xl text-gray-800 dark:text-gray-200"
+              />
+            </div>
+            <span
+              class="font-medium text-gray-800 dark:text-gray-200 text-xs tracking-wide"
               >GitHub</span
             >
+            <div class="mt-3">
+              <button
+                v-if="!githubLinked"
+                @click="linkGithub"
+                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <Icon icon="mdi:link" class="text-sm" />
+                <span>Link</span>
+              </button>
+              <button
+                v-else
+                @click="unlinkGithub"
+                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <Icon icon="tabler:unlink" class="text-sm" />
+                <span>Unlink</span>
+              </button>
+            </div>
+            <div
+              class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-blue-500/5 to-transparent"
+            />
           </div>
-          <div>
-            <button
-              v-if="!githubLinked"
-              @click="linkGithub"
-              class="inline-flex items-center gap-1 px-4 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          <!-- Google Tile -->
+          <div
+            class="group relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-5 flex flex-col items-center text-center transition shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500"
+          >
+            <div
+              class="w-14 h-14 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-inner mb-2 ring-1 ring-gray-200 dark:ring-gray-600 group-hover:ring-blue-400 dark:group-hover:ring-blue-500 transition"
             >
-              <Icon icon="mdi:link" class="text-lg" />
-              <span>Link</span>
-            </button>
-            <button
-              v-else
-              @click="unlinkGithub"
-              class="inline-flex items-center gap-1 px-4 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+              <Icon
+                icon="mdi:google"
+                class="text-3xl text-gray-800 dark:text-gray-200"
+              />
+            </div>
+            <span
+              class="font-medium text-gray-800 dark:text-gray-200 text-xs tracking-wide"
+              >Google</span
             >
-              <Icon icon="tabler:unlink" class="text-lg" />
-              <span>Unlink</span>
-            </button>
+            <div class="mt-3">
+              <button
+                @click="toast.info('Coming in future updates!')"
+                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/60 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400"
+              >
+                <Icon icon="mdi:link" class="text-sm" />
+                <span>Link</span>
+              </button>
+            </div>
           </div>
+          <!-- Future provider tiles go here -->
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -531,15 +637,18 @@ async function uploadAvatar() {
   try {
     const userId = authUser.value?.id;
     if (!userId) throw new Error("Not authenticated");
-
-  // Preserve original extension for correct content-type handling
-  const originalName = avatarFile.value.name || '';
-  const ext = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : 'png';
-  const filePath = `${userId}/${Date.now()}.${ext}`;
+    const originalName = avatarFile.value.name || "";
+    const ext = originalName.includes(".")
+      ? originalName.split(".").pop().toLowerCase()
+      : "png";
+    const filePath = `${userId}/${Date.now()}.${ext}`;
 
     const { error: upErr } = await supabase.storage
       .from("profile-avatar")
-      .upload(filePath, avatarFile.value, { upsert: false, contentType: avatarFile.value.type });
+      .upload(filePath, avatarFile.value, {
+        upsert: false,
+        contentType: avatarFile.value.type,
+      });
     if (upErr) throw upErr;
 
     const { data: pub } = supabase.storage

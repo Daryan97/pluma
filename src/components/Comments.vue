@@ -1,16 +1,19 @@
 <template>
-  <div class="mt-12" v-if="postId">
+  <div v-if="postId" v-bind="$attrs" :class="['mt-12', $attrs.class]">
     <h3
       class="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100"
     >
       <Icon icon="mdi:comment-text-outline" class="text-blue-500" />
       Comments
-      <span class="text-sm font-normal text-gray-500 dark:text-gray-400 flex items-center gap-1">
+      <span
+        class="text-sm font-normal text-gray-500 dark:text-gray-400 flex items-center gap-1"
+      >
         ({{ totalCount }})
         <span
           v-if="canModerate && pendingCount > 0"
           class="text-xs ml-1 px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100"
-        >{{ pendingCount }} pending</span>
+          >{{ pendingCount }} pending</span
+        >
       </span>
     </h3>
 
@@ -18,10 +21,13 @@
     <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
       <!-- Moderator Filter Select -->
       <div v-if="canModerate" class="flex flex-col gap-1">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">Filter</span>
+        <span
+          class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
+          >Filter</span
+        >
         <SelectRoot v-model="modFilter">
           <SelectTrigger
-            class="w-44 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 data-[placeholder]:text-gray-400"
+            class="w-44 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
             aria-label="Filter comments"
           >
             <SelectValue placeholder="All" />
@@ -32,33 +38,54 @@
               class="z-50 min-w-[var(--radix-select-trigger-width)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
               :side-offset="5"
             >
-              <SelectScrollUpButton class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500">
+              <SelectScrollUpButton
+                class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500"
+              >
                 <Icon icon="radix-icons:chevron-up" />
               </SelectScrollUpButton>
               <SelectViewport class="p-1">
                 <SelectGroup>
-                  <SelectItem value="all" class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white">
-                    <SelectItemIndicator class="absolute left-0 w-8 inline-flex items-center justify-center">
+                  <SelectItem
+                    value="all"
+                    class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                  >
+                    <SelectItemIndicator
+                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                    >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
                     <SelectItemText>All</SelectItemText>
                   </SelectItem>
-                  <SelectSeparator class="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                  <SelectItem value="approved" class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white">
-                    <SelectItemIndicator class="absolute left-0 w-8 inline-flex items-center justify-center">
+                  <SelectSeparator
+                    class="h-px bg-gray-200 dark:bg-gray-700 my-1"
+                  />
+                  <SelectItem
+                    value="approved"
+                    class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                  >
+                    <SelectItemIndicator
+                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                    >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
                     <SelectItemText>Approved</SelectItemText>
                   </SelectItem>
-                  <SelectItem value="pending" class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white">
-                    <SelectItemIndicator class="absolute left-0 w-8 inline-flex items-center justify-center">
+                  <SelectItem
+                    value="pending"
+                    class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                  >
+                    <SelectItemIndicator
+                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                    >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
                     <SelectItemText>Pending</SelectItemText>
                   </SelectItem>
                 </SelectGroup>
               </SelectViewport>
-              <SelectScrollDownButton class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500">
+              <SelectScrollDownButton
+                class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500"
+              >
                 <Icon icon="radix-icons:chevron-down" />
               </SelectScrollDownButton>
             </SelectContent>
@@ -68,10 +95,13 @@
 
       <!-- Sort Order Select -->
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400">Sort</span>
+        <span
+          class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
+          >Sort</span
+        >
         <SelectRoot v-model="sortOrder">
           <SelectTrigger
-            class="w-56 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 data-[placeholder]:text-gray-400"
+            class="w-56 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
             aria-label="Sort comments"
           >
             <SelectValue placeholder="Sort Order" />
@@ -82,27 +112,43 @@
               class="z-50 min-w-[var(--radix-select-trigger-width)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
               :side-offset="5"
             >
-              <SelectScrollUpButton class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500">
+              <SelectScrollUpButton
+                class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500"
+              >
                 <Icon icon="radix-icons:chevron-up" />
               </SelectScrollUpButton>
               <SelectViewport class="p-1">
                 <SelectGroup>
-                  <SelectItem value="newest" class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white">
-                    <SelectItemIndicator class="absolute left-0 w-8 inline-flex items-center justify-center">
+                  <SelectItem
+                    value="newest"
+                    class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                  >
+                    <SelectItemIndicator
+                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                    >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
                     <SelectItemText>Newest → Oldest</SelectItemText>
                   </SelectItem>
-                  <SelectSeparator class="h-px bg-gray-200 dark:bg-gray-700 my-1" />
-                  <SelectItem value="oldest" class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white">
-                    <SelectItemIndicator class="absolute left-0 w-8 inline-flex items-center justify-center">
+                  <SelectSeparator
+                    class="h-px bg-gray-200 dark:bg-gray-700 my-1"
+                  />
+                  <SelectItem
+                    value="oldest"
+                    class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                  >
+                    <SelectItemIndicator
+                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                    >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
                     <SelectItemText>Oldest → Newest</SelectItemText>
                   </SelectItem>
                 </SelectGroup>
               </SelectViewport>
-              <SelectScrollDownButton class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500">
+              <SelectScrollDownButton
+                class="flex items-center justify-center h-6 bg-white dark:bg-gray-800 text-gray-500"
+              >
                 <Icon icon="radix-icons:chevron-down" />
               </SelectScrollDownButton>
             </SelectContent>
@@ -120,21 +166,34 @@
             v-model="newComment"
             rows="3"
             placeholder="Write a thoughtful comment..."
-            class="peer w-full rounded-lg px-4 py-3 bg-white/90 dark:bg-gray-800/80 backdrop-blur border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500 dark:focus:border-blue-400 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden leading-relaxed min-h-[96px] resize-none"
+            class="peer w-full rounded-lg px-4 py-3 bg-white/90 dark:bg-gray-800/80 backdrop-blur border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400/60 focus:border-gray-400 dark:focus:border-gray-500 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden leading-relaxed min-h-[96px] resize-none"
             :disabled="submitting"
             @keydown="onTextareaKeydown"
             @input="autoResize"
             :maxlength="MAX_COMMENT_LENGTH"
             required
           ></textarea>
-          <div class="pointer-events-none absolute inset-x-3 top-2 text-[11px] font-medium text-gray-400 dark:text-gray-500 opacity-0 peer-focus:opacity-100 transition-opacity">Comment</div>
-          <div class="mt-1 flex justify-between text-[11px] text-gray-400 dark:text-gray-500 select-none">
-            <span :class="{'text-red-500 dark:text-red-400': newComment.length >= MAX_COMMENT_LENGTH}">{{ newComment.length }} / {{ MAX_COMMENT_LENGTH }}</span>
+          <div
+            class="pointer-events-none absolute left-3 -top-2 z-10 px-1 rounded bg-white dark:bg-gray-800 text-[10px] font-medium text-gray-500 dark:text-gray-400 shadow-sm"
+          >
+            Comment
+          </div>
+          <div
+            class="mt-1 flex justify-between text-[11px] text-gray-400 dark:text-gray-500 select-none"
+          >
+            <span
+              :class="{
+                'text-red-500 dark:text-red-400':
+                  newComment.length >= MAX_COMMENT_LENGTH,
+              }"
+              >{{ newComment.length }} / {{ MAX_COMMENT_LENGTH }}</span
+            >
             <button
               v-if="newComment.length > 0"
               type="button"
-              @click="newComment = ''"
-              class="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+              @click="clearComment"
+              class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
               Clear
             </button>
           </div>
@@ -147,13 +206,23 @@
             >Comment may need approval before others can see it.</span
           >
         </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-1">
-          <div class="order-2 sm:order-1 text-[11px] text-gray-400 dark:text-gray-500 flex flex-wrap items-center gap-1">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-1"
+        >
+          <div
+            class="order-2 sm:order-1 text-[11px] text-gray-400 dark:text-gray-500 flex flex-wrap items-center gap-1"
+          >
             <span>Tip:</span>
             <span>Press</span>
-            <kbd class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium">Ctrl</kbd>
+            <kbd
+              class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium"
+              >Ctrl</kbd
+            >
             <span>+</span>
-            <kbd class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium">Enter</kbd>
+            <kbd
+              class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium"
+              >Enter</kbd
+            >
             <span class="hidden sm:inline">(or</span>
             <span class="sm:inline hidden">⌘ + Enter on Mac)</span>
             <span class="sm:hidden">/ ⌘+Enter</span>
@@ -162,7 +231,7 @@
           <div class="order-1 sm:order-2 flex justify-end">
             <button
               type="submit"
-              class="inline-flex items-center gap-1 px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium disabled:opacity-60"
+              class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-60 disabled:pointer-events-none"
               :disabled="submitting || !newComment.trim()"
             >
               <Icon v-if="submitting" icon="mdi:loading" class="animate-spin" />
@@ -188,12 +257,24 @@
     </div>
     <div v-else>
       <div
-        v-if="comments.length === 0"
+        v-if="comments.length === 0 && modFilter === 'all'"
         class="text-gray-500 dark:text-gray-400 text-sm italic"
       >
         Be the first to comment!
       </div>
-  <ul class="space-y-6" id="comments" v-else>
+      <div
+        v-else-if="comments.length === 0 && modFilter === 'approved'"
+        class="text-gray-500 dark:text-gray-400 text-sm italic"
+      >
+        No approved comments yet.
+      </div>
+      <div
+        v-else-if="comments.length === 0 && modFilter === 'pending'"
+        class="text-gray-500 dark:text-gray-400 text-sm italic"
+      >
+        No pending comments.
+      </div>
+      <ul class="space-y-6" id="comments" v-else>
         <li
           v-for="c in comments"
           :key="c.id"
@@ -222,14 +303,20 @@
                     }}
                     <span
                       v-if="c.author_id === postAuthorId"
-                      class="ml-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100"
-                      >Author</span
+                      class="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-[10px] font-semibold tracking-wide uppercase text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
                     >
+                      <Icon icon="mdi:pen" class="text-[11px]" /> Author
+                    </span>
                     <span
-                        v-if="!c.approved && (canModerate || (sessionUser && sessionUser.id === c.author_id))"
-                        class="ml-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-600 dark:text-yellow-100"
+                      v-if="
+                        !c.approved &&
+                        (canModerate ||
+                          (sessionUser && sessionUser.id === c.author_id))
+                      "
+                      class="ml-1 hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-[10px] font-semibold tracking-wide uppercase text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
                     >
-                        Pending
+                      <Icon icon="mdi:clock-outline" class="text-[11px]" />
+                      Pending
                     </span>
                   </span>
                   <span class="text-gray-500 dark:text-gray-400 text-xs"
@@ -247,7 +334,7 @@
               <button
                 v-if="!c.approved"
                 @click="approveComment(c.id)"
-                class="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white"
+                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[13px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 focus:outline-none focus:ring-2 focus:ring-green-500"
                 title="Approve comment"
               >
                 <Icon icon="mdi:check-circle" class="text-base" />
@@ -255,7 +342,7 @@
               </button>
               <button
                 @click="requestDelete(c.id)"
-                class="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white"
+                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[13px] font-medium bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
                 title="Delete comment"
               >
                 <Icon icon="mdi:delete" class="text-base" />
@@ -280,19 +367,31 @@
         All comments loaded
       </div>
     </div>
+    <ConfirmDialog
+      :open="confirmOpen"
+      title="Delete Comment"
+      description="This action cannot be undone."
+      body="Are you sure you want to permanently delete this comment?"
+      @confirm="performDelete"
+      @cancel="
+        () => {
+          confirmOpen = false;
+          deleteTargetId = null;
+        }
+      "
+    />
   </div>
-  <ConfirmDialog
-    :open="confirmOpen"
-    title="Delete Comment"
-    description="This action cannot be undone."
-    body="Are you sure you want to permanently delete this comment?"
-    @confirm="performDelete"
-    @cancel="() => { confirmOpen = false; deleteTargetId = null }"
-  />
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  watch,
+  computed,
+  nextTick,
+} from "vue";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import { useToast } from "vue-toastification";
@@ -310,8 +409,8 @@ import {
   SelectItemText,
   SelectScrollUpButton,
   SelectScrollDownButton,
-  SelectSeparator
-} from 'radix-vue';
+  SelectSeparator,
+} from "radix-vue";
 
 const props = defineProps({
   postId: { type: [String, Number], required: true },
@@ -329,12 +428,20 @@ const loadMoreTrigger = ref(null);
 let commentsObserver = null;
 function initObserver() {
   if (commentsObserver) commentsObserver.disconnect();
-  commentsObserver = new IntersectionObserver((entries) => {
-    const entry = entries[0];
-    if (entry.isIntersecting && !loadingMore.value && !loading.value && !endReached.value) {
-      fetchComments();
-    }
-  }, { root: null, rootMargin: '200px', threshold: 0 });
+  commentsObserver = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0];
+      if (
+        entry.isIntersecting &&
+        !loadingMore.value &&
+        !loading.value &&
+        !endReached.value
+      ) {
+        fetchComments();
+      }
+    },
+    { root: null, rootMargin: "200px", threshold: 0 }
+  );
   if (loadMoreTrigger.value) commentsObserver.observe(loadMoreTrigger.value);
 }
 const newComment = ref("");
@@ -346,14 +453,12 @@ const confirmOpen = ref(false);
 const deleteTargetId = ref(null);
 const totalCount = ref(0);
 const pendingCount = ref(0);
-const modFilter = ref('all');
-const sortOrder = ref('newest');
+const modFilter = ref("all");
+const sortOrder = ref("newest");
 const MAX_COMMENT_LENGTH = 1000;
 
 const canModerate = computed(
-  () =>
-    role.value === "admin" ||
-    (role.value === "author" && sessionUser.value?.id === props.postAuthorId)
+  () => role.value === "admin" || role.value === "author"
 );
 
 async function fetchSession() {
@@ -390,16 +495,16 @@ function baseQuery() {
       `id, post_id, author_id, content, approved, created_at, author:profiles!comments_author_id_fkey(id, username, display_name, avatar_url)`
     )
     .eq("post_id", props.postId)
-    .order("created_at", { ascending: sortOrder.value === 'oldest' });
-  if (!canModerate.value) {
+    .order("created_at", { ascending: sortOrder.value === "oldest" });
+  if (canModerate.value) {
+    if (modFilter.value === "approved") q = q.eq("approved", true);
+    else if (modFilter.value === "pending") q = q.eq("approved", false);
+  } else {
     if (sessionUser.value) {
       q = q.or(`approved.eq.true,author_id.eq.${sessionUser.value.id}`);
     } else {
       q = q.eq("approved", true);
     }
-  } else {
-    if (modFilter.value === 'approved') q = q.eq('approved', true);
-    else if (modFilter.value === 'pending') q = q.eq('approved', false);
   }
   return q;
 }
@@ -436,7 +541,7 @@ async function fetchComments({ reset = false } = {}) {
     if (reset) {
       comments.value = mapped;
     } else {
-      const existing = new Set(comments.value.map(c => c.id));
+      const existing = new Set(comments.value.map((c) => c.id));
       for (const m of mapped) if (!existing.has(m.id)) comments.value.push(m);
     }
     if (mapped.length < pageSize) endReached.value = true;
@@ -467,14 +572,14 @@ async function submitComment() {
         ? "Comment posted"
         : "Comment submitted for approval"
     );
-  await fetchComments({ reset: true });
-  await updateCounts();
+    await fetchComments({ reset: true });
+    await updateCounts();
   } catch (e) {
     console.error(e);
     toast.error("Failed to post comment");
   } finally {
     submitting.value = false;
-  autoResize();
+    autoResize();
   }
 }
 
@@ -524,8 +629,8 @@ onMounted(async () => {
 watch(
   () => [props.postId],
   () => {
-  fetchComments({ reset: true });
-  updateCounts();
+    fetchComments({ reset: true });
+    updateCounts();
   }
 );
 
@@ -547,40 +652,45 @@ async function updateCounts() {
   if (!props.postId) return;
   try {
     if (canModerate.value) {
-      const { count: total } = await supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', props.postId);
+      const [{ count: total }, { count: pending }] = await Promise.all([
+        supabase
+          .from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", props.postId),
+        supabase
+          .from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("post_id", props.postId)
+          .eq("approved", false),
+      ]);
       totalCount.value = total || 0;
-      const { count: pending } = await supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', props.postId)
-        .eq('approved', false);
       pendingCount.value = pending || 0;
     } else {
       const approvedPromise = supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', props.postId)
-        .eq('approved', true);
-      const ownPendingPromise = sessionUser.value ? supabase
-        .from('comments')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', props.postId)
-        .eq('approved', false)
-        .eq('author_id', sessionUser.value.id) : Promise.resolve({ count: 0 });
-      const [{ count: approvedCnt }, { count: ownPendingCnt }] = await Promise.all([approvedPromise, ownPendingPromise]);
+        .from("comments")
+        .select("id", { count: "exact", head: true })
+        .eq("post_id", props.postId)
+        .eq("approved", true);
+      const ownPendingPromise = sessionUser.value
+        ? supabase
+            .from("comments")
+            .select("id", { count: "exact", head: true })
+            .eq("post_id", props.postId)
+            .eq("approved", false)
+            .eq("author_id", sessionUser.value.id)
+        : Promise.resolve({ count: 0 });
+      const [{ count: approvedCnt }, { count: ownPendingCnt }] =
+        await Promise.all([approvedPromise, ownPendingPromise]);
       totalCount.value = (approvedCnt || 0) + (ownPendingCnt || 0);
       pendingCount.value = 0;
     }
   } catch (e) {
-    console.warn('Count update failed', e);
+    console.warn("Count update failed", e);
   }
 }
 
 function onTextareaKeydown(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+  if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
     if (!submitting.value && newComment.value.trim()) {
       e.preventDefault();
       submitComment();
@@ -591,20 +701,32 @@ function onTextareaKeydown(e) {
 function autoResize() {
   const el = commentTextarea.value;
   if (!el) return;
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 600) + 'px';
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 600) + "px";
 }
 
-watch(newComment, (val) => {
-  if (val.length > MAX_COMMENT_LENGTH) newComment.value = val.slice(0, MAX_COMMENT_LENGTH);
+watch(newComment, async (val) => {
+  if (val.length > MAX_COMMENT_LENGTH)
+    newComment.value = val.slice(0, MAX_COMMENT_LENGTH);
+  await nextTick();
+  autoResize();
 });
+
+function clearComment() {
+  newComment.value = "";
+  const el = commentTextarea.value;
+  if (el) {
+    el.style.height = "";
+  }
+  nextTick(() => autoResize());
+}
 </script>
 
 <style scoped>
 #comments {
-    list-style: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 .comment-content {
   overflow-wrap: anywhere;
@@ -613,4 +735,3 @@ watch(newComment, (val) => {
   max-width: 100%;
 }
 </style>
-

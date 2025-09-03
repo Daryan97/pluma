@@ -1,54 +1,15 @@
 <template>
-  <div
-    v-if="post"
-    ref="markdownContainer"
-    class="prose prose-lg max-w-none text-gray-900 dark:text-gray-100 dark:prose-invert"
-  >
-    <h1 class="text-4xl font-bold mb-4">{{ post.title }}</h1>
-
-    <!-- Post Meta Info -->
-    <div class="text-sm text-gray-500 mb-6">
-      <span class="inline-flex items-center">
-        <Icon icon="mdi:account" class="mr-1" />
-        <span class="mr-1">By</span>
-        <router-link
-          :to="`/author/${post.author?.username}`"
-          class="hover:underline"
-        >
-          {{
-            post.author?.display_name ||
-            post.author?.username ||
-            "Unknown author"
-          }}
-        </router-link>
-      </span>
-      <span class="mx-2">|</span>
-      <span class="inline-flex items-center">
-        <Icon icon="mdi:calendar" class="mr-1" />
-        {{ formatDate(post.created_at) }}
-      </span>
-      <span class="mx-2">|</span>
-      <span class="inline-flex items-center">
-        <Icon icon="mdi:folder" class="mr-1" />
-        <router-link
-          :to="`/category/${post.category?.name}`"
-          class="hover:underline"
-        >
-          {{ post.category?.name || "Uncategorized" }}
-        </router-link>
-        {{ post.status }}
-      </span>
-    </div>
-
-    <!-- Cover Image with fallback -->
+  <!-- Post Content -->
+  <div v-if="post" ref="markdownContainer" class="max-w-none">
+    <!-- Cover Image -->
     <div
-      class="w-full max-h-[400px] rounded mb-6 overflow-hidden flex items-center justify-center bg-gray-100 dark:bg-gray-800"
+      class="w-full mb-8 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center aspect-[16/7] md:aspect-[16/6]"
     >
       <img
         v-if="post.cover_image_url && !coverImageError"
         :src="post.cover_image_url"
-        alt="Cover image"
-        class="w-full h-full object-cover"
+        :alt="post.title"
+        class="w-full h-full object-cover transition-transform duration-700"
         loading="lazy"
         draggable="false"
         @dragstart.prevent
@@ -57,32 +18,81 @@
       <NoImage v-else />
     </div>
 
-    <!-- Markdown Content -->
-    <Markdown
-      :source="post.content"
-      class="markdown-content mb-6"
-      ref="markdownContainer"
-    />
+    <!-- Title -->
+    <h1
+      class="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 dark:text-gray-100 mb-5 leading-tight"
+    >
+      {{ post.title }}
+    </h1>
+
+    <!-- Meta Chips -->
+    <div
+      class="flex flex-wrap items-center gap-2 mb-10 text-[11px] font-medium"
+    >
+      <router-link
+        :to="`/category/${post.category?.slug || 'uncategorized'}`"
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+      >
+        <Icon icon="mdi:folder" class="text-sm" />
+        {{ post.category?.name || "Uncategorized" }}
+      </router-link>
+      <router-link
+        v-if="post.author?.username"
+        :to="`/author/${post.author.username}`"
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
+      >
+        <Icon icon="mdi:account" class="text-sm" />
+        {{ post.author?.display_name || post.author?.username }}
+      </router-link>
+      <span
+        v-if="post.created_at"
+        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-400"
+      >
+        <Icon icon="mdi:calendar" class="text-sm" />
+        {{ formatDate(post.created_at) }}
+      </span>
+    </div>
+
+    <!-- Content -->
+    <div
+      class="prose prose-lg dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
+    >
+      <Markdown
+        :source="post.content"
+        class="markdown-content"
+        ref="markdownContainer"
+      />
+    </div>
 
     <!-- Tags -->
-    <div v-if="post.tags?.length" class="mt-6">
-      <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">Tags:</h4>
+    <div
+      v-if="post.tags?.length"
+      class="mt-10 border-t border-gray-200 dark:border-gray-700 pt-6"
+    >
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3"
+      >
+        Tags
+      </h4>
       <div class="flex flex-wrap gap-2">
         <span
           v-for="tag in post.tags"
           :key="tag"
-          class="bg-gray-200 dark:bg-gray-700 px-2 py-1 text-sm rounded text-gray-800 dark:text-gray-200 inline-flex items-center"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[11px] font-medium"
         >
-          <Icon icon="mdi:tag" class="mr-1" />
+          <Icon icon="mdi:tag" class="text-sm" />
           {{ tag }}
         </span>
       </div>
     </div>
   </div>
 
-  <!-- Fallback -->
-  <div v-else class="text-center text-gray-500 dark:text-gray-400">
-    <p>Post not found or is loading...</p>
+  <div v-else class="text-center text-gray-500 dark:text-gray-400 py-20">
+    <Icon
+      icon="mdi:file-search-outline"
+      class="text-5xl text-gray-300 dark:text-gray-600 mb-4"
+    />
+    <p class="text-sm">Post not found or is loading...</p>
   </div>
 </template>
 
@@ -96,7 +106,7 @@ const props = defineProps({
   post: {
     type: Object,
     required: true,
-  },
+  }
 });
 
 const markdownContainer = ref(null);

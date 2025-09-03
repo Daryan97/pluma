@@ -13,7 +13,7 @@
     </div>
 
     <div v-else-if="post" class="max-w-4xl mx-auto mt-10">
-      <Post :post="post" />
+      <Post :post="post" :user="user" />
       <Comments
         v-if="!post.comments_disabled"
         class="mt-10"
@@ -38,6 +38,7 @@ import { projectInfo } from "@/config/projectInfo";
 const route = useRoute();
 const post = ref(null);
 const loading = ref(true);
+const user = ref(null);
 
 const slug = ref(route.params.slug);
 
@@ -49,6 +50,21 @@ watch(
   },
   { immediate: true }
 );
+
+async function getUser() {
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
+
+  if (currentUser) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, display_name, role, avatar_url")
+      .eq("id", currentUser.id)
+      .single();
+    user.value = profile || null;
+  }
+}
 
 async function fetchPost() {
   if (!slug.value) {
@@ -75,6 +91,8 @@ async function fetchPost() {
       comments_disabled,
       cover_image_url,
       created_at,
+      status,
+      updated_at,
       author:profiles (
         id,
         username,
@@ -125,4 +143,6 @@ watch(
   },
   { immediate: true }
 );
+
+getUser();
 </script>

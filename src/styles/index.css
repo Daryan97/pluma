@@ -2,6 +2,10 @@
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+input, textarea {
+  @apply text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 focus:outline-none px-3 py-2;
+}
+
 button {
   @apply cursor-pointer;
 }
@@ -42,7 +46,11 @@ p {
   @apply text-gray-700 dark:text-gray-300;
 }
 
-a {
+p > a {
+  @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300;
+}
+
+table a {
   @apply text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300;
 }
 
@@ -86,24 +94,28 @@ pre > .code-scroll {
   @apply absolute z-10 top-2 left-2 bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs pointer-events-none;
 }
 
-.router-link-exact-active {
-  @apply text-blue-900 dark:text-blue-100 font-semibold;
+.nav-pill.router-link-exact-active {
+  @apply bg-gray-200 dark:bg-gray-700/60 text-gray-900 dark:text-gray-100;
+}
+
+.mobile-menu a.router-link-exact-active {
+  @apply bg-gray-200 dark:bg-gray-700/60 text-gray-900 dark:text-gray-100 font-medium;
 }
 
 .Vue-Toastification__toast--warning {
-  @apply bg-yellow-500 text-gray-700 dark:bg-yellow-500 dark:text-gray-100;
+  @apply bg-yellow-500/50 text-gray-700 dark:bg-yellow-500/50 dark:text-gray-100;
 }
 
 .Vue-Toastification__toast--info {
-  @apply bg-blue-500 text-gray-700 dark:bg-blue-500 dark:text-gray-100;
+  @apply bg-blue-500/50 text-gray-700 dark:bg-blue-500/50 dark:text-gray-100;
 }
 
 .Vue-Toastification__toast--success {
-  @apply bg-green-500 text-gray-700 dark:bg-green-500 dark:text-gray-100;
+  @apply bg-green-500/50 text-gray-700 dark:bg-green-500/50 dark:text-gray-100;
 }
 
 .Vue-Toastification__toast--error {
-  @apply bg-red-500 text-gray-700 dark:bg-red-500 dark:text-gray-100;
+  @apply bg-red-500/50 text-gray-700 dark:bg-red-500/50 dark:text-gray-100;
 }
 
 .Vue-Toastification__close-button {
@@ -157,4 +169,23 @@ li.task-list-item {
 
 kbd {
   @apply bg-gray-100 dark:bg-gray-800 p-1 rounded border border-gray-300 dark:border-gray-600;
+}
+
+/* Global dropdown menu item styling */
+.menu-item {
+  @apply w-full px-3 py-2 rounded-md flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none transition;
+}
+.menu-item[data-highlighted] {
+  @apply bg-gray-100 dark:bg-gray-700/60 text-gray-900 dark:text-gray-100;
+}
+.menu-item.text-red-600[data-highlighted],
+.menu-item.text-red-600.dark\:text-red-400[data-highlighted] {
+  @apply bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300;
+}
+
+.nav-pill {
+  @apply inline-flex items-center gap-2 h-9 px-3 rounded-md text-gray-700 dark:text-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/50 no-underline hover:no-underline transition;
+}
+.nav-pill[data-state="open"] {
+  @apply bg-gray-200 dark:bg-gray-700/60;
 }

@@ -1,120 +1,122 @@
 <template>
-  <div
-    class="max-w-md mx-auto mt-16 p-6 rounded-lg border bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow"
-  >
-    <div class="flex items-center gap-2 mb-6">
-      <Icon
-        icon="mdi:login"
-        class="text-3xl text-blue-600 dark:text-blue-400"
-      />
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-white leading-none">
-        Login
-      </h2>
+  <div class="max-w-md mx-auto mt-14 mb-20">
+    <div class="mb-8 text-center">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4">
+        <Icon icon="mdi:login" class="text-3xl" />
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Welcome back</h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to continue.</p>
     </div>
 
-    <form @submit.prevent="login" class="space-y-4">
-      <div>
-        <label class="block mb-1 text-sm text-gray-700 dark:text-gray-300">
-          Email
-        </label>
-        <div class="relative">
-          <Icon
-            icon="mdi:email-outline"
-            class="absolute left-3 top-3.5 text-gray-400"
-          />
+    <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <form @submit.prevent="login" class="space-y-5" novalidate>
+        <!-- Email -->
+        <div>
+          <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <Icon icon="mdi:email-outline" class="text-base text-blue-500" />
+            Email
+          </label>
           <input
-            v-model="email"
+            v-model.trim="email"
             type="email"
+            autocomplete="email"
             placeholder="you@example.com"
-            class="w-full pl-10 p-2.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full h-11 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 px-3 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             required
           />
         </div>
-      </div>
 
-      <div>
-        <label class="block mb-1 text-sm text-gray-700 dark:text-gray-300">
-          Password
-        </label>
-        <div class="relative">
-          <Icon
-            icon="mdi:lock-outline"
-            class="absolute left-3 top-3.5 text-gray-400"
-          />
-          <input
-            v-model="password"
-            type="password"
-            placeholder="••••••••"
-            class="w-full pl-10 p-2.5 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+        <!-- Password -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Icon icon="mdi:lock-outline" class="text-base text-blue-500" />
+              Password
+            </label>
+            <button
+              type="button"
+              @click="forgotPassword"
+              class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+              :disabled="forgotLoading || loginLoading || magicLinkLoading"
+            >
+              <span v-if="!forgotLoading">Forgot?</span>
+              <span v-else>Sending...</span>
+            </button>
+          </div>
+          <div class="relative">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              class="w-full h-11 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 px-3 pr-10 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+              required
+            />
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+            >
+              <Icon :icon="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" class="text-lg" />
+            </button>
+          </div>
         </div>
-        <div class="text-right mt-1">
-          <button
-            type="button"
-            @click="forgotPassword"
-            class="text-sm text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
-            :disabled="forgotLoading || loginLoading || magicLinkLoading"
-          >
-            <span v-if="!forgotLoading">Forgot password?</span>
-            <span v-else>Sending reset link...</span>
-          </button>
-        </div>
-      </div>
 
-      <!-- Login Button -->
-      <button
-        type="submit"
-        class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 text-white rounded-md font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-        :disabled="loginLoading || magicLinkLoading || forgotLoading"
-      >
-        <Icon icon="mdi:login" class="text-xl" />
-        <span v-if="!loginLoading">Login</span>
-        <span v-else>Logging in...</span>
-      </button>
+        <!-- Primary Login -->
+        <button
+          type="submit"
+          class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50 disabled:pointer-events-none"
+          :disabled="loginLoading || magicLinkLoading || forgotLoading"
+        >
+          <Icon v-if="loginLoading" icon="mdi:loading" class="animate-spin" />
+          <Icon v-else icon="mdi:login" class="text-lg" />
+          <span>{{ loginLoading ? 'Logging in...' : 'Login' }}</span>
+        </button>
 
-      <!-- Magic Link Button -->
-      <button
-        type="button"
-        class="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-700 dark:hover:bg-purple-500 text-white rounded-md font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-        @click="sendMagicLink"
-        :disabled="magicLinkLoading || loginLoading || forgotLoading"
-      >
-        <Icon icon="mdi:magic-staff" class="text-xl" />
-        <span v-if="!magicLinkLoading">Send Magic Link</span>
-        <span v-else>Sending link...</span>
-      </button>
-    </form>
-    <button
-      type="button"
-      @click="signInWithGithub"
-      class="mt-2 w-full py-2.5 px-4 bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-md font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-      :disabled="loginLoading || magicLinkLoading || forgotLoading"
-    >
-      <Icon icon="mdi:github" class="text-xl" />
-      <span>Continue with GitHub</span>
-    </button>
-    <p class="text-sm text-gray-600 dark:text-gray-400 mt-6 text-center">
-      Don’t have an account?
-      <router-link
-        to="/signup"
-        class="text-blue-600 dark:text-blue-400 hover:underline"
-      >
-        Sign up
-      </router-link>
-    </p>
+        <!-- Magic Link -->
+        <button
+          type="button"
+          class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:pointer-events-none"
+          @click="sendMagicLink"
+          :disabled="magicLinkLoading || loginLoading || forgotLoading"
+        >
+          <Icon v-if="magicLinkLoading" icon="mdi:loading" class="animate-spin" />
+            <Icon v-else icon="mdi:magic-staff" class="text-lg" />
+          <span>{{ magicLinkLoading ? 'Sending link...' : 'Send Magic Link' }}</span>
+        </button>
+
+        <!-- GitHub -->
+        <button
+          type="button"
+          @click="signInWithGithub"
+          class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:pointer-events-none"
+          :disabled="loginLoading || magicLinkLoading || forgotLoading"
+        >
+          <Icon v-if="false" icon="mdi:loading" class="animate-spin" />
+          <Icon icon="mdi:github" class="text-lg" />
+          <span>Continue with GitHub</span>
+        </button>
+
+        <p class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center">
+          Don’t have an account?
+          <router-link to="/signup" class="text-blue-600 dark:text-blue-400 hover:underline">Sign up</router-link>
+        </p>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { supabase } from "@/services/supabase";
-import { Icon } from "@iconify/vue";
-import { useToast } from "vue-toastification";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { supabase } from '@/services/supabase';
+import { Icon } from '@iconify/vue';
+import { useToast } from 'vue-toastification';
 
-const email = ref("");
-const password = ref("");
+const email = ref('');
+const password = ref('');
+const showPassword = ref(false);
 
 const loginLoading = ref(false);
 const magicLinkLoading = ref(false);
@@ -124,8 +126,8 @@ const toast = useToast();
 const router = useRouter();
 
 async function signInWithGithub() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "github",
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
     options: { redirectTo: `${window.location.origin}` },
   });
   if (error) toast.error(error.message);
@@ -133,73 +135,56 @@ async function signInWithGithub() {
 
 const login = async () => {
   loginLoading.value = true;
-
   const { error } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value,
   });
-
   loginLoading.value = false;
-
   if (error) {
-    if (error.code === "email_not_confirmed") {
+    if (error.code === 'email_not_confirmed') {
       toast.error(`${error.message}. We have sent a new confirmation email.`);
-      await supabase.auth.resend({
-        type: "signup",
-        email: email.value,
-      });
+      await supabase.auth.resend({ type: 'signup', email: email.value });
       return;
     }
     toast.error(error.message);
   } else {
-    toast.success("Login successful!");
-    router.push("/");
+    toast.success('Login successful!');
+    router.push('/');
   }
 };
 
 const forgotPassword = async () => {
   if (!email.value) {
-    toast.warning("Please enter your email address first.");
+    toast.warning('Please enter your email address first.');
     return;
   }
-
   forgotLoading.value = true;
-
   const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
     redirectTo: `${location.origin}/change-password`,
   });
-
   forgotLoading.value = false;
-
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success("Password reset link sent to your email.");
+    toast.success('Password reset link sent to your email.');
   }
 };
 
 const sendMagicLink = async () => {
   if (!email.value) {
-    toast.warning("Please enter your email to receive a magic link.");
+    toast.warning('Please enter your email to receive a magic link.');
     return;
   }
-
   magicLinkLoading.value = true;
-
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
-    options: {
-      shouldCreateUser: true,
-      emailRedirectTo: `${location.origin}/`,
-    },
+    options: { shouldCreateUser: true, emailRedirectTo: `${location.origin}/` },
   });
-
   magicLinkLoading.value = false;
-
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success("Magic link sent! Check your email.");
+    toast.success('Magic link sent! Check your email.');
   }
 };
 </script>

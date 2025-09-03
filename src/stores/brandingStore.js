@@ -1,26 +1,25 @@
 import { ref } from 'vue';
 import { supabase } from '@/services/supabase';
 
-// Clean branding store: stores public URLs (lightLogoUrl, darkLogoUrl) in settings table.
 const brandingLoaded = ref(false);
 const brandingLoading = ref(false);
 const brandingError = ref(null);
+const siteName = ref(null);
+const siteDescription = ref(null);
+const socialLinks = ref([]);
 const lightLogoUrl = ref(null);
 const darkLogoUrl = ref(null);
-// Also expose storage-relative paths (derived) for UI display if needed
+const faviconUrl = ref(null);
 const lightLogoPath = ref(null);
 const darkLogoPath = ref(null);
-// Version key to force cache-busting in UI when logos change
+const faviconPath = ref(null);
 const logoVersion = ref(Date.now());
 
-// Convert a Supabase public storage URL -> path inside the bucket (without bucket name)
 function storagePathFromPublicUrl(url) {
     if (!url) return null;
     try {
-        // Pattern: .../storage/v1/object/public/<bucket>/<path_inside_bucket>
         const m = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
         if (m) {
-            // m[1] is bucket name, m[2] is the object path we want
             return m[2];
         }
     } catch (e) {
@@ -38,13 +37,18 @@ export async function fetchBranding(force = false) {
             .from('settings')
             .select('value')
             .eq('key', 'branding')
-            .single();
+            .maybeSingle();
         if (error) throw error;
         const value = data?.value || {};
+        siteName.value = value.siteName || null;
+        siteDescription.value = value.siteDescription || null;
+        socialLinks.value = Array.isArray(value.socialLinks) ? value.socialLinks : [];
         lightLogoUrl.value = value.lightLogoUrl || null;
         darkLogoUrl.value = value.darkLogoUrl || null;
+        faviconUrl.value = value.faviconUrl || null;
         lightLogoPath.value = value.lightLogoPath || null;
         darkLogoPath.value = value.darkLogoPath || null;
+        faviconPath.value = value.faviconPath || null;
         brandingLoaded.value = true;
     } catch (e) {
         console.error('[branding] fetch error', e);
@@ -54,54 +58,60 @@ export async function fetchBranding(force = false) {
     }
 }
 
-export async function updateBranding({ lightFile, darkFile }) {
-    // Fetch existing to merge values
+export async function updateBranding({ lightFile, darkFile, faviconFile, siteName: newSiteName, siteDescription: newSiteDescription, socialLinks: newSocialLinks }) {
     let existingValue = {};
     const { data: existingRow } = await supabase
         .from('settings')
         .select('value')
         .eq('key', 'branding')
-        .single();
+        .maybeSingle();
     if (existingRow?.value) existingValue = existingRow.value;
 
-    const newValue = { ...existingValue }; // preserve other keys
+    const newValue = { ...existingValue };
+    if (typeof newSiteName === 'string') newValue.siteName = newSiteName.trim() || null;
+    if (typeof newSiteDescription === 'string') newValue.siteDescription = newSiteDescription.trim() || null;
+    if (Array.isArray(newSocialLinks)) newValue.socialLinks = newSocialLinks.filter(l => l && l.label && l.url);
 
     async function uploadVariant(file, variant) {
         if (!file) return;
-        // Determine previously stored object path (if any)
-        const prevUrlOrPath = variant === 'light' ? (newValue.lightLogoUrl || newValue.lightLogoPath) : (newValue.darkLogoUrl || newValue.darkLogoPath);
+        let prevUrlOrPath;
+        if (variant === 'light') prevUrlOrPath = newValue.lightLogoUrl || newValue.lightLogoPath;
+        else if (variant === 'dark') prevUrlOrPath = newValue.darkLogoUrl || newValue.darkLogoPath;
+        else if (variant === 'favicon') prevUrlOrPath = newValue.faviconUrl || newValue.faviconPath;
         const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
 
-        // Build new deterministic path using variant plus current file extension
         const originalName = file.name || '';
         const ext = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : '';
-    const objectPath = ext ? `${variant}.${ext}` : variant; // e.g. light.png / dark.svg
+    const objectPath = ext ? `${variant}.${ext}` : variant;
 
-        // If previous path exists and is different from the target path, remove it first
         if (prevPath && prevPath !== objectPath) {
             try { await supabase.storage.from('branding').remove([prevPath]); } catch (e) { console.warn('[branding] remove previous variant failed (different path)', variant, prevPath, e); }
         } else {
-            // Remove the existing file at objectPath (overwrite scenario)
-            try { await supabase.storage.from('branding').remove([objectPath]); } catch (_) {/* ignore if not present */}
+            try { await supabase.storage.from('branding').remove([objectPath]); } catch (_) {
+                console.warn('[branding] remove previous variant failed (same path)', variant, objectPath, _);
+            }
         }
 
-        // Upload new file (allow upsert to avoid race conditions)
         const { error: upErr } = await supabase.storage.from('branding').upload(objectPath, file, { upsert: true, cacheControl: '3600', contentType: file.type });
         if (upErr) throw upErr;
 
         const { data: pub } = supabase.storage.from('branding').getPublicUrl(objectPath);
         if (variant === 'light') {
             newValue.lightLogoUrl = pub.publicUrl;
-            newValue.lightLogoPath = objectPath; // store path too for future flexibility
-        } else {
+            newValue.lightLogoPath = objectPath;
+        } else if (variant === 'dark') {
             newValue.darkLogoUrl = pub.publicUrl;
             newValue.darkLogoPath = objectPath;
+        } else if (variant === 'favicon') {
+            newValue.faviconUrl = pub.publicUrl;
+            newValue.faviconPath = objectPath;
         }
     }
 
     await Promise.all([
         uploadVariant(lightFile, 'light'),
-        uploadVariant(darkFile, 'dark')
+        uploadVariant(darkFile, 'dark'),
+        uploadVariant(faviconFile, 'favicon')
     ]);
 
     const { error } = await supabase.from('settings').upsert({ key: 'branding', value: newValue });
@@ -111,11 +121,9 @@ export async function updateBranding({ lightFile, darkFile }) {
     logoVersion.value = Date.now();
 }
 
-// Remove a specific branding variant ('light' | 'dark') – deletes file then updates settings
 export async function removeBrandingVariant(variant) {
-    const valid = ['light', 'dark'];
+    const valid = ['light', 'dark', 'favicon'];
     if (!valid.includes(variant)) return;
-    // Fetch latest
     let existingValue = {};
     const { data: existingRow } = await supabase
         .from('settings')
@@ -124,8 +132,8 @@ export async function removeBrandingVariant(variant) {
         .single();
     if (existingRow?.value) existingValue = existingRow.value;
 
-    const urlKey = variant === 'light' ? 'lightLogoUrl' : 'darkLogoUrl';
-    const pathKey = variant === 'light' ? 'lightLogoPath' : 'darkLogoPath';
+    const urlKey = variant === 'light' ? 'lightLogoUrl' : variant === 'dark' ? 'darkLogoUrl' : 'faviconUrl';
+    const pathKey = variant === 'light' ? 'lightLogoPath' : variant === 'dark' ? 'darkLogoPath' : 'faviconPath';
     const prevUrlOrPath = existingValue[urlKey] || existingValue[pathKey];
     const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
 
@@ -148,11 +156,16 @@ export function useBranding() {
         brandingLoaded,
         brandingLoading,
         brandingError,
+        siteName,
+        siteDescription,
+        socialLinks,
         lightLogoUrl,
         darkLogoUrl,
+        faviconUrl,
         lightLogoPath,
         darkLogoPath,
-    logoVersion,
+        faviconPath,
+        logoVersion,
         fetchBranding,
         updateBranding,
         removeBrandingVariant

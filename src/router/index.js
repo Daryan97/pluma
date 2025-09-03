@@ -10,6 +10,9 @@ const NewPost = () => import('@/pages/NewPost.vue')
 const Dashboard = () => import('@/pages/Dashboard.vue')
 const ChangePassword = () => import('@/pages/ChangePassword.vue')
 const EditPost = () => import('@/pages/EditPost.vue')
+const Profile = () => import('@/pages/Profile.vue')
+const Install = () => import('@/pages/Install.vue')
+const Test = () => import('@/pages/Test.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -19,19 +22,22 @@ const router = createRouter({
       name: 'Home',
       component: Home,
       meta: {
-        title: `Home | ${projectInfo.name}`,
-        description: `${projectInfo.description}`
+        baseTitle: 'Home',
+        description: () => projectInfo.description
       }
+    },
+    {
+      path: '/install',
+      name: 'Install',
+      component: Install,
+      meta: { baseTitle: 'Install', description: 'Initial setup wizard.' }
     },
     {
       path: '/posts/:slug',
       name: 'PostDetail',
       component: PostDetail,
       props: true,
-      meta: {
-        title: `Post Detail | ${projectInfo.name}`,
-        description: 'Read the full post and explore more details.'
-      }
+      meta: { baseTitle: 'Post Detail', description: 'Read the full post and explore more details.' }
     },
     {
       path: '/post/:slug',
@@ -45,10 +51,7 @@ const router = createRouter({
       name: 'CategoryPosts',
       component: () => import('@/pages/CategoryPosts.vue'),
       props: true,
-      meta: {
-        title: `Category Posts | ${projectInfo.name}`,
-        description: 'Explore posts in this category.'
-      }
+      meta: { baseTitle: 'Category Posts', description: 'Explore posts in this category.' }
     },
     {
       path: '/categories/:slug',
@@ -61,10 +64,7 @@ const router = createRouter({
       name: 'AuthorPosts',
       component: () => import('@/pages/AuthorPosts.vue'),
       props: true,
-      meta: {
-        title: `Author Posts | ${projectInfo.name}`,
-        description: 'View posts by this author.'
-      }
+      meta: { baseTitle: 'Author Posts', description: 'View posts by this author.' }
     },
     {
       path: '/authors/:username',
@@ -76,86 +76,50 @@ const router = createRouter({
       path: '/login',
       name: 'Login',
       component: Login,
-      meta: {
-        requireAnonymous: true,
-        title: `Login | ${projectInfo.name}`,
-        description: 'Login to your account to access more features.'
-      }
+      meta: { requireAnonymous: true, baseTitle: 'Login', description: 'Login to your account to access more features.' }
     },
     {
       path: '/signup',
       name: 'Signup',
       component: Signup,
-      meta: {
-        requireAnonymous: true,
-        title: `Sign Up | ${projectInfo.name}`,
-        description: 'Create a new account to join our community.'
-      }
+      meta: { requireAnonymous: true, baseTitle: 'Sign Up', description: 'Create a new account to join our community.' }
     },
     {
       path: '/dashboard/new-post',
       name: 'NewPost',
       component: NewPost,
-      meta: {
-        requiresAuth: true,
-        requiresAuthorOrAdmin: true,
-        title: `New Post | ${projectInfo.name}`,
-        description: 'Write and publish a new post.'
-      }
+      meta: { requiresAuth: true, requiresAuthorOrAdmin: true, baseTitle: 'New Post', description: 'Write and publish a new post.' }
     },
     {
       path: '/dashboard/edit/:id',
       name: 'EditPost',
       component: EditPost,
       props: true,
-      meta: {
-        requiresAuth: true,
-        requiresAuthorOrAdmin: true,
-        title: `Edit Post | ${projectInfo.name}`,
-        description: 'Edit an existing post.'
-      }
+      meta: { requiresAuth: true, requiresAuthorOrAdmin: true, baseTitle: 'Edit Post', description: 'Edit an existing post.' }
     },
     {
       path: '/dashboard',
       name: 'Dashboard',
       component: Dashboard,
-      meta: {
-        requiresAuth: true,
-        requiresAuthorOrAdmin: true,
-        title: `Dashboard | ${projectInfo.name}`,
-        description: 'Admin dashboard for managing the platform.'
-      }
+      meta: { requiresAuth: true, requiresAuthorOrAdmin: true, baseTitle: 'Dashboard', description: 'Admin dashboard for managing the platform.' }
     },
     {
       path: '/change-password',
       name: 'ChangePassword',
       component: ChangePassword,
-      meta: {
-        requiresAuth: true,
-        title: `Change Password | ${projectInfo.name}`,
-        description: 'Change your account password securely.'
-      }
+      meta: { requiresAuth: true, baseTitle: 'Change Password', description: 'Change your account password securely.' }
     },
     {
       path: '/profile',
       name: 'Profile',
-      component: () => import('@/pages/Profile.vue'),
-      meta: {
-        requiresAuth: true,
-        title: `Profile | ${projectInfo.name}`,
-        description: 'View and edit your profile information.'
-      }
+      component: Profile,
+      meta: { requiresAuth: true, baseTitle: 'Profile', description: 'View and edit your profile information.' },
     },
     {
-      path: '/dashboard/members',
-      name: 'Members',
-      component: () => import('@/pages/Members.vue'),
-      meta: {
-        requiresAuth: true,
-        requiresAdmin: true,
-        title: `Members | ${projectInfo.name}`,
-        description: 'Manage user roles on the platform.'
-      }
+      path: '/test',
+      name: 'Test',
+      component: Test,
+      meta: { devOnly: true, baseTitle: 'Test', description: 'Test page (development only).' }
     }
   ]
 })
@@ -171,19 +135,59 @@ router.beforeEach(async (to, from, next) => {
   if (user && to.name !== 'Profile') {
     const { data: prof, error: profErr } = await supabase
       .from('profiles')
-      .select('username, display_name')
+      .select('username, display_name, role')
       .eq('id', user.id)
       .single()
-    if (!profErr && (!prof.username || !prof.display_name)) {
+    if (!profErr && (!prof?.username || !prof?.display_name)) {
       toast.error('Please complete your profile before proceeding.')
       return next({ name: 'Profile', query: { edit: 'true' } })
+    } else if (!profErr && prof?.role === 'disabled') {
+      toast.error('Your account has been banned. Please contact support for assistance.')
+      await supabase.auth.signOut()
+      return next('/login')
     }
   }
 
   const requiresAuth = to.meta.requiresAuth
   const requiresAdmin = to.meta.requiresAdmin
+  const devOnly = to.meta.devOnly
+  if (devOnly) {
+    const isDev = import.meta.env.VITE_ENV === 'development'
+    if (!isDev) {
+      return next('/')
+    }
+  }
   const requiresAuthorOrAdmin = to.meta.requiresAuthorOrAdmin
   const requireAnonymous = to.meta.requireAnonymous
+
+  try {
+    const isInstallRoute = to.name === 'Install'
+    const { data, error } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'installation')
+      .maybeSingle()
+
+    if (!error && data && typeof data.value === 'object' && data.value !== null) {
+      if ('complete' in data.value) {
+        data.value = data.value.complete === true
+      }
+    }
+
+    const installDone = !error && data?.value === true
+
+    if (!installDone && !isInstallRoute) {
+      return next({ name: 'Install' })
+    }
+    if (installDone && isInstallRoute) {
+      return next('/')
+    }
+  } catch (e) {
+    console.error('Failed to fetch installation status', e)
+    if (to.name !== 'Install') {
+      return next({ name: 'Install' })
+    }
+  }
 
   if (requireAnonymous && user) {
     return next('/')
@@ -217,20 +221,12 @@ router.beforeEach(async (to, from, next) => {
 })
 
 router.afterEach((to) => {
-  if (to.meta && to.meta.title) {
-    document.title = to.meta.title
-  } else {
-    document.title = 'Pluma'
-  }
-  if (to.meta && to.meta.description) {
-    document
-      .querySelector('meta[name="description"]')
-      .setAttribute('content', to.meta.description)
-  } else {
-    document
-      .querySelector('meta[name="description"]')
-      .setAttribute('content', projectInfo.description)
-  }
+  const base = to.meta?.baseTitle;
+  if (base) document.title = `${base} | ${projectInfo.name}`; else document.title = projectInfo.name;
+  const descRaw = to.meta?.description;
+  const desc = typeof descRaw === 'function' ? descRaw() : descRaw || projectInfo.description;
+  const metaTag = document.querySelector('meta[name="description"]');
+  if (metaTag) metaTag.setAttribute('content', desc);
 })
 
 export default router

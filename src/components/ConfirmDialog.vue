@@ -23,16 +23,16 @@
         <div class="mt-6 flex justify-end gap-3">
           <button
             @click="cancel"
-            class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
-            <Icon icon="mdi:close-circle-outline" class="w-4 h-4 text-gray-600 dark:text-gray-400" aria-hidden="true" />
+            <Icon icon="mdi:close-circle-outline" class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
             <span>Cancel</span>
           </button>
           <button
             @click="confirm"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
-            <Icon icon="mdi:check-circle-outline" class="w-4 h-4 text-white/90" aria-hidden="true" />
+            <Icon icon="mdi:check-circle-outline" class="w-4 h-4 text-red-600 dark:text-red-300" aria-hidden="true" />
             <span>Confirm</span>
           </button>
         </div>
