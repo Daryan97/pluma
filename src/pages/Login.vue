@@ -1,18 +1,30 @@
 <template>
   <div class="max-w-md mx-auto mt-14 mb-20">
     <div class="mb-8 text-center">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4">
+      <div
+        class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4"
+      >
         <Icon icon="mdi:login" class="text-3xl" />
       </div>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Welcome back</h1>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to continue.</p>
+      <h1
+        class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
+      >
+        Welcome back
+      </h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        Sign in to continue.
+      </p>
     </div>
 
-    <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <div
+      class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+    >
       <form @submit.prevent="login" class="space-y-5" novalidate>
         <!-- Email -->
         <div>
-          <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             <Icon icon="mdi:email-outline" class="text-base text-blue-500" />
             Email
           </label>
@@ -29,7 +41,9 @@
         <!-- Password -->
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               <Icon icon="mdi:lock-outline" class="text-base text-blue-500" />
               Password
             </label>
@@ -58,7 +72,10 @@
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
               class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             >
-              <Icon :icon="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" class="text-lg" />
+              <Icon
+                :icon="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'"
+                class="text-lg"
+              />
             </button>
           </div>
         </div>
@@ -71,7 +88,7 @@
         >
           <Icon v-if="loginLoading" icon="mdi:loading" class="animate-spin" />
           <Icon v-else icon="mdi:login" class="text-lg" />
-          <span>{{ loginLoading ? 'Logging in...' : 'Login' }}</span>
+          <span>{{ loginLoading ? "Logging in..." : "Login" }}</span>
         </button>
 
         <!-- Magic Link -->
@@ -81,9 +98,15 @@
           @click="sendMagicLink"
           :disabled="magicLinkLoading || loginLoading || forgotLoading"
         >
-          <Icon v-if="magicLinkLoading" icon="mdi:loading" class="animate-spin" />
-            <Icon v-else icon="mdi:magic-staff" class="text-lg" />
-          <span>{{ magicLinkLoading ? 'Sending link...' : 'Send Magic Link' }}</span>
+          <Icon
+            v-if="magicLinkLoading"
+            icon="mdi:loading"
+            class="animate-spin"
+          />
+          <Icon v-else icon="mdi:magic-staff" class="text-lg" />
+          <span>{{
+            magicLinkLoading ? "Sending link..." : "Send Magic Link"
+          }}</span>
         </button>
 
         <!-- GitHub -->
@@ -98,9 +121,15 @@
           <span>Continue with GitHub</span>
         </button>
 
-        <p class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center">
+        <p
+          class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center"
+        >
           Don’t have an account?
-          <router-link to="/signup" class="text-blue-600 dark:text-blue-400 hover:underline">Sign up</router-link>
+          <router-link
+            to="/signup"
+            class="text-blue-600 dark:text-blue-400 hover:underline"
+            >Sign up</router-link
+          >
         </p>
       </form>
     </div>
@@ -108,14 +137,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { supabase } from '@/services/supabase';
-import { Icon } from '@iconify/vue';
-import { useToast } from 'vue-toastification';
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { supabase } from "@/services/supabase";
+import { Icon } from "@iconify/vue";
+import { useToast } from "vue-toastification";
 
-const email = ref('');
-const password = ref('');
+const email = ref("");
+const password = ref("");
 const showPassword = ref(false);
 
 const loginLoading = ref(false);
@@ -127,7 +156,7 @@ const router = useRouter();
 
 async function signInWithGithub() {
   const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
+    provider: "github",
     options: { redirectTo: `${window.location.origin}` },
   });
   if (error) toast.error(error.message);
@@ -135,27 +164,49 @@ async function signInWithGithub() {
 
 const login = async () => {
   loginLoading.value = true;
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: signInData, error } = await supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value,
   });
+  let userId = signInData?.user?.id;
+  if (!userId) {
+    // fallback: get session
+    const { data: sessionData } = await supabase.auth.getSession();
+    userId = sessionData?.session?.user?.id;
+  }
+  if (userId) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single();
+    if (profile?.role === "disabled") {
+      await supabase.auth.signOut();
+      toast.error("Your account has been disabled. Please contact support.");
+      loginLoading.value = false;
+      return;
+    }
+  }
   loginLoading.value = false;
   if (error) {
-    if (error.code === 'email_not_confirmed') {
-      toast.error(`${error.message}. We have sent a new confirmation email.`);
-      await supabase.auth.resend({ type: 'signup', email: email.value });
+    if (error.code === "email_not_confirmed") {
+      toast.error(`${error.message}.`);
+      await supabase.auth.resend({ type: "signup", email: email.value });
+      return;
+    }
+    if (error.code === "user_banned") {
+      toast.error("Your account has been banned. Please contact support.");
       return;
     }
     toast.error(error.message);
   } else {
-    toast.success('Login successful!');
-    router.push('/');
+    router.push("/");
   }
 };
 
 const forgotPassword = async () => {
   if (!email.value) {
-    toast.warning('Please enter your email address first.');
+    toast.warning("Please enter your email address first.");
     return;
   }
   forgotLoading.value = true;
@@ -166,13 +217,13 @@ const forgotPassword = async () => {
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success('Password reset link sent to your email.');
+    toast.success("Password reset link sent to your email.");
   }
 };
 
 const sendMagicLink = async () => {
   if (!email.value) {
-    toast.warning('Please enter your email to receive a magic link.');
+    toast.warning("Please enter your email to receive a magic link.");
     return;
   }
   magicLinkLoading.value = true;
@@ -184,7 +235,7 @@ const sendMagicLink = async () => {
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success('Magic link sent! Check your email.');
+    toast.success("Magic link sent! Check your email.");
   }
 };
 </script>

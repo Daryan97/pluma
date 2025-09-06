@@ -41,26 +41,26 @@
           </div>
 
           <!-- Global Search Trigger -->
-            <div class="w-full max-w-xl">
-              <div
-                role="button"
-                tabindex="0"
-                aria-label="Open global search"
-                @click="openGlobalSearch"
-                @keydown.enter.prevent="openGlobalSearch"
-                @keydown.space.prevent="openGlobalSearch"
-                class="group flex items-center h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm ring-0 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer select-none px-4 gap-3"
-              >
-                <Icon icon="mdi:magnify" class="text-gray-500 dark:text-gray-400 text-xl" />
-                <span class="flex-1 text-left text-sm text-gray-500 dark:text-gray-400">
-                  Search anywhere...
-                </span>
-                <span class="hidden sm:inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 font-medium pr-1">
-                  <kbd class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-[10px] font-mono text-gray-600 dark:text-gray-300 shadow-sm">/</kbd>
-                  Open
-                </span>
-              </div>
+          <div v-if="featuresEnabled.search" class="w-full max-w-xl">
+            <div
+              role="button"
+              tabindex="0"
+              aria-label="Open global search"
+              @click="openGlobalSearch"
+              @keydown.enter.prevent="openGlobalSearch"
+              @keydown.space.prevent="openGlobalSearch"
+              class="group flex items-center h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm ring-0 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer select-none px-4 gap-3"
+            >
+              <Icon icon="mdi:magnify" class="text-gray-500 dark:text-gray-400 text-xl" />
+              <span class="flex-1 text-left text-sm text-gray-500 dark:text-gray-400">
+                Search anywhere...
+              </span>
+              <span class="hidden sm:inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 font-medium pr-1">
+                <kbd class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-[10px] font-mono text-gray-600 dark:text-gray-300 shadow-sm">/</kbd>
+                Open
+              </span>
             </div>
+          </div>
         </div>
       </div>
     </section>
@@ -88,11 +88,13 @@
 </template>
 
 <script setup>
+
 import PostLoader from '@/components/PostLoader.vue'
 import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useSettings } from '@/stores/settingsStore'
 
 const route = useRoute()
 const router = useRouter()
@@ -112,6 +114,8 @@ function openGlobalSearch(){
   window.dispatchEvent(evt)
 }
 
+
+const { featuresEnabled } = useSettings();
 const isUncategorized = computed(() => route.params.slug === 'uncategorized')
 const displayName = computed(() => isUncategorized.value ? 'Uncategorized' : (category.value?.name || route.params.slug))
 

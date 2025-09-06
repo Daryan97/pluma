@@ -34,13 +34,13 @@
 
           <!-- Add Category -->
           <div class="flex flex-col sm:flex-row gap-2 mb-4">
-            <div class="relative flex-1">
-              <Icon icon="mdi:format-list-bulleted" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+            <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-green-500 transition">
+              <Icon icon="mdi:format-list-bulleted" class="ml-3 text-gray-500 dark:text-gray-400 text-base" />
               <input
                 v-model="newName"
                 @keydown.enter="addCategory"
                 placeholder="New category name"
-                class="w-full h-9 pl-9 pr-3 rounded-md text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
               />
             </div>
             <button
@@ -54,12 +54,14 @@
 
           <!-- Search Categories -->
           <div class="mb-4 relative">
-            <Icon icon="mdi:magnify" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
-            <input
-              v-model="searchTerm"
-              placeholder="Search categories..."
-              class="w-full h-9 pl-9 pr-3 rounded-md text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition">
+              <Icon icon="mdi:magnify" class="ml-3 text-gray-500 dark:text-gray-400 text-base" />
+              <input
+                v-model="searchTerm"
+                placeholder="Search categories..."
+                class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           <!-- List Categories -->

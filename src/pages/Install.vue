@@ -715,10 +715,10 @@ const envAnon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as
   | string
   | undefined;
 const url = ref<string>(
-  envUrl || localStorage.getItem("setup_supabase_url") || ""
+  envUrl || ""
 );
 const anonKey = ref<string>(
-  envAnon || localStorage.getItem("setup_supabase_anon") || ""
+  envAnon || ""
 );
 const urlError = ref<string>("");
 const keyError = ref<string>("");
@@ -948,8 +948,6 @@ async function verifyEnvironment() {
       policyChecks.value[0].status = "fail";
       policyChecks.value[0].detail = e.message;
     }
-    localStorage.setItem("setup_supabase_url", url.value);
-    localStorage.setItem("setup_supabase_anon", anonKey.value);
     if (allVerified.value) toast.success("All checks passed");
     else toast.info("Verification finished (review results)");
   } catch (e: any) {

@@ -6,17 +6,18 @@
     <div
       class="px-5 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between"
     >
-      <div class="flex flex-col gap-1">
-        <h2
-          class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 tracking-wide"
-        >
-          <Icon icon="mdi:image-edit" class="text-blue-500 text-base" />
-          <span>Logos & Favicon</span>
-        </h2>
-        <p class="text-[11px] leading-snug text-gray-500 dark:text-gray-400">
-          Upload or replace visual branding assets. These display across
-          navigation, footer and browser tab.
-        </p>
+      <div class="flex items-start gap-3">
+        <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+          <Icon icon="mdi:image-edit" class="w-6 h-6" />
+        </div>
+        <div class="flex-1">
+          <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase">
+            Logos & Favicon
+          </h2>
+          <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
+            Upload or replace visual branding assets. These display across navigation, footer and browser tab.
+          </p>
+        </div>
       </div>
     </div>
     <div class="p-5 space-y-8 flex-1 flex flex-col">

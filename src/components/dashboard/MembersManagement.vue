@@ -21,17 +21,16 @@
           >
         </h2>
         <div class="relative w-full sm:w-80">
-          <input
-            v-model="searchQuery"
-            @input="onSearchInput"
-            type="text"
-            placeholder="Search members..."
-            class="w-full h-9 px-3 pl-10 rounded-md text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400"
-          />
-          <Icon
-            icon="mdi:magnify"
-            class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 text-lg"
-          />
+          <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition">
+            <Icon icon="mdi:magnify" class="ml-3 text-gray-500 dark:text-gray-300 text-base" />
+            <input
+              v-model="searchQuery"
+              @input="onSearchInput"
+              type="text"
+              placeholder="Search members..."
+              class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
+            />
+          </div>
         </div>
       </div>
       <div

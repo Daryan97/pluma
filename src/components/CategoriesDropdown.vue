@@ -10,7 +10,7 @@
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
       <DropdownMenuContent
-        class="min-w-[220px] max-h-[60vh] overflow-auto p-1.5 rounded-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur border border-gray-200 dark:border-gray-700 shadow-lg focus:outline-none origin-top-right data-[side=bottom]:animate-slideUpAndFade data-[side=top]:animate-slideDownAndFade"
+        class="min-w-[220px] max-h-[60vh] overflow-auto p-1.5 rounded-xl bg-white/95 dark:bg-gray-800/50 backdrop-blur border border-gray-200 dark:border-gray-700/30 shadow-lg focus:outline-none origin-top-right data-[side=bottom]:animate-slideUpAndFade data-[side=top]:animate-slideDownAndFade"
         :side-offset="8"
         align="end"
       >

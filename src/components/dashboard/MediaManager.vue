@@ -664,7 +664,7 @@ import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import { useToast } from "vue-toastification";
-import SignedLinkDialog from "@/components/SignedLinkDialog.vue";
+import SignedLinkDialog from "@/components/dashboard/SignedLinkDialog.vue";
 import {
   SelectRoot,
   SelectTrigger,

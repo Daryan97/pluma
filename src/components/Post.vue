@@ -8,9 +8,14 @@
     <p class="text-sm">Post not found or is loading...</p>
   </div>
 
-  <div v-else class="relative">
+  <article
+    v-else
+    class="relative"
+    itemscope
+    itemtype="https://schema.org/Article"
+  >
     <!-- Hero Cover -->
-    <div
+    <figure
       class="relative mb-10 group rounded-2xl overflow-hidden border border-gray-200/80 dark:border-gray-700/60 bg-gray-100 dark:bg-gray-800"
     >
       <div
@@ -19,7 +24,7 @@
         <img
           v-if="post.cover_image_url && !coverImageError"
           :src="post.cover_image_url"
-          :alt="post.title"
+          :alt="post.title + ' cover image'"
           class="w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(.25,.1,.25,1)] group-hover:scale-[1.04]"
           loading="lazy"
           draggable="false"
@@ -45,6 +50,7 @@
         <div class="absolute inset-x-0 bottom-0 p-6 md:p-10">
           <h1
             class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-white drop-shadow-md"
+            itemprop="headline"
           >
             {{ post.title }}
           </h1>
@@ -76,12 +82,18 @@
           </div>
         </div>
       </div>
-    </div>
+      <meta
+        v-if="post.cover_image_url"
+        itemprop="image"
+        :content="post.cover_image_url"
+      />
+    </figure>
 
     <!-- Main Body -->
     <div
       ref="markdownContainer"
       class="prose prose-lg dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
+      itemprop="articleBody"
     >
       <Markdown
         :source="post.content"
@@ -151,7 +163,26 @@
         </div>
       </div>
     </div>
-  </div>
+    <meta
+      v-if="post.created_at"
+      itemprop="datePublished"
+      :content="post.created_at"
+    />
+    <meta
+      v-if="post.updated_at"
+      itemprop="dateModified"
+      :content="post.updated_at || post.created_at"
+    />
+    <meta
+      v-if="post.author?.display_name || post.author?.username"
+      itemprop="author"
+      :content="post.author?.display_name || post.author?.username"
+    />
+    <meta
+      itemprop="publisher"
+      :content="post.author?.display_name || post.author?.username || 'Unknown'"
+    />
+  </article>
 </template>
 
 <script setup>

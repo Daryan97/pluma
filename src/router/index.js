@@ -141,10 +141,12 @@ router.beforeEach(async (to, from, next) => {
     if (!profErr && (!prof?.username || !prof?.display_name)) {
       toast.error('Please complete your profile before proceeding.')
       return next({ name: 'Profile', query: { edit: 'true' } })
-    } else if (!profErr && prof?.role === 'disabled') {
-      toast.error('Your account has been banned. Please contact support for assistance.')
-      await supabase.auth.signOut()
-      return next('/login')
+    }
+    // Always sign out if role is disabled
+    if (!profErr && prof?.role === 'disabled') {
+      await supabase.auth.signOut();
+      toast.error('Your account has been disabled. Please contact support.');
+      return next('/login');
     }
   }
 
@@ -168,6 +170,11 @@ router.beforeEach(async (to, from, next) => {
       .eq('key', 'installation')
       .maybeSingle()
 
+    if (error && error.message && error.message.includes('JWSError')) {
+      await supabase.auth.signOut();
+      return next('/login');
+    }
+
     if (!error && data && typeof data.value === 'object' && data.value !== null) {
       if ('complete' in data.value) {
         data.value = data.value.complete === true
@@ -184,6 +191,11 @@ router.beforeEach(async (to, from, next) => {
     }
   } catch (e) {
     console.error('Failed to fetch installation status', e)
+    // Only sign out if error is JWSError
+    if (e && e.message && e.message.includes('JWSError')) {
+      await supabase.auth.signOut();
+      return next('/login');
+    }
     if (to.name !== 'Install') {
       return next({ name: 'Install' })
     }

@@ -16,17 +16,41 @@
       >
         <div class="flex flex-col items-center text-center gap-8">
           <div class="space-y-5 max-w-3xl">
-            <span
-              class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-            >
-              <Icon icon="mdi:lightning-bolt" class="text-base" /> Welcome
-            </span>
+            <!-- Welcome/Latest Post -->
+            <div v-if="showWelcome">
+              <button
+                v-if="latestPost"
+                type="button"
+                @click="openLatestPost"
+                @keydown.enter.prevent="openLatestPost"
+                @keydown.space.prevent="openLatestPost"
+                class="group inline-flex items-center max-w-full gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition"
+                :aria-label="'Open latest post: ' + latestPost.title"
+              >
+                <Icon icon="mdi:star-four-points" class="text-base shrink-0" />
+                <span class="truncate" :title="latestPost.title">{{ latestPost.title }}</span>
+                <Icon
+                  icon="mdi:arrow-right"
+                  class="text-sm opacity-60 group-hover:translate-x-0.5 transition-transform"
+                />
+              </button>
+              <span
+                v-else
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+              >
+                <Icon icon="mdi:lightning-bolt" class="text-base" /> Welcome
+              </span>
+            </div>
+            <!-- SiteName -->
             <h1
+              v-if="showSiteName"
               class="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white"
             >
               {{ projectInfo.name }}
             </h1>
+            <!-- Site Description -->
             <p
+              v-if="showSiteDescription"
               class="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed"
             >
               {{
@@ -36,7 +60,7 @@
             </p>
           </div>
           <!-- Search Trigger (non-editable) -->
-          <div class="w-full max-w-xl">
+          <div v-if="showSearch" class="w-full max-w-xl">
             <div
               role="button"
               tabindex="0"
@@ -68,17 +92,19 @@
           </div>
           <!-- Quick Stats -->
           <div
-            class="grid grid-cols-3 gap-6 max-w-2xl w-full pt-4"
-            v-if="statsLoaded"
+            class="max-w-2xl w-full pt-4"
+            v-if="statsLoaded && enabledStats.length > 0"
           >
-            <div v-for="s in stats" :key="s.key" class="text-center">
-              <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {{ s.value }}
-              </div>
-              <div
-                class="mt-1 text-[11px] uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400"
-              >
-                {{ s.label }}
+            <div class="grid gap-6" :style="{ gridTemplateColumns: `repeat(${enabledStats.length}, minmax(0, 1fr))` }">
+              <div v-for="s in enabledStats" :key="s.key" class="text-center">
+                <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {{ s.value }}
+                </div>
+                <div
+                  class="mt-1 text-[11px] uppercase tracking-wide font-medium text-gray-500 dark:text-gray-400"
+                >
+                  {{ s.label }}
+                </div>
               </div>
             </div>
           </div>
@@ -129,12 +155,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
 import PostLoader from "@/components/PostLoader.vue";
 import { projectInfo } from "@/config/projectInfo";
 import { Icon } from "@iconify/vue";
+import { useStatsSettings, fetchStatsSettings } from '@/stores/statsSettingsStore';
+import { useSettings, fetchSettings } from '@/stores/settingsStore';
 
 const router = useRouter();
 function openGlobalSearch() {
@@ -173,30 +201,41 @@ function goToCategory(slug) {
   router.push(`/category/${slug}`);
 }
 
-// Quick stats (counts)
+// Quick stats (counts) - dynamic based on settings
 const stats = ref([
   { key: "posts", label: "Posts", value: "—" },
   { key: "categories", label: "Categories", value: "—" },
   { key: "authors", label: "Authors", value: "—" },
 ]);
 const statsLoaded = ref(false);
+const { statsEnabled } = useStatsSettings();
+const { featuresEnabled } = useSettings();
+const enabledStats = computed(() => stats.value.filter(s => statsEnabled.value[s.key]));
+
 async function loadStats() {
+  await fetchStatsSettings();
   const [{ count: postsCount }, { count: catCount }, { count: authorCount }] =
     await Promise.all([
-      supabase
-        .from("posts")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "published"),
-      supabase.from("categories").select("id", { count: "exact", head: true }),
-      supabase
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .in("role", ["author", "admin"]),
+      statsEnabled.value.posts
+        ? supabase
+            .from("posts")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "published")
+        : Promise.resolve({ count: null }),
+      statsEnabled.value.categories
+        ? supabase.from("categories").select("id", { count: "exact", head: true })
+        : Promise.resolve({ count: null }),
+      statsEnabled.value.authors
+        ? supabase
+            .from("profiles")
+            .select("id", { count: "exact", head: true })
+            .in("role", ["author", "admin"])
+        : Promise.resolve({ count: null }),
     ]);
   stats.value = [
-    { key: "posts", label: "Posts", value: postsCount || 0 },
-    { key: "categories", label: "Categories", value: catCount || 0 },
-    { key: "authors", label: "Authors", value: authorCount || 0 },
+    { key: "posts", label: "Posts", value: postsCount ?? "—" },
+    { key: "categories", label: "Categories", value: catCount ?? "—" },
+    { key: "authors", label: "Authors", value: authorCount ?? "—" },
   ];
   statsLoaded.value = true;
 }
@@ -204,5 +243,33 @@ async function loadStats() {
 onMounted(() => {
   loadCategories();
   loadStats();
+  fetchLatestPost();
+  fetchSettings();
 });
+
+// Latest post pill
+const latestPost = ref(null);
+async function fetchLatestPost() {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("title, slug, created_at")
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!error && data) {
+    latestPost.value = data;
+  }
+}
+function openLatestPost() {
+  if (latestPost.value?.slug) {
+    router.push(`/posts/${latestPost.value.slug}`);
+  }
+}
+
+// Add computed for enabled features
+const showWelcome = computed(() => featuresEnabled.value.welcome !== false);
+const showSiteName = computed(() => featuresEnabled.value.siteName !== false);
+const showSiteDescription = computed(() => featuresEnabled.value.siteDescription !== false);
+const showSearch = computed(() => featuresEnabled.value.search !== false);
 </script>

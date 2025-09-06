@@ -1,9 +1,13 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
-    <header class="flex items-center justify-between mb-6 flex-wrap gap-4">
+    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[60vh]">
+      <Icon icon="mdi:loading" class="animate-spin text-4xl text-blue-500 mb-4" />
+    </div>
+    <template v-else>
+  <header class="flex items-center justify-between mb-6 flex-wrap gap-4">
       <div class="flex items-center gap-2">
         <Icon
-          icon="mdi:view-dashboard"
+          icon="mdi:monitor-dashboard"
           class="text-blue-600 dark:text-blue-400 text-3xl"
         />
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
@@ -38,14 +42,16 @@
         </TabsIndicator>
         <TabsTrigger
           value="overview"
-          class="px-5 h-11 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
+          class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
+          <Icon icon="mdi:view-dashboard" class="text-blue-500 dark:text-blue-400 text-lg" />
           Overview
         </TabsTrigger>
         <TabsTrigger
           value="posts"
-          class="px-5 h-11 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
+          class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
+          <Icon icon="mdi:post-outline" class="text-green-500 dark:text-green-400 text-lg" />
           Posts
         </TabsTrigger>
         <TabsTrigger
@@ -53,7 +59,8 @@
           value="comments"
           class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
-          <span>Pending Comments</span>
+          <Icon icon="mdi:comment-multiple-outline" class="text-yellow-500 dark:text-yellow-400 text-lg" />
+          <span>Comments</span>
           <span
             v-if="stats.pendingComments > 0"
             class="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full text-[11px] font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-800/60 dark:text-yellow-200"
@@ -64,22 +71,26 @@
         <TabsTrigger
           v-if="role === 'admin'"
           value="members"
-          class="px-5 h-11 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
-          >Members</TabsTrigger
+          class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
+          <Icon icon="mdi:account-group-outline" class="text-purple-500 dark:text-purple-400 text-lg" />
+          Members
+        </TabsTrigger>
         <TabsTrigger
           v-if="role === 'admin'"
           value="media"
-          class="px-5 h-11 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
+          class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
+          <Icon icon="mdi:image-multiple-outline" class="text-pink-500 dark:text-pink-400 text-lg" />
           Media
         </TabsTrigger>
         <TabsTrigger
           v-if="role === 'admin'"
-          value="branding"
-          class="px-5 h-11 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
+          value="settings"
+          class="px-5 h-11 flex items-center justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 relative outline-none cursor-pointer hover:text-blue-600 dark:hover:text-blue-300"
         >
-          Branding
+          <Icon icon="mdi:cog-outline" class="text-gray-500 dark:text-gray-300 text-lg" />
+          Settings
         </TabsTrigger>
       </TabsList>
 
@@ -436,8 +447,9 @@
                                 v-for="day in weekDays"
                                 :key="day"
                                 class="w-7 rounded-md text-[10px] font-normal text-gray-500 dark:text-gray-400"
-                                >{{ day }}</DateRangePickerHeadCell
                               >
+                                {{ day }}
+                              </DateRangePickerHeadCell>
                             </DateRangePickerGridRow>
                           </DateRangePickerGridHead>
                           <DateRangePickerGridBody>
@@ -517,20 +529,19 @@
         <MediaManager v-if="mediaLoaded" />
       </TabsContent>
 
-      <TabsContent value="branding" v-if="role === 'admin'" class="space-y-10">
-        <div
-          v-if="brandingLoaded"
-          class="grid gap-10 lg:grid-cols-2 items-start"
-        >
-          <BrandingMetaForm />
-          <LogoUpload class="self-stretch" />
-        </div>
-        <div
-          v-else
-          class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center"
-        >
-          Loading branding...
-        </div>
+      <TabsContent value="settings" v-if="role === 'admin'" class="space-y-10">
+        <template v-if="brandingLoaded">
+          <div class="grid gap-10 lg:grid-cols-2 items-start">
+            <BrandingMetaForm />
+            <LogoUpload class="self-stretch" />
+            <StatsSettingsForm class="self-stretch lg:col-span-2" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center">
+            Loading settings...
+          </div>
+        </template>
       </TabsContent>
 
       <TabsContent value="members" v-if="role === 'admin'" class="space-y-6">
@@ -554,10 +565,12 @@
       @cancel="closeDialog"
     />
     <!-- Role change confirmation now handled inside MembersManagement component -->
+    </template>
   </div>
 </template>
 
 <script setup>
+const loading = ref(true);
 import { ref, onMounted, computed, watch } from "vue";
 import { supabase } from "@/services/supabase";
 import { useRouter } from "vue-router";
@@ -572,7 +585,7 @@ import {
 import StatsOverview from "@/components/dashboard/StatsOverview.vue";
 import PostsTable from "@/components/dashboard/PostsTable.vue";
 import PostFilters from "@/components/dashboard/PostFilters.vue";
-import PendingComments from "@/components/dashboard/PendingComments.vue";
+import PendingComments from "@/components/dashboard/CommentsTable.vue";
 import {
   DateRangePickerRoot,
   DateRangePickerField,
@@ -619,6 +632,7 @@ import {
   updateBranding,
   fetchBranding,
 } from "@/stores/brandingStore";
+import StatsSettingsForm from '@/components/dashboard/StatsSettingsForm.vue';
 
 const showConfirm = ref(false);
 const confirmMessage = ref("");
@@ -1073,7 +1087,7 @@ watch(activeTab, async (val) => {
     await fetchPendingComments(true);
     pendingLoaded.value = true;
   } else if (
-    val === "branding" &&
+    val === "settings" &&
     !brandingLoaded.value &&
     role.value === "admin"
   ) {
@@ -1091,7 +1105,7 @@ watch(activeTab, async (val) => {
 });
 
 function isTabAllowed(tab) {
-  if (["members", "branding", "media"].includes(tab))
+  if (["members", "media", "settings"].includes(tab))
     return role.value === "admin";
   if (tab === "comments")
     return role.value === "admin" || role.value === "author";
@@ -1108,9 +1122,11 @@ function restoreActiveTab() {
 }
 
 onMounted(async () => {
+  loading.value = true;
   await fetchCurrentUser();
-  await fetchStats();
   restoreActiveTab();
+  await fetchStats();
+  loading.value = false;
 });
 </script>
 

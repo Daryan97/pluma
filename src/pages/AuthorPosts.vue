@@ -55,17 +55,47 @@
       <p class="text-sm text-gray-600 dark:text-gray-400">Author not found.</p>
     </div>
 
+    <!-- Global Search Trigger -->
+    <div v-if="featuresEnabled.search && author" class="w-full max-w-xl mx-auto mb-8">
+      <div
+        role="button"
+        tabindex="0"
+        aria-label="Open global search"
+        @click="openGlobalSearch"
+        @keydown.enter.prevent="openGlobalSearch"
+        @keydown.space.prevent="openGlobalSearch"
+        class="group flex items-center h-12 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-sm ring-0 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer select-none px-4 gap-3"
+      >
+        <Icon icon="mdi:magnify" class="text-gray-500 dark:text-gray-400 text-xl" />
+        <span class="flex-1 text-left text-sm text-gray-500 dark:text-gray-400">
+          Search anywhere...
+        </span>
+        <span class="hidden sm:inline-flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 font-medium pr-1">
+          <kbd class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-[10px] font-mono text-gray-600 dark:text-gray-300 shadow-sm">/</kbd>
+          Open
+        </span>
+      </div>
+    </div>
+
     <!-- Posts -->
     <PostLoader v-if="author" filterBy="author" :filterValue="$route.params.username" />
   </div>
 </template>
 
 <script setup>
+
 import PostLoader from '@/components/PostLoader.vue'
 import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
 import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSettings } from '@/stores/settingsStore'
+const { featuresEnabled } = useSettings();
+
+function openGlobalSearch() {
+  const evt = new CustomEvent('pluma:open-global-search', { detail: { query: '' } })
+  window.dispatchEvent(evt)
+}
 
 const route = useRoute()
 const author = ref(null)

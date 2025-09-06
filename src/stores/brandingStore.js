@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { supabase } from '@/services/supabase';
+import router from '@/router';
 
 const brandingLoaded = ref(false);
 const brandingLoading = ref(false);
@@ -52,6 +53,11 @@ export async function fetchBranding(force = false) {
         brandingLoaded.value = true;
     } catch (e) {
         console.error('[branding] fetch error', e);
+        if (e.message === 'JWSError JWSInvalidSignature') {
+            await supabase.auth.signOut();
+            router.push('/');
+        }
+
         brandingError.value = e;
     } finally {
         brandingLoading.value = false;
@@ -82,7 +88,7 @@ export async function updateBranding({ lightFile, darkFile, faviconFile, siteNam
 
         const originalName = file.name || '';
         const ext = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : '';
-    const objectPath = ext ? `${variant}.${ext}` : variant;
+        const objectPath = ext ? `${variant}.${ext}` : variant;
 
         if (prevPath && prevPath !== objectPath) {
             try { await supabase.storage.from('branding').remove([prevPath]); } catch (e) { console.warn('[branding] remove previous variant failed (different path)', variant, prevPath, e); }
