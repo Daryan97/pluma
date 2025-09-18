@@ -109,17 +109,64 @@
           }}</span>
         </button>
 
-        <!-- GitHub -->
-        <button
-          type="button"
-          @click="signInWithGithub"
-          class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 disabled:pointer-events-none"
-          :disabled="loginLoading || magicLinkLoading || forgotLoading"
-        >
-          <Icon v-if="false" icon="mdi:loading" class="animate-spin" />
-          <Icon icon="mdi:github" class="text-lg" />
-          <span>Continue with GitHub</span>
-        </button>
+        <!-- OAuth Providers -->
+        <div v-if="enabledProviders.length > 0" class="space-y-4">
+          <!-- Divider -->
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+              <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            </div>
+            <div class="relative flex justify-center">
+              <span class="bg-white dark:bg-gray-800 px-3 text-[11px] font-medium text-gray-500 dark:text-gray-400">Or continue with</span>
+            </div>
+          </div>
+
+          <!-- Full buttons when 3 or fewer providers -->
+          <div v-if="!smallGridMode" class="grid gap-2 text-black">
+            <button
+              v-for="provider in enabledProviders"
+              :key="provider"
+              type="button"
+              class="w-full inline-flex items-center justify-center gap-2 h-11 px-4 rounded-md text-sm font-medium border focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 hover:brightness-105"
+              :style="{ backgroundColor: brandBg(provider), borderColor: brandBorder(provider) }"
+              @click="signInWithProvider(provider)"
+              :disabled="loginLoading || magicLinkLoading || forgotLoading"
+              :aria-label="`Continue with ${providerLabel(provider)}`"
+            >
+              <Icon :icon="providerIcon(provider)" class="text-base" :style="{ color: providerGlyphColor(provider) || undefined }" />
+              <span>{{ providerLabel(provider) }}</span>
+            </button>
+          </div>
+
+          <!-- Compact centered icon grid when more than 3 providers -->
+          <div v-else class="flex flex-wrap justify-center gap-2">
+            <button
+              v-for="provider in visibleProviders"
+              :key="provider"
+              type="button"
+              :title="providerLabel(provider)"
+              :aria-label="`Continue with ${providerLabel(provider)}`"
+              @click="signInWithProvider(provider)"
+              class="inline-flex items-center justify-center h-10 w-10 rounded-md text-gray-700 dark:text-gray-300 hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50 disabled:pointer-events-none border"
+              :style="{ backgroundColor: brandBg(provider), borderColor: brandBorder(provider) }"
+              :disabled="loginLoading || magicLinkLoading || forgotLoading"
+            >
+              <Icon :icon="providerIcon(provider)" class="text-base" :style="{ color: providerGlyphColor(provider) || undefined }" />
+              <span class="sr-only">{{ providerLabel(provider) }}</span>
+            </button>
+          </div>
+
+          <!-- Expand/Collapse only for compact grid -->
+          <div v-if="smallGridMode && hasOverflow" class="flex justify-center">
+            <button
+              type="button"
+              @click="expanded = !expanded"
+              class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {{ expanded ? 'Show less' : `Show ${enabledProviders.length - COLLAPSED_COUNT} more` }}
+            </button>
+          </div>
+        </div>
 
         <p
           class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center"
@@ -137,11 +184,12 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import { useToast } from "vue-toastification";
+import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 
 const email = ref("");
 const password = ref("");
@@ -154,55 +202,34 @@ const forgotLoading = ref(false);
 const toast = useToast();
 const router = useRouter();
 
-async function signInWithGithub() {
+// Provider settings from store
+const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
+const enabledProviders = computed(() =>
+  ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
+);
+
+// Layout + collapsible logic
+const COLLAPSED_COUNT = 6;
+const expanded = ref(false);
+const smallGridMode = computed(() => enabledProviders.value.length > 3);
+const hasOverflow = computed(() => smallGridMode.value && enabledProviders.value.length > COLLAPSED_COUNT);
+const visibleProviders = computed(() =>
+  expanded.value || !smallGridMode.value
+    ? enabledProviders.value
+    : enabledProviders.value.slice(0, COLLAPSED_COUNT)
+);
+
+onMounted(async () => {
+  await fetchSettings();
+});
+
+async function signInWithProvider(provider) {
   const { error } = await supabase.auth.signInWithOAuth({
-    provider: "github",
+    provider,
     options: { redirectTo: `${window.location.origin}` },
   });
   if (error) toast.error(error.message);
 }
-
-const login = async () => {
-  loginLoading.value = true;
-  const { data: signInData, error } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value,
-  });
-  let userId = signInData?.user?.id;
-  if (!userId) {
-    // fallback: get session
-    const { data: sessionData } = await supabase.auth.getSession();
-    userId = sessionData?.session?.user?.id;
-  }
-  if (userId) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-    if (profile?.role === "disabled") {
-      await supabase.auth.signOut();
-      toast.error("Your account has been disabled. Please contact support.");
-      loginLoading.value = false;
-      return;
-    }
-  }
-  loginLoading.value = false;
-  if (error) {
-    if (error.code === "email_not_confirmed") {
-      toast.error(`${error.message}.`);
-      await supabase.auth.resend({ type: "signup", email: email.value });
-      return;
-    }
-    if (error.code === "user_banned") {
-      toast.error("Your account has been banned. Please contact support.");
-      return;
-    }
-    toast.error(error.message);
-  } else {
-    router.push("/");
-  }
-};
 
 const forgotPassword = async () => {
   if (!email.value) {

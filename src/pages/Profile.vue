@@ -6,7 +6,7 @@
       My Profile
     </h1>
 
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+  <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-auto">
       <!-- Auth User Info -->
       <section
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col"
@@ -324,6 +324,7 @@
 
       <!-- Linked Accounts -->
       <section
+        v-if="enabledProviders.length > 0"
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col md:col-span-3 lg:col-span-3"
       >
         <header class="flex items-center justify-between mb-4">
@@ -340,26 +341,22 @@
           </div>
         </header>
         <div class="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          <!-- GitHub Tile -->
           <div
+            v-for="provider in visibleProviders"
+            :key="provider"
             class="group relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-5 flex flex-col items-center text-center transition shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500"
           >
             <div
-              class="w-14 h-14 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-inner mb-2 ring-1 ring-gray-200 dark:ring-gray-600 group-hover:ring-blue-400 dark:group-hover:ring-blue-500 transition"
+              class="w-14 h-14 rounded-full flex items-center justify-center shadow-inner mb-2 border transition"
+              :style="{ backgroundColor: brandBg(provider), borderColor: brandBorder(provider) }"
             >
-              <Icon
-                icon="mdi:github"
-                class="text-3xl text-gray-800 dark:text-gray-200"
-              />
+              <Icon :icon="providerIcon(provider)" class="text-3xl" :style="{ color: providerGlyphColor(provider) || undefined }" />
             </div>
-            <span
-              class="font-medium text-gray-800 dark:text-gray-200 text-xs tracking-wide"
-              >GitHub</span
-            >
+            <span class="font-medium text-gray-800 dark:text-gray-200 text-xs tracking-wide">{{ providerLabel(provider) }}</span>
             <div class="mt-3">
               <button
-                v-if="!githubLinked"
-                @click="linkGithub"
+                v-if="!isLinked(provider)"
+                @click="linkProvider(provider)"
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <Icon icon="mdi:link" class="text-sm" />
@@ -367,7 +364,7 @@
               </button>
               <button
                 v-else
-                @click="unlinkGithub"
+                @click="unlinkProvider(provider)"
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <Icon icon="tabler:unlink" class="text-sm" />
@@ -378,33 +375,16 @@
               class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-blue-500/5 to-transparent"
             />
           </div>
-          <!-- Google Tile -->
-          <div
-            class="group relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 p-5 flex flex-col items-center text-center transition shadow-sm hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500"
+          <!-- Expand/Collapse if many providers -->
+        </div>
+        <div v-if="hasOverflow" class="flex justify-center mt-2">
+          <button
+            type="button"
+            @click="expanded = !expanded"
+            class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
           >
-            <div
-              class="w-14 h-14 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-inner mb-2 ring-1 ring-gray-200 dark:ring-gray-600 group-hover:ring-blue-400 dark:group-hover:ring-blue-500 transition"
-            >
-              <Icon
-                icon="mdi:google"
-                class="text-3xl text-gray-800 dark:text-gray-200"
-              />
-            </div>
-            <span
-              class="font-medium text-gray-800 dark:text-gray-200 text-xs tracking-wide"
-              >Google</span
-            >
-            <div class="mt-3">
-              <button
-                @click="toast.info('Coming in future updates!')"
-                class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700/60 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400"
-              >
-                <Icon icon="mdi:link" class="text-sm" />
-                <span>Link</span>
-              </button>
-            </div>
-          </div>
-          <!-- Future provider tiles go here -->
+            {{ expanded ? 'Show less' : `Show ${enabledProviders.length - COLLAPSED_COUNT} more` }}
+          </button>
         </div>
       </section>
     </div>
@@ -417,6 +397,7 @@ import { supabase } from "@/services/supabase";
 import { useToast } from "vue-toastification";
 import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
+import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 
 const toast = useToast();
 const route = useRoute();
@@ -439,9 +420,25 @@ const emailAuthInput = ref("");
 const savingEmail = ref(false);
 const lastRequestedEmail = ref("");
 
-const githubLinked = computed(() =>
-  authUser.value.identities?.some((i) => i.provider === "github")
+// Provider settings
+const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
+const enabledProviders = computed(() =>
+  ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
 );
+
+// Collapsible list logic for Linked Accounts (mirror Login)
+const COLLAPSED_COUNT = 8; // show more items here since tiles are larger
+const expanded = ref(false);
+const hasOverflow = computed(() => enabledProviders.value.length > COLLAPSED_COUNT);
+const visibleProviders = computed(() =>
+  expanded.value ? enabledProviders.value : enabledProviders.value.slice(0, COLLAPSED_COUNT)
+);
+
+// Brand tints for icon circle
+// provider helpers now sourced from settings store
+
+const isLinked = (provider) =>
+  !!authUser.value.identities?.some((i) => i.provider === provider);
 
 function formatDate(dateStr) {
   const date = new Date(dateStr);
@@ -491,6 +488,7 @@ async function loadUser() {
 
 onMounted(async () => {
   await loadUser();
+  await fetchSettings();
 
   if (route.query.error) {
     const msg = route.query.error_description
@@ -700,9 +698,9 @@ async function removeAvatar() {
   }
 }
 
-async function linkGithub() {
+async function linkProvider(provider) {
   const { data, error } = await supabase.auth.linkIdentity({
-    provider: "github",
+    provider,
     options: {
       redirectTo: `${window.location.origin}/profile`,
       skipBrowserRedirect: true,
@@ -715,29 +713,34 @@ async function linkGithub() {
   window.location.assign(data.url);
 }
 
-async function unlinkGithub() {
-  const { data: identities, error: identitiesError } =
-    await supabase.auth.getUserIdentities();
-
-  if (identitiesError) {
-    toast.error("Failed to fetch identities");
+async function unlinkProvider(provider) {
+  const user = authUser.value;
+  if (!user) {
+    toast.error("Not authenticated");
     return;
   }
 
-  const githubIdentity = identities.identities.find(
-    (i) => i.provider === "github"
-  );
-  if (!githubIdentity) {
-    toast.error("No linked GitHub account found");
+  const identity = user.identities?.find((i) => i.provider === provider);
+  if (!identity) {
+    toast.error(`No linked ${provider} account`);
     return;
   }
 
-  const { error } = await supabase.auth.unlinkIdentity(githubIdentity);
+  const identityId = identity.identity_id || identity.id;
+  if (!identityId) {
+    toast.error("identity_id not found");
+    return;
+  }
+
+  const { error } = await supabase.auth.unlinkIdentity({
+    identity_id: identityId,
+  });
   if (error) {
-    toast.error("Failed to unlink GitHub account");
-  } else {
-    toast.success("GitHub account unlinked successfully");
-    loadUser();
+    toast.error(error.message);
+    return;
   }
+
+  toast.success(`${provider} account unlinked`);
+  await loadUser();
 }
 </script>

@@ -535,6 +535,7 @@
             <BrandingMetaForm />
             <LogoUpload class="self-stretch" />
             <StatsSettingsForm class="self-stretch lg:col-span-2" />
+            <ProviderSettingsForm class="self-stretch lg:col-span-2" />
           </div>
         </template>
         <template v-else>
@@ -633,6 +634,7 @@ import {
   fetchBranding,
 } from "@/stores/brandingStore";
 import StatsSettingsForm from '@/components/dashboard/StatsSettingsForm.vue';
+import ProviderSettingsForm from '@/components/dashboard/ProviderSettingsForm.vue';
 
 const showConfirm = ref(false);
 const confirmMessage = ref("");
