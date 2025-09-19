@@ -86,8 +86,7 @@ async function fetchPost() {
       content,
       category:categories (
         id,
-        name,
-        slug
+        name
       ),
       tags,
       slug,

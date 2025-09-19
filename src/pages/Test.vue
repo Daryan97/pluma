@@ -9,7 +9,7 @@
       >
         This page exposes internal debugging utilities. It is guarded by
         <code>devOnly</code> route meta and <code>VITE_ENV=development</code>.
-        Do NOT enable in production.
+        It should never be accessible in production environments.
       </p>
     </header>
 
@@ -57,6 +57,39 @@
         class="text-[11px] leading-tight p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-x-auto max-h-72"
         >{{ result }}</pre
       >
+    </section>
+
+    <!-- Full Stats -->
+    <section
+      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
+    >
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Full Stats
+        </h2>
+        <div class="flex gap-2">
+          <button
+            @click="loadFullStats"
+            :disabled="statsLoading"
+            class="h-8 px-3 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60"
+          >
+            {{ statsLoading ? 'Refreshing...' : 'Refresh' }}
+          </button>
+        </div>
+      </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400">Quick aggregate counters for the site (posts, users, categories, buckets, recent activity).</p>
+      <div>
+        <div v-if="statsRls" class="mb-2 p-3 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-200">
+          Queries appear to be blocked by Row Level Security (RLS) or permission issues.
+          <div class="mt-1 text-xs text-yellow-700 dark:text-yellow-300">{{ statsRlsMsg || 'Check RLS policies, service role, or use an authenticated account with sufficient permissions.' }}</div>
+        </div>
+        <pre
+          v-if="statsResult"
+          class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
+          >{{ statsResult }}</pre
+        >
+        <p v-else class="text-gray-400">No stats loaded yet.</p>
+      </div>
     </section>
 
     <!-- Auth / Session -->
@@ -130,11 +163,30 @@
       >
         <div>
           <h3 class="font-medium mb-1">Settings</h3>
-          <pre
-            v-if="settingsRaw"
-            class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
-            >{{ settingsRaw }}</pre
-          >
+          <div v-if="settingsRaw" class="space-y-2">
+            <pre
+              class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
+              >{{ settingsRaw }}</pre
+            >
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div class="text-gray-600 dark:text-gray-300">Installation</div>
+              <div class="text-gray-800 dark:text-gray-100">
+                {{ installationDisplay() }}
+              </div>
+              <div class="text-gray-600 dark:text-gray-300">Auth Providers</div>
+              <div class="text-gray-800 dark:text-gray-100">
+                {{ authProvidersDisplay() }}
+              </div>
+              <div class="text-gray-600 dark:text-gray-300">Site Origin</div>
+              <div class="text-gray-800 dark:text-gray-100">
+                {{ siteOriginDisplay() }}
+              </div>
+              <div class="text-gray-600 dark:text-gray-300">Site Title</div>
+              <div class="text-gray-800 dark:text-gray-100">
+                {{ siteTitleDisplay() }}
+              </div>
+            </div>
+          </div>
           <p v-else class="text-gray-400">No data</p>
         </div>
         <div>
@@ -220,6 +272,96 @@
         >{{ localStorageDump }}</pre
       >
     </section>
+
+    <!-- Dev Tools -->
+    <section
+      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
+    >
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Dev Tools
+        </h2>
+        <div class="flex gap-2">
+          <button
+            @click="toggleTheme"
+            class="h-8 px-3 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+          >
+            Toggle Theme
+          </button>
+          <button
+            @click="seedCategories"
+            class="h-8 px-3 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+          >
+            Seed Categories
+          </button>
+          <button
+            @click="latencyDistribution"
+            class="h-8 px-3 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+          >
+            Latency Dist
+          </button>
+          <button
+            @click="concurrencyBenchmark"
+            class="h-8 px-3 text-xs rounded bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300"
+          >
+            Concurrency
+          </button>
+          <button
+            @click="e2eRenderTime"
+            class="h-8 px-3 text-xs rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300"
+          >
+            E2E Render
+          </button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="space-y-2">
+          <button
+            @click="createDummyPost"
+            class="w-full h-9 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-sm"
+          >
+            Create Dummy Post
+          </button>
+          <button
+            @click="archiveLatest"
+            class="w-full h-9 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm"
+          >
+            Archive Latest Post
+          </button>
+          <button
+            @click="unarchiveLatest"
+            class="w-full h-9 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm"
+          >
+            Unarchive Latest Post
+          </button>
+        </div>
+        <div class="space-y-2">
+          <button
+            @click="listTestPosts"
+            class="w-full h-9 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
+          >
+            List Test Posts
+          </button>
+          <button
+            @click="deleteTestPosts"
+            class="w-full h-9 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-sm"
+          >
+            Delete Test Posts
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="font-medium mb-1">Result</h3>
+        <pre
+          v-if="devResult"
+          class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
+          >{{ devResult }}</pre
+        >
+        <p v-else class="text-gray-400">No action yet.</p>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -227,6 +369,355 @@
 import { supabase } from "@/services/supabase";
 import { ref } from "vue";
 import { fetchBranding } from "@/stores/brandingStore";
+
+// Dev tools
+const devResult = ref("");
+
+function setDevResult(obj) {
+  try {
+    devResult.value =
+      typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+  } catch {
+    devResult.value = String(obj);
+  }
+}
+
+function toggleTheme() {
+  const current = document.body.dataset.theme === "dark" ? "dark" : "light";
+  const next = current === "dark" ? "light" : "dark";
+  document.body.dataset.theme = next;
+  setDevResult(`Theme -> ${next}`);
+}
+
+async function seedCategories() {
+  setDevResult("Seeding...");
+  try {
+    const defaults = [
+      { name: "Announcements", slug: "announcements" },
+      { name: "Tutorials", slug: "tutorials" },
+      { name: "Guides", slug: "guides" },
+    ];
+    // perform a bulk upsert and request the rows back with .select()
+    const { data, error } = await supabase
+      .from("categories")
+      .upsert(defaults, { onConflict: ["slug"] })
+      .select("*");
+    if (error) throw error;
+    setDevResult(data);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function createDummyPost() {
+  setDevResult("Creating...");
+  try {
+    const title = "Test Post " + Date.now();
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    // ensure we include the currently authenticated user as author
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user?.id || null;
+    if (!userId) throw new Error("No authenticated user in session");
+
+    const payload = {
+      title,
+      content: "This is a test post created by dev tools.",
+      tags: ["test"],
+      status: "published",
+      slug,
+      comments_disabled: true,
+      author_id: userId,
+    };
+
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([payload])
+      .select("id,slug")
+      .single();
+    if (error) throw error;
+    setDevResult(data);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+// --- Performance tests ---
+function msStats(arr) {
+  if (!arr || !arr.length) return null;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const sum = sorted.reduce((s, v) => s + v, 0);
+  const avg = sum / sorted.length;
+  const p = (p) => {
+    const idx = Math.min(
+      sorted.length - 1,
+      Math.floor((p / 100) * sorted.length)
+    );
+    return sorted[idx];
+  };
+  return {
+    count: sorted.length,
+    min: sorted[0],
+    avg: Math.round(avg),
+    p50: p(50),
+    p95: p(95),
+    p99: p(99),
+    max: sorted[sorted.length - 1],
+  };
+}
+
+async function latencyDistribution() {
+  setDevResult("Measuring latency distribution...");
+  try {
+    const reps = 20;
+    const times = [];
+    let failures = 0;
+    for (let i = 0; i < reps; i++) {
+      const t0 = performance.now();
+      try {
+        await supabase.from("settings").select("key").limit(1);
+      } catch (e) {
+        failures++;
+      }
+      const t1 = performance.now();
+      times.push(Math.round(t1 - t0));
+      // small backoff
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    setDevResult({
+      op: "settings.select",
+      reps: reps,
+      failures,
+      stats: msStats(times),
+      raw: times,
+    });
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function concurrencyBenchmark() {
+  setDevResult("Running concurrency benchmark...");
+  try {
+    const total = 30;
+    const parallel = 6;
+    const start = performance.now();
+    let created = 0,
+      failed = 0;
+    const sessionResp = await supabase.auth.getSession();
+    const userId = sessionResp?.data?.session?.user?.id;
+    if (!userId)
+      return setDevResult("No authenticated user for concurrency benchmark");
+
+    const batches = Math.ceil(total / parallel);
+    for (let b = 0; b < batches; b++) {
+      const ops = [];
+      for (let i = 0; i < parallel && b * parallel + i < total; i++) {
+        const t = Date.now() + "-" + b + "-" + i;
+        const payload = {
+          title: "Perf Test " + t,
+          content: "perf",
+          slug: ("perf-" + t).replace(/[^a-z0-9-]/g, "-"),
+          status: "published",
+          comments_disabled: true,
+          author_id: userId,
+        };
+        ops.push(
+          supabase.from("posts").insert([payload]).select("id").single()
+        );
+      }
+      const results = await Promise.allSettled(ops);
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value?.data) created++;
+        else failed++;
+      }
+      // brief pause
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    const dur = Math.round(performance.now() - start);
+    setDevResult({
+      total,
+      created,
+      failed,
+      duration_ms: dur,
+      ops_per_sec: Math.round((created + failed) / (dur / 1000)),
+    });
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function e2eRenderTime() {
+  setDevResult("Measuring end-to-end render time for PostDetail...");
+  try {
+    // pick the most recent post slug
+    const { data: posts, error: pErr } = await supabase
+      .from("posts")
+      .select("slug")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (pErr) throw pErr;
+    const slug = posts?.[0]?.slug;
+    if (!slug) return setDevResult("No posts available to test");
+
+    const url = window.location.origin + "/posts/" + slug; // URL of the opened page
+    const w = window.open(url, "_blank");
+    if (!w) return setDevResult("Popup blocked; allow popups for this site");
+
+    const start = performance.now();
+    const pollInterval = 250;
+    const maxMs = 10000;
+    let elapsed = 0;
+    let stopped = false;
+
+    const stop = (msg) => {
+      if (stopped) return;
+      stopped = true;
+      try {
+        if (!w.closed) w.close();
+      } catch (e) {}
+      setDevResult(msg);
+    };
+
+    const poll = setInterval(() => {
+      elapsed = Math.round(performance.now() - start);
+      if (w.closed) {
+        clearInterval(poll);
+        stop({
+          url,
+          render_ms: "popup closed before measurement",
+          elapsed_ms: elapsed,
+        });
+        return;
+      }
+      try {
+        // try same-origin DOM access to detect when the article exists
+        const doc = w.document;
+        if (!doc) return;
+        const article =
+          doc.querySelector("article") ||
+          doc.querySelector("[data-post-root]") ||
+          doc.querySelector(".markdown-content");
+        if (article) {
+          clearInterval(poll);
+          const renderMs = Math.round(performance.now() - start);
+          const roundTrip = Math.round(performance.now() - start);
+          stop({ url, render_ms: renderMs, elapsed_ms: roundTrip });
+        }
+      } catch (e) {
+        // cross-origin access blocked
+        clearInterval(poll);
+        stop({
+          url,
+          render_ms: null,
+          message:
+            "Opened popup but cannot access DOM due to same-origin policy. For exact timing, add a postMessage report from PostDetail.",
+        });
+      }
+      if (elapsed >= maxMs) {
+        clearInterval(poll);
+        stop({
+          url,
+          render_ms: null,
+          message:
+            "Timed out waiting for article (10s). Page may be slow or blocked.",
+        });
+      }
+    }, pollInterval);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function getLatestPost() {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id,slug,status")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function archiveLatest() {
+  setDevResult("Archiving...");
+  try {
+    const p = await getLatestPost();
+    if (!p) return setDevResult("No posts found");
+    const { error } = await supabase
+      .from("posts")
+      .update({ status: "archived" })
+      .eq("id", p.id);
+    if (error) throw error;
+    setDevResult("Archived: " + p.id);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function unarchiveLatest() {
+  setDevResult("Unarchiving...");
+  try {
+    const p = await getLatestPost();
+    if (!p) return setDevResult("No posts found");
+    const { error } = await supabase
+      .from("posts")
+      .update({ status: "published" })
+      .eq("id", p.id);
+    if (error) throw error;
+    setDevResult("Unarchived: " + p.id);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function listTestPosts() {
+  setDevResult("Listing...");
+  try {
+    // show last 20 posts that include 'Test Post' in title
+    // include both legacy 'Test Post' and perf-created 'Perf Test'
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id,title,slug,status,created_at")
+      .or("title.ilike.%Test Post%,title.ilike.%Perf Test%")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    setDevResult(data);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function deleteTestPosts() {
+  if (
+    !confirm(
+      'Delete test posts with title like "Test Post" or "Perf Test"? This will remove posts created by dev tools.'
+    )
+  )
+    return;
+  setDevResult("Deleting...");
+  try {
+    // delete and return deleted rows so we can report how many were removed
+    const { data, error } = await supabase
+      .from("posts")
+      .delete()
+      .or("title.ilike.%Test Post%,title.ilike.%Perf Test%")
+      .select("id,title");
+    if (error) throw error;
+    setDevResult({
+      deleted: Array.isArray(data) ? data.length : 0,
+      rows: data,
+    });
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
 
 // Storage
 const bucketName = ref("");
@@ -243,6 +734,7 @@ const profileRole = ref("");
 
 // Settings / branding
 const settingsRaw = ref("");
+const settingsMap = ref({});
 const brandingRaw = ref("");
 
 // RLS
@@ -255,11 +747,144 @@ const latencyMs = ref(null);
 // Local storage
 const localStorageDump = ref("");
 
+// Full stats
+const statsLoading = ref(false);
+const statsResult = ref("");
+const statsRls = ref(false);
+const statsRlsMsg = ref("");
+
+async function loadFullStats() {
+  statsLoading.value = true;
+  statsResult.value = "Loading...";
+  statsRls.value = false;
+  statsRlsMsg.value = "";
+  try {
+    // helper to detect RLS/permission style errors
+    function isRlsError(e) {
+      if (!e) return false;
+      const status = e?.status || e?.statusCode || null;
+      const msg = (e?.message || e?.details || e?.error_description || "")
+        .toString()
+        .toLowerCase();
+      if (status === 401 || status === 403) return true;
+      return /permission|forbidden|row-level|rls|not authorized|insufficient/.test(msg);
+    }
+
+    // guarded count helper: returns numeric count or null and sets RLS flags
+    async function guardedCount(buildFn) {
+      try {
+        let q = supabase.from("posts");
+        // buildFn receives a fresh query builder; it should return a query
+        const resp = await buildFn(supabase);
+        if (resp?.error) throw resp.error;
+        return resp?.count ?? null;
+      } catch (e) {
+        if (isRlsError(e)) {
+          statsRls.value = true;
+          statsRlsMsg.value = e.message || String(e);
+          return null;
+        }
+        throw e;
+      }
+    }
+
+    // build queries using guardedCount to capture permission errors without aborting
+    const total = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }));
+    const published = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "published"));
+    const drafts = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"));
+    const archived = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "archived"));
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const last24h = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).gte("created_at", since));
+
+    const users = await guardedCount((s) => s.from("profiles").select("id", { count: "exact", head: true }));
+    const categories = await guardedCount((s) => s.from("categories").select("id", { count: "exact", head: true }));
+
+    const commentsTotal = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }));
+    const commentsApproved = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).eq("approved", true));
+    const commentsPending = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).or("approved.eq.false,approved.is.null"));
+
+    // storage buckets (best-effort)
+    let buckets = null;
+    try {
+      const list = await supabase.storage.listBuckets();
+      if (list.error) throw list.error;
+      buckets = Array.isArray(list.data) ? list.data.length : null;
+    } catch (e) {
+      buckets = "error: " + (e.message || String(e));
+    }
+
+    statsResult.value = JSON.stringify(
+      {
+        posts: {
+          total: total ?? null,
+          published: published ?? null,
+          drafts: drafts ?? null,
+          archived: archived ?? null,
+          last24h: last24h ?? null,
+        },
+        users: users ?? null,
+        categories: categories ?? null,
+        comments: {
+          total: commentsTotal ?? null,
+          approved: commentsApproved ?? null,
+          pending: commentsPending ?? null,
+        },
+        buckets,
+        sampled_at: new Date().toISOString(),
+        rls_blocked: statsRls.value || undefined,
+      },
+      null,
+      2
+    );
+  } catch (e) {
+    statsResult.value = "ERROR: " + (e.message || String(e));
+  } finally {
+    statsLoading.value = false;
+  }
+}
+
 function prepareRun(act) {
   action.value = act;
   errorMsg.value = "";
   result.value = "";
   loading.value = true;
+}
+
+function authProvidersDisplay() {
+  const ap =
+    settingsMap.value["auth_providers_enabled"] ||
+    settingsMap.value["auth_providers"] ||
+    null;
+  if (!ap) return "—";
+  try {
+    const enabled = Object.keys(ap).filter((k) => ap[k]);
+    return enabled.length ? enabled.join(", ") : "none enabled";
+  } catch (e) {
+    return JSON.stringify(ap);
+  }
+}
+
+function siteTitleDisplay() {
+  const branding = settingsMap.value["branding"] || null;
+  if (branding && branding.siteName) return branding.siteName;
+  return settingsMap.value["site_title"] || "—";
+}
+
+function siteOriginDisplay() {
+  return settingsMap.value["site_origin"] || window.location.origin || "—";
+}
+
+function installationDisplay() {
+  const inst = settingsMap.value["installation"] || null;
+  if (!inst) return "—";
+  const ok = !!inst.complete;
+  const when = inst.completed_at
+    ? new Date(inst.completed_at).toLocaleString()
+    : null;
+  return ok
+    ? `Complete — ${when || "unknown"}`
+    : `Incomplete${when ? " — " + when : ""}`;
 }
 
 async function checkBucket() {
@@ -322,6 +947,17 @@ async function loadSettings() {
     const { data, error } = await supabase.from("settings").select("key,value");
     if (error) throw error;
     settingsRaw.value = JSON.stringify(data, null, 2);
+    // build a map for common keys
+    const map = {};
+    for (const row of data || []) {
+      try {
+        map[row.key] =
+          typeof row.value === "string" ? JSON.parse(row.value) : row.value;
+      } catch (_) {
+        map[row.key] = row.value;
+      }
+    }
+    settingsMap.value = map;
   } catch (e) {
     settingsRaw.value = "ERROR: " + (e.message || "unknown");
   }

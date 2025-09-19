@@ -1,5 +1,4 @@
 <template>
-  <!-- Loading / Not Found States -->
   <div v-if="!post" class="text-center text-gray-500 dark:text-gray-400 py-24">
     <Icon
       icon="mdi:file-search-outline"
@@ -46,41 +45,7 @@
             {{ post.category?.name || "Uncategorized" }}
           </router-link>
         </div>
-        <!-- Title / Meta -->
-        <div class="absolute inset-x-0 bottom-0 p-6 md:p-10">
-          <h1
-            class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-white drop-shadow-md"
-            itemprop="headline"
-          >
-            {{ post.title }}
-          </h1>
-          <div
-            class="mt-6 flex flex-wrap items-center gap-3 text-[11px] font-medium text-gray-200"
-          >
-            <router-link
-              v-if="post.author?.username"
-              :to="`/author/${post.author.username}`"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/15 hover:bg-white/25 text-white backdrop-blur-sm"
-            >
-              <Icon icon="mdi:account" class="text-sm" />
-              {{ post.author?.display_name || post.author?.username }}
-            </router-link>
-            <span
-              v-if="post.created_at"
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 text-gray-100"
-            >
-              <Icon icon="mdi:calendar" class="text-sm" />
-              {{ formatDate(post.created_at) }}
-            </span>
-            <span
-              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/10 text-gray-100"
-              v-if="readingTime"
-            >
-              <Icon icon="mdi:clock-outline" class="text-sm" />
-              {{ readingTime }} min read
-            </span>
-          </div>
-        </div>
+        <!-- Title/Meta moved below image -->
       </div>
       <meta
         v-if="post.cover_image_url"
@@ -88,6 +53,42 @@
         :content="post.cover_image_url"
       />
     </figure>
+
+    <!-- Title and Meta (below image) -->
+    <div class="mb-8 px-1">
+      <h1
+        class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-gray-900 dark:text-gray-100"
+        itemprop="headline"
+      >
+        {{ post.title }}
+      </h1>
+      <div
+        class="mt-4 flex flex-wrap items-center gap-3 text-[12px] md:text-[13px] font-medium text-gray-600 dark:text-gray-400"
+      >
+        <router-link
+          v-if="post.author?.username"
+          :to="`/author/${post.author.username}`"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          <Icon icon="mdi:account" class="text-sm" />
+          {{ post.author?.display_name || post.author?.username }}
+        </router-link>
+        <span
+          v-if="post.created_at"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+        >
+          <Icon icon="mdi:calendar" class="text-sm" />
+          {{ formatDate(post.created_at) }}
+        </span>
+        <span
+          v-if="readingTime"
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+        >
+          <Icon icon="mdi:clock-outline" class="text-sm" />
+          {{ readingTime }} min read
+        </span>
+      </div>
+    </div>
 
     <!-- Main Body -->
     <div
@@ -296,6 +297,18 @@ function addEnhancements() {
         pre.appendChild(btn);
       }
     });
+
+    // If this page was opened by a dev tool, report render time back to the opener for E2E timing
+    try {
+      if (window.opener && window.opener.postMessage) {
+        const navStart = (performance.timing && performance.timing.navigationStart) || 0;
+        const renderTime = Math.round(performance.now() - navStart);
+        // send only to same origin opener
+        window.opener.postMessage({ __pluma_e2e_time: true, time: renderTime }, window.location.origin);
+      }
+    } catch (e) {
+      // ignore
+    }
   });
 }
 

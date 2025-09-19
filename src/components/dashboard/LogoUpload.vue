@@ -55,6 +55,7 @@
                 :src="lightPreview"
                 alt="Light Logo Preview"
                 class="max-h-20 object-contain"
+                loading="lazy"
               />
               <button
                 type="button"
@@ -105,6 +106,7 @@
                 :src="darkPreview"
                 alt="Dark Logo Preview"
                 class="max-h-20 object-contain bg-gray-900 p-1 rounded"
+                loading="lazy"
               />
               <button
                 type="button"
@@ -154,6 +156,7 @@
                 :src="faviconPreview"
                 alt="Favicon Preview"
                 class="h-12 w-12 object-contain bg-white dark:bg-gray-900 p-1 rounded"
+                loading="lazy"
               />
               <button
                 type="button"
@@ -225,6 +228,7 @@
                   :src="lightDisplaySrc"
                   alt="Light logo"
                   class="h-8 max-w-[140px] object-contain"
+                  loading="lazy"
                 />
               </template>
               <template v-else>
@@ -261,6 +265,7 @@
                     :src="faviconDisplaySrc"
                     alt="Fav"
                     class="h-4 w-4 object-contain"
+                    loading="lazy"
                   />
                   <span
                     v-else
@@ -364,6 +369,7 @@
                   :src="darkDisplaySrc"
                   alt="Dark logo"
                   class="h-8 max-w-[140px] object-contain"
+                  loading="lazy"
                 />
               </template>
               <template v-else>
@@ -398,6 +404,7 @@
                   :src="faviconDisplaySrc"
                   alt="Fav"
                   class="h-4 w-4 object-contain"
+                  loading="lazy"
                 />
                 <span v-else class="text-[8px] font-semibold text-gray-200">{{
                   siteInitial

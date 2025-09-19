@@ -52,7 +52,7 @@ function addUncategorized(list){
 function sortList(list){
   return [...list].sort((a,b)=> a.name.localeCompare(b.name))
 }
-const categoriesList = computed(()=> sortList(addUncategorized(props.categories || [])))
+const categoriesList = computed(()=> addUncategorized(sortList(props.categories || [])))
 
 function go(slug){
   open.value = false

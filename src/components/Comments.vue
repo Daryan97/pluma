@@ -290,6 +290,7 @@
                   :src="c.author_avatar_url"
                   :alt="c.author_display_name || c.author_username || 'Avatar'"
                   class="w-full h-full object-cover"
+                  loading="lazy"
                 />
                 <Icon v-else icon="mdi:account" class="text-xl text-gray-500" />
               </div>

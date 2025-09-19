@@ -1,10 +1,9 @@
 <template>
-  <PostForm mode="edit" :postId="route.params.id" />
+  <PostForm mode="edit" :postId="id" />
 </template>
 
-<script setup>
-import { useRoute } from "vue-router";
+<script setup lang="ts">
 import PostForm from "@/components/PostForm.vue";
-
-const route = useRoute();
+const props = defineProps<{ id: string }>();
+const id = props.id;
 </script>

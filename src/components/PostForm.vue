@@ -14,7 +14,7 @@
       >
         <Icon icon="mdi:chevron-right" class="w-4 h-4" />
         <span class="capitalize">{{
-          mode === "edit" ? "Edit" : "Create"
+          currentMode === "edit" ? "Edit" : "Create"
         }}</span>
         <Icon icon="mdi:chevron-right" class="w-4 h-4" />
         <span>Post</span>
@@ -34,13 +34,13 @@
             <h1
               class="text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
             >
-              {{ mode === "edit" ? "Edit Blog Post" : "New Blog Post" }}
+              {{ currentMode === "edit" ? "Edit Blog Post" : "New Blog Post" }}
             </h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Craft engaging content with markdown, tags and a thumbnail.
             </p>
           </div>
-          <div v-if="mode === 'edit' && postId" class="ml-auto">
+          <div v-if="currentMode === 'edit' && currentPostId" class="ml-auto">
             <router-link
               :to="`/posts/${slug}`"
               target="_blank"
@@ -255,6 +255,7 @@
                       :alt="authorDisplay || 'Avatar'"
                       class="w-full h-full object-cover"
                       @error="authorAvatar = null"
+                      loading="lazy"
                     />
                     <span v-else>{{
                       (authorDisplay || "?").charAt(0).toUpperCase()
@@ -303,6 +304,7 @@
                               :alt="a.display_name || a.username || 'Avatar'"
                               class="w-full h-full object-cover"
                               @error="a.avatar_url = null"
+                              loading="lazy"
                             />
                             <span v-else>{{
                               (a.display_name || a.username || "?")
@@ -355,6 +357,7 @@
                   :alt="authorDisplay || 'Avatar'"
                   class="w-full h-full object-cover"
                   @error="authorAvatar = null"
+                  loading="lazy"
                 />
                 <span v-else>{{
                   (authorDisplay || "?").charAt(0).toUpperCase()
@@ -590,6 +593,7 @@
                   :alt="title || 'Thumbnail preview'"
                   class="max-h-40 object-contain rounded"
                   @error="previewImageError = true"
+                  loading="lazy"
                 />
                 <button
                   type="button"
@@ -644,6 +648,7 @@
                   :alt="title || 'Thumbnail preview'"
                   class="object-cover w-full h-full"
                   @error="previewImageError = true"
+                  loading="lazy"
                 />
                 <NoImage v-else />
               </div>
@@ -721,7 +726,7 @@
             <span
               v-if="
                 !fieldsLocked &&
-                (mode === 'create' || (mode === 'edit' && status === 'draft'))
+                (currentMode === 'create' || (currentMode === 'edit' && status === 'draft'))
               "
               class="block text-center text-xs text-gray-500 dark:text-gray-400"
             >
@@ -736,7 +741,7 @@
             <button
               v-if="
                 !fieldsLocked &&
-                (mode === 'create' || (mode === 'edit' && status === 'draft'))
+                (currentMode === 'create' || (currentMode === 'edit' && status === 'draft'))
               "
               type="button"
               @click="handleSaveDraft"
@@ -780,7 +785,7 @@
         <button
           v-if="
             !fieldsLocked &&
-            (mode === 'create' || (mode === 'edit' && status === 'draft'))
+            (currentMode === 'create' || (currentMode === 'edit' && status === 'draft'))
           "
           type="button"
           @click="handleSaveDraft"
@@ -833,6 +838,10 @@ const props = defineProps({
   postId: String,
 });
 
+// Local reactive state to allow switching from create -> edit in-place
+const currentMode = ref(props.mode);
+const currentPostId = ref(props.postId || null);
+
 const router = useRouter();
 const toast = useToast();
 
@@ -843,7 +852,7 @@ const observer = new MutationObserver(() => {
 
 onMounted(() => {
   fetchCategories();
-  if (props.mode === "edit") {
+  if (currentMode.value === "edit" && currentPostId.value) {
     loadPost();
   } else {
     getUser().then(() => {
@@ -918,7 +927,7 @@ function onAuthorSelect(val) {
 const categories = ref([]);
 const statusOptions = ["published", "draft", "archived"];
 const displayedStatusOptions = computed(() =>
-  props.mode === "edit"
+  currentMode.value === "edit"
     ? statusOptions
     : statusOptions.filter((s) => s !== "draft")
 );
@@ -992,12 +1001,13 @@ async function isSlugTaken(testSlug) {
     .select("id", { count: "exact" })
     .eq("slug", testSlug)
     .limit(1);
-  if (props.mode === "edit" && props.postId) {
+  if (currentMode.value === "edit" && currentPostId.value) {
+    // Handled below when comparing IDs
   }
   const { data, error, count } = await query;
   if (error) return false;
   if (count && count > 0) {
-    if (props.mode === "edit" && data?.length && data[0].id === props.postId) {
+    if (currentMode.value === "edit" && data?.length && data[0].id === currentPostId.value) {
       return false;
     }
     return true;
@@ -1137,7 +1147,7 @@ const loadPost = async () => {
   const { data: post, error } = await supabase
     .from("posts")
     .select("*")
-    .eq("id", props.postId)
+    .eq("id", currentPostId.value)
     .single();
 
   if (error) {
@@ -1250,13 +1260,12 @@ const handleSubmit = async () => {
 
     let effectiveStatus = status.value;
     const publishingFromDraft =
-      props.mode === "edit" && status.value === "draft";
+      currentMode.value === "edit" && status.value === "draft";
     if (publishingFromDraft) effectiveStatus = "published";
     const archivingFromActive =
-      props.mode === "edit" &&
+      currentMode.value === "edit" &&
       status.value === "archived" &&
       originalStatus.value !== "archived";
-
 
     let finalThumb = null;
     if (thumbnailMode.value === "upload" && thumbnailFile.value) {
@@ -1290,11 +1299,22 @@ const handleSubmit = async () => {
       comments_disabled: commentsDisabled.value,
     };
 
-    if (props.mode === "create") {
+    if (currentMode.value === "create") {
       postPayload.author_id = authorId.value || userData.user.id;
-      const { error } = await supabase.from("posts").insert([postPayload]);
+      const { data: inserted, error } = await supabase
+        .from("posts")
+        .insert([postPayload])
+        .select("id, status, slug")
+        .single();
       if (error) throw new Error(error.message);
       toast.success("Post created!");
+      // Switch to edit mode in-place
+      currentMode.value = "edit";
+      currentPostId.value = inserted.id;
+      originalStatus.value = inserted.status || effectiveStatus;
+      status.value = inserted.status || effectiveStatus;
+      // Update URL to edit route without full reload
+      router.replace({ name: 'EditPost', params: { id: inserted.id } });
     } else {
       if (canChangeAuthor.value && authorId.value) {
         postPayload.author_id = authorId.value;
@@ -1302,20 +1322,22 @@ const handleSubmit = async () => {
       const { error } = await supabase
         .from("posts")
         .update(postPayload)
-        .eq("id", props.postId);
+        .eq("id", currentPostId.value);
       if (error) throw new Error(error.message);
       if (archivingFromActive) {
         toast.success("Post archived");
         originalStatus.value = "archived";
+        status.value = "archived";
       } else if (publishingFromDraft) {
         toast.success("Post published!");
         originalStatus.value = "published";
+        status.value = "published";
       } else {
         toast.success("Post updated!");
         originalStatus.value = effectiveStatus;
+        status.value = effectiveStatus;
       }
     }
-    await router.push("/dashboard");
   } catch (e) {
     if (e && e.message) toast.error(e.message);
     else toast.error("Failed");
@@ -1369,11 +1391,22 @@ const handleSaveDraft = async () => {
           .getPublicUrl(data.path).data.publicUrl;
       }
     }
-    if (props.mode === "create") {
+    if (currentMode.value === "create") {
       draftPayload.author_id = authorId.value || userData.user.id;
-      const { error } = await supabase.from("posts").insert([draftPayload]);
+      const { data: inserted, error } = await supabase
+        .from("posts")
+        .insert([draftPayload])
+        .select("id, status, slug")
+        .single();
       if (error) throw new Error(error.message);
       toast.success("Draft saved");
+      // Switch to edit mode in-place
+      currentMode.value = "edit";
+      currentPostId.value = inserted.id;
+      originalStatus.value = inserted.status || "draft";
+      status.value = inserted.status || "draft";
+      // Update URL to edit route without full reload
+      router.replace({ name: 'EditPost', params: { id: inserted.id } });
     } else {
       if (canChangeAuthor.value && authorId.value) {
         draftPayload.author_id = authorId.value;
@@ -1381,11 +1414,10 @@ const handleSaveDraft = async () => {
       const { error } = await supabase
         .from("posts")
         .update(draftPayload)
-        .eq("id", props.postId);
+        .eq("id", currentPostId.value);
       if (error) throw new Error(error.message);
       toast.success("Draft updated");
     }
-    await router.push("/dashboard");
   } catch (e) {
     if (e && e.message) toast.error(e.message);
     else toast.error("Failed");

@@ -13,6 +13,9 @@ const EditPost = () => import('@/pages/EditPost.vue')
 const Profile = () => import('@/pages/Profile.vue')
 const Install = () => import('@/pages/Install.vue')
 const Test = () => import('@/pages/Test.vue')
+const Archive = () => import('@/pages/Archive.vue')
+const ArchiveCategory = () => import('@/pages/ArchiveCategory.vue')
+const ArchivePost = () => import('@/pages/ArchivePost.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,6 +28,38 @@ const router = createRouter({
         baseTitle: 'Home',
         description: () => projectInfo.description
       }
+    },
+    {
+      path: '/archive',
+      name: 'Archive',
+      component: Archive,
+      meta: { baseTitle: 'Archive', description: 'Browse archived posts.' }
+    },
+    {
+      path: '/archive',
+      redirect: '/archive'
+    },
+    {
+      path: '/archive/category/:slug',
+      name: 'ArchiveCategory',
+      component: ArchiveCategory,
+      props: true,
+      meta: { baseTitle: 'Archive Category', description: 'Archived posts by category.' }
+    },
+    {
+      path: '/archive/category/:slug',
+      redirect: (to) => `/archive/category/${to.params.slug}`
+    },
+    {
+      path: '/archive/post/:slug',
+      name: 'ArchivePost',
+      component: ArchivePost,
+      props: true,
+      meta: { baseTitle: 'Archived Post', description: 'View an archived post.' }
+    },
+    {
+      path: '/archive/post/:slug',
+      redirect: (to) => `/archive/post/${to.params.slug}`
     },
     {
       path: '/install',

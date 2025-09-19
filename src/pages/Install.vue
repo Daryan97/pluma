@@ -826,9 +826,15 @@ async function saveInitialBranding() {
           socialLinks: [],
         },
       });
-    if (error) throw error;
+    if (error && error.code !== "42501") throw error;
     brandingSaved.value = true;
-    toast.success("Branding saved");
+    if (error && error.code === "42501") {
+      toast.info(
+        "Branding already exists (skipped). You can update it later in the dashboard."
+      );
+    } else {
+      toast.success("Branding saved");
+    }
     activeStep.value = 4;
   } catch (e: any) {
     toast.error(e.message || "Failed to save branding");
@@ -1020,7 +1026,7 @@ function nextStep() {
   if (activeStep.value < 4) {
     activeStep.value++;
     if (activeStep.value === 4) {
-      checkExistingAdmin();
+     checkExistingAdmin();
     }
   }
 }

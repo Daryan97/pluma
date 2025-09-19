@@ -360,7 +360,7 @@ drop policy if exists "posts_delete_admin_or_owner_author" on public.posts;
 create policy "posts_read_published_or_authors" on public.posts for
 select
     to public using (
-        status = 'published'
+        status IN ('published', 'archived')
         or public.is_author()
     );
 
@@ -412,7 +412,7 @@ insert
                 public.posts p
             where
                 p.id = post_id
-                and p.status = 'published'
+                and p.status IN ('published', 'archived')
                 and p.comments_disabled = false
         )
     );
@@ -433,7 +433,7 @@ insert
                 public.posts p
             where
                 p.id = public.comments.post_id
-                and p.status = 'published' :: public.post_status
+                and p.status IN ('published', 'archived')
                 and p.comments_disabled = false
         )
     );
