@@ -13,7 +13,6 @@
     itemscope
     itemtype="https://schema.org/Article"
   >
-    <!-- Hero Cover -->
     <figure
       class="relative mb-10 group rounded-2xl overflow-hidden border border-gray-200/80 dark:border-gray-700/60 bg-gray-100 dark:bg-gray-800"
     >
@@ -31,11 +30,9 @@
           @error="coverImageError = true"
         />
         <NoImage :plain="true" v-else />
-        <!-- Gradient Overlay -->
         <div
           class="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-gray-900/20 to-transparent"
         ></div>
-        <!-- Top meta overlay (category) -->
         <div class="absolute top-4 left-4 flex flex-wrap gap-2">
           <router-link
             :to="`/category/${post.category?.slug || 'uncategorized'}`"
@@ -45,7 +42,6 @@
             {{ post.category?.name || "Uncategorized" }}
           </router-link>
         </div>
-        <!-- Title/Meta moved below image -->
       </div>
       <meta
         v-if="post.cover_image_url"
@@ -54,7 +50,6 @@
       />
     </figure>
 
-    <!-- Title and Meta (below image) -->
     <div class="mb-8 px-1">
       <h1
         class="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight text-gray-900 dark:text-gray-100"
@@ -90,7 +85,6 @@
       </div>
     </div>
 
-    <!-- Main Body -->
     <div
       ref="markdownContainer"
       class="prose prose-lg dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
@@ -103,7 +97,6 @@
       />
     </div>
 
-    <!-- Tags & Share Row -->
     <div class="mt-12 flex flex-col gap-10">
       <div
         v-if="post.tags?.length"
@@ -192,6 +185,7 @@ import Markdown from "vue3-markdown-it";
 import { Icon } from "@iconify/vue";
 import NoImage from "./NoImage.vue";
 import { useToast } from "vue-toastification";
+import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
 
 const toast = useToast();
 
@@ -216,7 +210,7 @@ const readingTime = computed(() => {
 const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
 const twitterShareUrl = computed(() => {
-  const url = encodeURIComponent(window.location.href);
+  const url = encodeURIComponent(getBrowserUrl());
   const text = encodeURIComponent(props.post?.title || "Check this out");
   return `https://x.com/intent/tweet?text=${text}&url=${url}`;
 });
@@ -225,7 +219,7 @@ const linkCopied = ref(false);
 
 async function copyLink() {
   try {
-    await navigator.clipboard.writeText(window.location.href);
+    await navigator.clipboard.writeText(getBrowserUrl());
     linkCopied.value = true;
     setTimeout(() => (linkCopied.value = false), 2000);
   } catch {
@@ -237,7 +231,7 @@ async function nativeShare() {
   try {
     await navigator.share({
       title: props.post?.title,
-      url: window.location.href,
+      url: getBrowserUrl(),
     });
   } catch {
     toast.error("Share cancelled or failed");
@@ -298,16 +292,18 @@ function addEnhancements() {
       }
     });
 
-    // If this page was opened by a dev tool, report render time back to the opener for E2E timing
     try {
       if (window.opener && window.opener.postMessage) {
-        const navStart = (performance.timing && performance.timing.navigationStart) || 0;
+        const navigationEntry =
+          typeof performance.getEntriesByType === "function"
+            ? performance.getEntriesByType("navigation")?.[0]
+            : null;
+        const navStart = navigationEntry?.startTime ?? 0;
         const renderTime = Math.round(performance.now() - navStart);
-        // send only to same origin opener
-        window.opener.postMessage({ __pluma_e2e_time: true, time: renderTime }, window.location.origin);
+        window.opener.postMessage({ __pluma_e2e_time: true, time: renderTime }, getBrowserOrigin());
       }
     } catch (e) {
-      // ignore
+
     }
   });
 }

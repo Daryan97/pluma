@@ -17,7 +17,6 @@
       </div>
     </header>
 
-    <!-- Bucket List -->
     <div v-if="!activeBucket" class="space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -70,7 +69,6 @@
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Name -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -105,7 +103,6 @@
               {{ bucketNameError }}
             </p>
           </div>
-          <!-- Visibility -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -179,7 +176,6 @@
               Public buckets expose files via unsigned public URLs.
             </p>
           </div>
-          <!-- MIME Types -->
           <div class="space-y-2 md:col-span-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -199,7 +195,6 @@
               Comma or newline separated. Leave blank for any type.
             </p>
           </div>
-          <!-- Size Limit -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -346,7 +341,6 @@
       </div>
     </div>
 
-    <!-- Browser -->
     <div v-else class="space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div
@@ -827,7 +821,6 @@ async function listObjects() {
             updated_at = fileObj.updated_at;
           }
         } catch {
-          /* ignore */
         }
         mapped.push({
           name: p.display_name || p.username || "User " + p.id.substring(0, 6),

@@ -3,14 +3,12 @@
     class="relative flex flex-col items-center justify-center w-full h-full select-none overflow-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-800 dark:via-gray-900 dark:to-blue-950 text-gray-500 dark:text-gray-300"
     aria-hidden="true"
   >
-    <!-- Decorative blobs -->
     <div
       class="pointer-events-none absolute -top-12 -right-10 w-48 h-48 rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-2xl"
     />
     <div
       class="pointer-events-none absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-indigo-200/30 dark:bg-indigo-600/10 blur-2xl"
     />
-    <!-- Content -->
     <div
       class="relative z-10 flex flex-col items-center gap-3"
       v-if="plain !== true"

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '@/services/supabase'
 import { projectInfo } from '@/config/projectInfo'
+import { loadRuntimeEnv } from '@/lib/runtimeEnv'
 
 const Home = () => import('@/pages/Home.vue')
 const PostDetail = () => import('@/pages/PostDetail.vue')
@@ -177,7 +178,6 @@ router.beforeEach(async (to, from, next) => {
       toast.error('Please complete your profile before proceeding.')
       return next({ name: 'Profile', query: { edit: 'true' } })
     }
-    // Always sign out if role is disabled
     if (!profErr && prof?.role === 'disabled') {
       await supabase.auth.signOut();
       toast.error('Your account has been disabled. Please contact support.');
@@ -189,7 +189,8 @@ router.beforeEach(async (to, from, next) => {
   const requiresAdmin = to.meta.requiresAdmin
   const devOnly = to.meta.devOnly
   if (devOnly) {
-    const isDev = import.meta.env.VITE_ENV === 'development'
+    const { VITE_ENV } = await loadRuntimeEnv()
+    const isDev = VITE_ENV === 'development'
     if (!isDev) {
       return next('/')
     }
@@ -226,7 +227,6 @@ router.beforeEach(async (to, from, next) => {
     }
   } catch (e) {
     console.error('Failed to fetch installation status', e)
-    // Only sign out if error is JWSError
     if (e && e.message && e.message.includes('JWSError')) {
       await supabase.auth.signOut();
       return next('/login');
@@ -274,7 +274,6 @@ router.afterEach((to) => {
   const desc = typeof descRaw === 'function' ? descRaw() : descRaw || projectInfo.description;
   const metaTag = document.querySelector('meta[name="description"]');
   if (metaTag) metaTag.setAttribute('content', desc);
-  // Open Graph & Twitter meta
   const ensure = (name, attr = 'property') => {
     let el = document.head.querySelector(`${attr === 'name' ? 'meta[name' : 'meta[property'}="${name}"]`);
     if (!el) { el = document.createElement('meta'); el.setAttribute(attr, name); document.head.appendChild(el); } return el;
@@ -286,12 +285,10 @@ router.afterEach((to) => {
   ensure('twitter:card', 'name').setAttribute('content', 'summary_large_image');
   ensure('twitter:title', 'name').setAttribute('content', document.title);
   ensure('twitter:description', 'name').setAttribute('content', desc);
-  // Canonical
   const canonicalHref = window.location.origin + to.fullPath.split('?')[0];
   let canonical = document.head.querySelector('link[rel="canonical"]');
   if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
   canonical.setAttribute('href', canonicalHref);
-  // Basic JSON-LD (Home & PostDetail)
   const prior = document.getElementById('ld-primary'); if (prior) prior.remove();
   let ld = null;
   if (to.name === 'Home') {

@@ -45,6 +45,26 @@ function updateFavicon(url) {
     });
 }
 
+function upsertLink(attrs = {}) {
+    const head = document.head;
+    let link = head.querySelector(
+        `link[rel="${attrs.rel}"][type="${attrs.type}"]${attrs.rel === 'alternate' ? '[href="/rss.xml"]' : ''}`
+    );
+    if (!link) {
+        link = document.createElement('link');
+        head.appendChild(link);
+    }
+    Object.entries(attrs).forEach(([key, value]) => {
+        if (value) link.setAttribute(key, value);
+    });
+}
+
+function updateStructuredLinks(siteLabel) {
+    const title = siteLabel ? `${siteLabel} RSS` : 'RSS Feed';
+    upsertLink({ rel: 'alternate', type: 'application/rss+xml', title, href: '/rss.xml' });
+    upsertLink({ rel: 'sitemap', type: 'application/xml', href: '/sitemap.xml' });
+}
+
 fetchBranding(true).then(() => {
     projectInfo.applyBranding({ siteName: siteName.value, siteDescription: siteDescription.value, socialLinks: socialLinks.value })
     if (!document.title || document.title === 'Loading…') document.title = projectInfo.name
@@ -53,8 +73,7 @@ fetchBranding(true).then(() => {
         metaDesc.setAttribute('content', projectInfo.description)
     }
     updateFavicon(faviconUrl.value)
-    // Default OG image fallback (favicon as last resort)
-    const ensure = (name, attr='property') => { let el=document.head.querySelector(`${attr==='name'?'meta[name':'meta[property'}="${name}"]`); if(!el){ el=document.createElement('meta'); el.setAttribute(attr,name); document.head.appendChild(el);} return el; };
+    updateStructuredLinks(projectInfo.name)
     const ogImg = document.head.querySelector('meta[property="og:image"]');
     if(!ogImg && faviconUrl.value){ const el = document.createElement('meta'); el.setAttribute('property','og:image'); el.content = faviconUrl.value; document.head.appendChild(el);}    
 });
@@ -70,6 +89,7 @@ watch([siteName, siteDescription, socialLinks], ([n, d, sl]) => {
     }
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc && d && metaDesc.getAttribute('content') !== d) metaDesc.setAttribute('content', d);
+    updateStructuredLinks(projectInfo.name);
 });
 
 watch([faviconUrl, logoVersion], ([url]) => {

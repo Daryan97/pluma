@@ -14,7 +14,6 @@
       </div>
     </div>
     <form @submit.prevent="save" class="space-y-8">
-      <!-- Warning: also configure providers in Supabase -->
       <div class="rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-amber-800 dark:text-amber-200 text-[12px] flex items-start gap-2">
         <Icon icon="mdi:alert-circle-outline" class="text-amber-600 dark:text-amber-300 mt-0.5" />
         <div>
@@ -93,12 +92,13 @@ import { ref, watch, computed, onMounted } from 'vue';
 import { useSettings, fetchSettings } from '@/stores/settingsStore';
 import { Icon } from '@iconify/vue';
 import { useToast } from 'vue-toastification';
+import { getBrowserOrigin } from '@/lib/utils';
+
 onMounted(async () => {
   await fetchSettings();
 });
 
-// Current app origin to show correct redirect URLs for Supabase configuration
-const appOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+const appOrigin = getBrowserOrigin();
 
 const { providersEnabled, ALL_PROVIDERS, saveProvidersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
 const toast = useToast();

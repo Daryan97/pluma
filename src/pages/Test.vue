@@ -12,8 +12,6 @@
         It should never be accessible in production environments.
       </p>
     </header>
-
-    <!-- Storage Buckets -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
     >
@@ -58,8 +56,6 @@
         >{{ result }}</pre
       >
     </section>
-
-    <!-- Full Stats -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
     >
@@ -91,8 +87,6 @@
         <p v-else class="text-gray-400">No stats loaded yet.</p>
       </div>
     </section>
-
-    <!-- Auth / Session -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
     >
@@ -136,8 +130,6 @@
         >{{ sessionRaw }}</pre
       >
     </section>
-
-    <!-- Settings & Branding -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
     >
@@ -200,8 +192,6 @@
         </div>
       </div>
     </section>
-
-    <!-- RLS Probe -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
     >
@@ -224,8 +214,6 @@
         >{{ rlsResult }}</pre
       >
     </section>
-
-    <!-- Latency -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
     >
@@ -244,8 +232,6 @@
         }}</span>
       </div>
     </section>
-
-    <!-- Local Storage -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
     >
@@ -272,8 +258,6 @@
         >{{ localStorageDump }}</pre
       >
     </section>
-
-    <!-- Dev Tools -->
     <section
       class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
     >
@@ -369,8 +353,8 @@
 import { supabase } from "@/services/supabase";
 import { ref } from "vue";
 import { fetchBranding } from "@/stores/brandingStore";
+import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
 
-// Dev tools
 const devResult = ref("");
 
 function setDevResult(obj) {
@@ -397,7 +381,6 @@ async function seedCategories() {
       { name: "Tutorials", slug: "tutorials" },
       { name: "Guides", slug: "guides" },
     ];
-    // perform a bulk upsert and request the rows back with .select()
     const { data, error } = await supabase
       .from("categories")
       .upsert(defaults, { onConflict: ["slug"] })
@@ -417,7 +400,6 @@ async function createDummyPost() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
-    // ensure we include the currently authenticated user as author
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -446,7 +428,6 @@ async function createDummyPost() {
   }
 }
 
-// --- Performance tests ---
 function msStats(arr) {
   if (!arr || !arr.length) return null;
   const sorted = [...arr].sort((a, b) => a - b);
@@ -485,7 +466,6 @@ async function latencyDistribution() {
       }
       const t1 = performance.now();
       times.push(Math.round(t1 - t0));
-      // small backoff
       await new Promise((r) => setTimeout(r, 100));
     }
     setDevResult({
@@ -535,7 +515,6 @@ async function concurrencyBenchmark() {
         if (r.status === "fulfilled" && r.value?.data) created++;
         else failed++;
       }
-      // brief pause
       await new Promise((r) => setTimeout(r, 150));
     }
     const dur = Math.round(performance.now() - start);
@@ -554,7 +533,6 @@ async function concurrencyBenchmark() {
 async function e2eRenderTime() {
   setDevResult("Measuring end-to-end render time for PostDetail...");
   try {
-    // pick the most recent post slug
     const { data: posts, error: pErr } = await supabase
       .from("posts")
       .select("slug")
@@ -564,7 +542,7 @@ async function e2eRenderTime() {
     const slug = posts?.[0]?.slug;
     if (!slug) return setDevResult("No posts available to test");
 
-    const url = window.location.origin + "/posts/" + slug; // URL of the opened page
+    const url = getBrowserOrigin() + "/posts/" + slug;
     const w = window.open(url, "_blank");
     if (!w) return setDevResult("Popup blocked; allow popups for this site");
 
@@ -595,7 +573,6 @@ async function e2eRenderTime() {
         return;
       }
       try {
-        // try same-origin DOM access to detect when the article exists
         const doc = w.document;
         if (!doc) return;
         const article =
@@ -609,7 +586,6 @@ async function e2eRenderTime() {
           stop({ url, render_ms: renderMs, elapsed_ms: roundTrip });
         }
       } catch (e) {
-        // cross-origin access blocked
         clearInterval(poll);
         stop({
           url,
@@ -679,8 +655,6 @@ async function unarchiveLatest() {
 async function listTestPosts() {
   setDevResult("Listing...");
   try {
-    // show last 20 posts that include 'Test Post' in title
-    // include both legacy 'Test Post' and perf-created 'Perf Test'
     const { data, error } = await supabase
       .from("posts")
       .select("id,title,slug,status,created_at")
@@ -703,7 +677,6 @@ async function deleteTestPosts() {
     return;
   setDevResult("Deleting...");
   try {
-    // delete and return deleted rows so we can report how many were removed
     const { data, error } = await supabase
       .from("posts")
       .delete()
@@ -719,35 +692,28 @@ async function deleteTestPosts() {
   }
 }
 
-// Storage
 const bucketName = ref("");
 const loading = ref(false);
 const result = ref("");
 const errorMsg = ref("");
 const action = ref("");
 
-// Session
 const sessionUser = ref(null);
 const sessionRaw = ref("");
 const sessionExpiry = ref("");
 const profileRole = ref("");
 
-// Settings / branding
 const settingsRaw = ref("");
 const settingsMap = ref({});
 const brandingRaw = ref("");
 
-// RLS
 const rlsTables = ["settings", "profiles", "posts", "comments"];
 const rlsResult = ref("");
 
-// Latency
 const latencyMs = ref(null);
 
-// Local storage
 const localStorageDump = ref("");
 
-// Full stats
 const statsLoading = ref(false);
 const statsResult = ref("");
 const statsRls = ref(false);
@@ -759,7 +725,6 @@ async function loadFullStats() {
   statsRls.value = false;
   statsRlsMsg.value = "";
   try {
-    // helper to detect RLS/permission style errors
     function isRlsError(e) {
       if (!e) return false;
       const status = e?.status || e?.statusCode || null;
@@ -770,11 +735,9 @@ async function loadFullStats() {
       return /permission|forbidden|row-level|rls|not authorized|insufficient/.test(msg);
     }
 
-    // guarded count helper: returns numeric count or null and sets RLS flags
     async function guardedCount(buildFn) {
       try {
         let q = supabase.from("posts");
-        // buildFn receives a fresh query builder; it should return a query
         const resp = await buildFn(supabase);
         if (resp?.error) throw resp.error;
         return resp?.count ?? null;
@@ -788,7 +751,6 @@ async function loadFullStats() {
       }
     }
 
-    // build queries using guardedCount to capture permission errors without aborting
     const total = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }));
     const published = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "published"));
     const drafts = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"));
@@ -804,7 +766,6 @@ async function loadFullStats() {
     const commentsApproved = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).eq("approved", true));
     const commentsPending = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).or("approved.eq.false,approved.is.null"));
 
-    // storage buckets (best-effort)
     let buckets = null;
     try {
       const list = await supabase.storage.listBuckets();
@@ -872,7 +833,7 @@ function siteTitleDisplay() {
 }
 
 function siteOriginDisplay() {
-  return settingsMap.value["site_origin"] || window.location.origin || "—";
+  return settingsMap.value["site_origin"] || getBrowserOrigin() || "—";
 }
 
 function installationDisplay() {
@@ -947,7 +908,6 @@ async function loadSettings() {
     const { data, error } = await supabase.from("settings").select("key,value");
     if (error) throw error;
     settingsRaw.value = JSON.stringify(data, null, 2);
-    // build a map for common keys
     const map = {};
     for (const row of data || []) {
       try {

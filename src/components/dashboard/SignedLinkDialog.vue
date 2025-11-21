@@ -140,7 +140,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["generate", "cancel", "close"]);
 
-const MAX_SECONDS = 43200; // 12 hours
+const MAX_SECONDS = 43200;
 const secondsInput = ref(String(Math.min(props.defaultSeconds, MAX_SECONDS)));
 const error = ref("");
 const generatedUrl = ref("");

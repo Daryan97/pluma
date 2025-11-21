@@ -9,15 +9,12 @@ const featuresEnabled = ref({
   search: true,
 });
 
-// List of all supported auth providers
 export const ALL_PROVIDERS = [
   'apple', 'azure', 'bitbucket', 'discord', 'facebook', 'figma', 'github', 'gitlab', 'google', 'kakao', 'keycloak', 'linkedin_oidc', 'notion', 'twitch', 'twitter', 'slack_oidc', 'spotify', 'workos', 'zoom'
 ];
 
-// Reactive map of enabled providers
 const providersEnabled = ref({});
 
-// Centralized provider metadata (label, icon, colors)
 const PROVIDER_META = {
   apple: { label: 'Apple', icon: 'logos:apple', bg: '#ececef', border: '#e5e7eb' },
   azure: { label: 'Azure', icon: 'logos:microsoft-azure', bg: '#e0efff', border: '#cfe3ff' },
@@ -58,7 +55,6 @@ function providerGlyphColor(key) {
 
 
 export async function fetchSettings() {
-  // Fetch homepage features
   const { data: featuresData, error: featuresError } = await supabase
     .from('settings')
     .select('value')
@@ -75,29 +71,23 @@ export async function fetchSettings() {
     featuresEnabled.value = { welcome: true, siteName: true, siteDescription: true, search: true };
   }
 
-  // Fetch enabled providers
   const { data: provData, error: provError } = await supabase
     .from('settings')
     .select('value')
     .eq('key', 'auth_providers_enabled')
     .maybeSingle();
   if (!provError && provData && provData.value && typeof provData.value === 'object') {
-    // Ensure all providers are present in the object
     providersEnabled.value = {};
     for (const p of ALL_PROVIDERS) {
-      // Default to disabled unless explicitly true in DB
       providersEnabled.value[p] = provData.value[p] === true;
     }
   } else {
-    // Default: all providers disabled when missing/empty in DB
     providersEnabled.value = {};
     for (const p of ALL_PROVIDERS) providersEnabled.value[p] = false;
   }
 }
 
-// Save enabled providers to Supabase
 export async function saveProvidersEnabled(newProviders) {
-  // newProviders: { provider: boolean, ... }
   await supabase.from('settings').upsert([
     { key: 'auth_providers_enabled', value: newProviders }
   ], { onConflict: 'key' });
@@ -110,7 +100,6 @@ export function useSettings() {
     providersEnabled,
     ALL_PROVIDERS,
     saveProvidersEnabled,
-    // provider helpers
     providerLabel,
     providerIcon,
     brandBg,

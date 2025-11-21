@@ -200,11 +200,9 @@ watch(featuresEnabled, (val) => {
 
 async function save() {
   error.value = "";
-  // Save stats
   const { error: statsErr } = await supabase
     .from("settings")
     .upsert({ key: "stats_home_enabled", value: localEnabled.value });
-  // Save features
   const { error: featuresErr } = await supabase
     .from("settings")
     .upsert({ key: "features_home_enabled", value: localFeatures.value });

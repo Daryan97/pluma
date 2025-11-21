@@ -10,7 +10,6 @@
 
     <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
       <form @submit.prevent="handleSignup" class="space-y-5" novalidate>
-        <!-- Email -->
         <div>
           <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             <Icon icon="mdi:email-outline" class="text-base text-blue-500" />
@@ -27,8 +26,6 @@
             />
           </div>
         </div>
-
-        <!-- Password -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -58,8 +55,6 @@
             <span :class="['font-medium', passwordStrength.textClass]">{{ passwordStrength.label }}</span>
           </div>
         </div>
-
-        <!-- Username -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -82,8 +77,6 @@
             <div v-if="usernameError" class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ usernameError }}</div>
           </div>
         </div>
-
-        <!-- Display Name -->
         <div>
           <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             <Icon icon="mdi:card-account-details-outline" class="text-base text-blue-500" />
@@ -98,8 +91,6 @@
               required
             />
         </div>
-
-        <!-- Submit -->
         <button
           type="submit"
           :disabled="submitting || usernameError || !email || !password || !username || !displayName || passwordStrength.percent < 25"

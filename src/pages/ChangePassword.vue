@@ -1,6 +1,5 @@
 <template>
   <div v-if="authenticated" class="max-w-md mx-auto mt-14 mb-20">
-    <!-- Heading -->
     <div class="mb-8 text-center">
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4">
         <Icon icon="mdi:lock-reset" class="text-3xl" />
@@ -8,11 +7,8 @@
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Change password</h1>
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Enter a new password for your account.</p>
     </div>
-
-    <!-- Card -->
     <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
       <form @submit.prevent="handleReset" class="space-y-5" novalidate>
-        <!-- Password -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">

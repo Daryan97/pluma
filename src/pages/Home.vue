@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen">
-    <!-- Hero -->
     <section class="relative overflow-hidden">
       <div
         class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"
@@ -16,7 +15,6 @@
       >
         <div class="flex flex-col items-center text-center gap-8">
           <div class="space-y-5 max-w-3xl">
-            <!-- Welcome/Latest Post -->
             <div v-if="showWelcome">
               <button
                 v-if="latestPost"
@@ -41,14 +39,12 @@
                 <Icon icon="mdi:lightning-bolt" class="text-base" /> Welcome
               </span>
             </div>
-            <!-- SiteName -->
             <h1
               v-if="showSiteName"
               class="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white"
             >
               {{ projectInfo.name }}
             </h1>
-            <!-- Site Description -->
             <p
               v-if="showSiteDescription"
               class="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed"
@@ -59,7 +55,6 @@
               }}
             </p>
           </div>
-          <!-- Search Trigger (non-editable) -->
           <div v-if="showSearch" class="w-full max-w-xl">
             <div
               role="button"
@@ -90,7 +85,6 @@
               </span>
             </div>
           </div>
-          <!-- Quick Stats -->
           <div
             class="max-w-2xl w-full pt-4"
             v-if="statsLoaded && enabledStats.length > 0"
@@ -111,8 +105,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Categories -->
     <section
       class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20"
       v-if="categoriesLoaded && categories.length"
@@ -143,8 +135,6 @@
         </button>
       </div>
     </section>
-
-    <!-- Feed -->
     <main class="relative -mt-4">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <h2 class="sr-only">Latest Posts</h2>
@@ -172,7 +162,6 @@ function openGlobalSearch() {
   window.dispatchEvent(evt);
 }
 
-// Categories
 const categories = ref([]);
 const categoriesLoaded = ref(false);
 const categoryActive = ref("all");
@@ -201,7 +190,6 @@ function goToCategory(slug) {
   router.push(`/category/${slug}`);
 }
 
-// Quick stats (counts) - dynamic based on settings
 const stats = ref([
   { key: "posts", label: "Posts", value: "—" },
   { key: "categories", label: "Categories", value: "—" },
@@ -247,7 +235,6 @@ onMounted(() => {
   fetchSettings();
 });
 
-// Latest post pill
 const latestPost = ref(null);
 async function fetchLatestPost() {
   const { data, error } = await supabase
@@ -267,7 +254,6 @@ function openLatestPost() {
   }
 }
 
-// Add computed for enabled features
 const showWelcome = computed(() => featuresEnabled.value.welcome !== false);
 const showSiteName = computed(() => featuresEnabled.value.siteName !== false);
 const showSiteDescription = computed(() => featuresEnabled.value.siteDescription !== false);

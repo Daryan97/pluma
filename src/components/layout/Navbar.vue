@@ -2,15 +2,12 @@
   <nav
     class="relative border-b border-gray-200 dark:border-gray-800 overflow-hidden"
   >
-    <!-- Base gradient -->
     <div
       class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"
     ></div>
-    <!-- Light tint / blur overlay (lighter in light mode for visibility) -->
     <div
       class="absolute inset-0 -z-10 bg-white/35 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"
     ></div>
-    <!-- Decorative subtle blobs (light mode only) -->
     <div
       class="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-200/40 blur-2xl mix-blend-multiply dark:hidden"
     ></div>
@@ -18,7 +15,6 @@
       class="pointer-events-none absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl mix-blend-multiply dark:hidden"
     ></div>
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <!-- Logo -->
       <div class="flex items-center gap-2">
         <router-link to="/" class="block max-h-10">
           <img
@@ -50,8 +46,6 @@
           >
         </router-link>
       </div>
-
-      <!-- Desktop Links -->
       <div
         class="hidden md:flex items-center gap-2 text-gray-700 dark:text-gray-300"
         id="nav-links"
@@ -74,10 +68,7 @@
           Dashboard
         </router-link>
       </div>
-
-      <!-- Right Section -->
       <div class="hidden md:flex items-center gap-3 relative">
-        <!-- Search Icon with Hint -->
         <button
           @click="showSearch = true"
           class="nav-pill bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
@@ -94,11 +85,7 @@
             to search
           </span>
         </button>
-
-        <!-- User Dropdown -->
         <UserDropdown :user="user" :avatar-url="avatar_url" />
-
-        <!-- Theme Toggle -->
         <button
           @click="theme.toggleTheme()"
           class="nav-pill gap-1 bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
@@ -118,8 +105,6 @@
           />
         </button>
       </div>
-
-      <!-- Mobile Menu Toggle -->
       <button
         class="md:hidden flex items-center text-gray-700 dark:text-gray-300"
         @click="mobileMenuOpen = !mobileMenuOpen"
@@ -127,13 +112,10 @@
         <Icon icon="mdi:menu" class="text-2xl" />
       </button>
     </div>
-
-    <!-- Mobile Menu -->
     <div
       v-if="mobileMenuOpen"
       class="mobile-menu md:hidden border-t border-gray-200 dark:border-gray-700 px-4 py-4 space-y-4 text-gray-700 dark:text-gray-300 bg-white/90 dark:bg-gray-900/80 backdrop-blur-sm"
     >
-      <!-- User / Guest Summary -->
       <div
         class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 backdrop-blur shadow-sm"
       >
@@ -194,8 +176,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Navigation Links -->
       <div class="flex flex-col gap-3">
         <router-link
           to="/"
@@ -211,8 +191,6 @@
           />
           <span class="text-gray-700 dark:text-gray-300"> Home </span>
         </router-link>
-
-        <!-- Categories Dropdown (Mobile) -->
         <div class="relative">
           <button
             @click="mobileCategoriesOpen = !mobileCategoriesOpen"
@@ -282,8 +260,6 @@
           <span class="text-gray-700 dark:text-gray-300"> Dashboard </span>
         </router-link>
       </div>
-
-      <!-- Utilities -->
       <div
         class="flex flex-col gap-3 border-t pt-4 border-gray-200 dark:border-gray-700"
       >
@@ -362,7 +338,6 @@ async function getCategories() {
     .from("categories")
     .select("id, name, slug");
   if (error) {
-    toast.error("Error fetching categories");
     categories.value = [];
   } else {
     categories.value = categoriesData.map((cat) => ({

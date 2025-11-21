@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen">
-    <!-- Hero -->
     <section class="relative overflow-hidden">
       <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div>
       <div class="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-3xl"></div>
@@ -28,8 +27,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Category Pills Navigation (Archive) -->
     <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
         <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
@@ -40,8 +37,6 @@
         </button>
       </div>
     </section>
-
-    <!-- Feed -->
     <main class="relative -mt-4">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <h2 class="sr-only">Archived Category Posts</h2>
@@ -106,7 +101,6 @@ function onImageError(id){ imageErrorMap.value = { ...imageErrorMap.value, [id]:
 const isUncategorized = computed(() => slug === 'uncategorized')
 const displayName = computed(() => isUncategorized.value ? 'Uncategorized' : (category.value?.name || slug))
 
-// pills
 const categories = ref([])
 const categoriesLoaded = ref(false)
 const categoryActive = ref(slug || 'all')

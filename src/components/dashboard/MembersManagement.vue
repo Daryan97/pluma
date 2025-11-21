@@ -40,7 +40,6 @@
         Loading members...
       </div>
       <div v-else class="rounded-b-2xl">
-        <!-- Responsive scroll wrapper -->
         <div class="overflow-x-auto -mx-4 sm:mx-0">
           <table
             class="min-w-[780px] w-full text-left text-sm text-gray-800 dark:text-gray-100 border-separate border-spacing-0"

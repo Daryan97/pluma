@@ -1,13 +1,14 @@
 <template>
   <div class="max-w-5xl mx-auto">
-    <!-- Empty & Loading States -->
     <div v-if="posts.length === 0 && loading" class="space-y-10">
       <div
         v-for="n in 3"
         :key="n"
         class="animate-pulse bg-white/90 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/60 rounded-2xl overflow-hidden shadow-sm backdrop-blur-sm"
       >
-        <div class="h-56 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700"></div>
+        <div
+          class="h-56 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700"
+        ></div>
         <div class="p-6 space-y-5">
           <div class="h-5 w-2/3 bg-gray-200 dark:bg-gray-600 rounded"></div>
           <div class="flex gap-3">
@@ -29,22 +30,24 @@
       v-if="posts.length === 0 && !loading"
       class="relative text-center py-24 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700/70 bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm"
     >
-      <div class="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950 opacity-60"></div>
+      <div
+        class="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950 opacity-60"
+      ></div>
       <Icon
         icon="mdi:note-remove"
         class="block mx-auto text-5xl text-gray-400 dark:text-gray-500 mb-4"
       />
-      <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">No posts found.</p>
+      <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+        No posts found.
+      </p>
     </div>
 
-    <!-- Posts List -->
     <div class="space-y-12">
       <article
         v-for="post in posts"
         :key="post.id"
         class="group relative bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
       >
-        <!-- Media -->
         <router-link :to="`/posts/${post.slug}`" class="block group">
           <div
             class="relative w-full aspect-[16/8] md:aspect-[16/6] overflow-hidden bg-gray-100 dark:bg-gray-700"
@@ -62,12 +65,13 @@
             <div v-else class="flex items-center justify-center h-full">
               <NoImage />
             </div>
-            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-gray-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            />
           </div>
         </router-link>
 
-        <!-- Content -->
-  <div class="p-6 md:p-8">
+        <div class="p-6 md:p-8">
           <div
             class="flex flex-wrap items-center gap-3 text-[11px] font-medium mb-4"
           >
@@ -122,10 +126,8 @@
       </article>
     </div>
 
-    <!-- Intersection trigger -->
     <div ref="loadMoreTrigger" class="h-12"></div>
 
-    <!-- Loading more indicator -->
     <div v-if="loading && posts.length > 0" class="flex justify-center py-8">
       <Icon icon="mdi:loading" class="animate-spin text-blue-500" width="32" />
     </div>

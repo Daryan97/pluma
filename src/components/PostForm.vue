@@ -1,4 +1,3 @@
-<!-- components/PostForm.vue -->
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10 pb-28 lg:pb-10">
     <div class="mb-6 flex items-center gap-3">
@@ -22,7 +21,6 @@
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
-      <!-- Main Column -->
       <div class="flex-1 space-y-6">
         <header class="flex items-center gap-3 flex-wrap">
           <div
@@ -53,7 +51,6 @@
         </header>
 
         <form id="postForm" @submit.prevent="handleSubmit" class="space-y-8">
-          <!-- Title & Slug Card -->
           <section
             class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5"
           >
@@ -141,7 +138,6 @@
             </div>
           </section>
 
-          <!-- Content Card -->
           <section
             class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-4"
           >
@@ -169,7 +165,6 @@
             </div>
           </section>
 
-          <!-- Tags Card (mobile/stacked visible) -->
           <section
             class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3 lg:hidden"
           >
@@ -210,14 +205,11 @@
             </p>
           </section>
 
-          <!-- Mobile spacer (actions moved to fixed bar) -->
           <div class="lg:hidden"></div>
         </form>
       </div>
 
-      <!-- Sidebar -->
       <aside class="w-full lg:w-80 space-y-6 lg:sticky lg:top-6 self-start">
-        <!-- Status / Category Card -->
         <section
           class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm space-y-5"
         >
@@ -226,7 +218,6 @@
           >
             Publishing
           </h2>
-          <!-- Author (editable for admins) -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -366,7 +357,6 @@
               <span class="truncate">{{ authorDisplay || "—" }}</span>
             </div>
           </div>
-          <!-- Status -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -417,7 +407,6 @@
             </SelectRoot>
           </div>
 
-          <!-- Category -->
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -479,7 +468,6 @@
             </SelectRoot>
           </div>
 
-          <!-- Tags (desktop) -->
           <div class="hidden lg:block space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
@@ -519,7 +507,6 @@
           </div>
         </section>
 
-        <!-- Thumbnail Card -->
         <section
           class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm space-y-5"
         >
@@ -664,7 +651,6 @@
           </div>
         </section>
 
-        <!-- Options & Actions -->
         <section
           class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm space-y-5"
         >
@@ -759,7 +745,6 @@
       </aside>
     </div>
   </div>
-  <!-- Fixed Mobile Action Bar -->
   <div class="fixed inset-x-0 bottom-0 z-40 lg:hidden">
     <div
       class="mx-auto max-w-7xl px-4 pt-3 pb-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-t border-gray-200 dark:border-gray-700 shadow-lg"
@@ -838,7 +823,6 @@ const props = defineProps({
   postId: String,
 });
 
-// Local reactive state to allow switching from create -> edit in-place
 const currentMode = ref(props.mode);
 const currentPostId = ref(props.postId || null);
 
@@ -1002,7 +986,7 @@ async function isSlugTaken(testSlug) {
     .eq("slug", testSlug)
     .limit(1);
   if (currentMode.value === "edit" && currentPostId.value) {
-    // Handled below when comparing IDs
+    query.neq("id", currentPostId.value);
   }
   const { data, error, count } = await query;
   if (error) return false;
@@ -1308,12 +1292,10 @@ const handleSubmit = async () => {
         .single();
       if (error) throw new Error(error.message);
       toast.success("Post created!");
-      // Switch to edit mode in-place
       currentMode.value = "edit";
       currentPostId.value = inserted.id;
       originalStatus.value = inserted.status || effectiveStatus;
       status.value = inserted.status || effectiveStatus;
-      // Update URL to edit route without full reload
       router.replace({ name: 'EditPost', params: { id: inserted.id } });
     } else {
       if (canChangeAuthor.value && authorId.value) {
@@ -1400,12 +1382,10 @@ const handleSaveDraft = async () => {
         .single();
       if (error) throw new Error(error.message);
       toast.success("Draft saved");
-      // Switch to edit mode in-place
       currentMode.value = "edit";
       currentPostId.value = inserted.id;
       originalStatus.value = inserted.status || "draft";
       status.value = inserted.status || "draft";
-      // Update URL to edit route without full reload
       router.replace({ name: 'EditPost', params: { id: inserted.id } });
     } else {
       if (canChangeAuthor.value && authorId.value) {

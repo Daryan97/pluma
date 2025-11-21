@@ -20,7 +20,6 @@
       class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
     >
       <form @submit.prevent="login" class="space-y-5" novalidate>
-        <!-- Email -->
         <div>
           <label
             class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -37,8 +36,6 @@
             required
           />
         </div>
-
-        <!-- Password -->
         <div>
           <div class="flex items-center justify-between mb-1">
             <label
@@ -79,8 +76,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Primary Login -->
         <button
           type="submit"
           class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50 disabled:pointer-events-none"
@@ -90,8 +85,6 @@
           <Icon v-else icon="mdi:login" class="text-lg" />
           <span>{{ loginLoading ? "Logging in..." : "Login" }}</span>
         </button>
-
-        <!-- Magic Link -->
         <button
           type="button"
           class="w-full inline-flex items-center justify-center gap-2 h-11 px-6 rounded-md text-sm font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:pointer-events-none"
@@ -108,10 +101,7 @@
             magicLinkLoading ? "Sending link..." : "Send Magic Link"
           }}</span>
         </button>
-
-        <!-- OAuth Providers -->
         <div v-if="enabledProviders.length > 0" class="space-y-4">
-          <!-- Divider -->
           <div class="relative">
             <div class="absolute inset-0 flex items-center" aria-hidden="true">
               <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
@@ -120,8 +110,6 @@
               <span class="bg-white dark:bg-gray-800 px-3 text-[11px] font-medium text-gray-500 dark:text-gray-400">Or continue with</span>
             </div>
           </div>
-
-          <!-- Full buttons when 3 or fewer providers -->
           <div v-if="!smallGridMode" class="grid gap-2 text-black">
             <button
               v-for="provider in enabledProviders"
@@ -137,8 +125,6 @@
               <span>{{ providerLabel(provider) }}</span>
             </button>
           </div>
-
-          <!-- Compact centered icon grid when more than 3 providers -->
           <div v-else class="flex flex-wrap justify-center gap-2">
             <button
               v-for="provider in visibleProviders"
@@ -155,8 +141,6 @@
               <span class="sr-only">{{ providerLabel(provider) }}</span>
             </button>
           </div>
-
-          <!-- Expand/Collapse only for compact grid -->
           <div v-if="smallGridMode && hasOverflow" class="flex justify-center">
             <button
               type="button"
@@ -190,6 +174,7 @@ import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import { useToast } from "vue-toastification";
 import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
+import { getBrowserOrigin } from "@/lib/utils";
 
 const email = ref("");
 const password = ref("");
@@ -202,13 +187,11 @@ const forgotLoading = ref(false);
 const toast = useToast();
 const router = useRouter();
 
-// Provider settings from store
 const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
 const enabledProviders = computed(() =>
   ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
 );
 
-// Layout + collapsible logic
 const COLLAPSED_COUNT = 6;
 const expanded = ref(false);
 const smallGridMode = computed(() => enabledProviders.value.length > 3);
@@ -226,7 +209,7 @@ onMounted(async () => {
 async function signInWithProvider(provider) {
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo: `${window.location.origin}` },
+    options: { redirectTo: getBrowserOrigin() },
   });
   if (error) toast.error(error.message);
 }
@@ -238,7 +221,7 @@ const forgotPassword = async () => {
   }
   forgotLoading.value = true;
   const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
-    redirectTo: `${location.origin}/change-password`,
+    redirectTo: `${getBrowserOrigin()}/change-password`,
   });
   forgotLoading.value = false;
   if (error) {
@@ -256,13 +239,41 @@ const sendMagicLink = async () => {
   magicLinkLoading.value = true;
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
-    options: { shouldCreateUser: true, emailRedirectTo: `${location.origin}/` },
+    options: { shouldCreateUser: true, emailRedirectTo: getBrowserOrigin() },
   });
   magicLinkLoading.value = false;
   if (error) {
     toast.error(error.message);
   } else {
     toast.success("Magic link sent! Check your email.");
+  }
+};
+
+const login = async () => {
+  if (!email.value || !password.value) {
+    toast.warning("Please enter both email and password.");
+    return;
+  }
+  
+  loginLoading.value = true;
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
+    });
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Welcome back!");
+      router.push("/dashboard");
+    }
+  } catch (err) {
+    toast.error("An unexpected error occurred.");
+    console.error("Login error:", err);
+  } finally {
+    loginLoading.value = false;
   }
 };
 </script>

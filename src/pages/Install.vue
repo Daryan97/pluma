@@ -17,7 +17,6 @@
         </p>
       </div>
     </header>
-    <!-- Stepper Navigation (restored) -->
     <nav
       class="flex flex-wrap justify-center gap-4 mb-6 pt-1"
       aria-label="Setup Progress"
@@ -56,7 +55,6 @@
         </span>
       </button>
     </nav>
-    <!-- STEP 1: Run SQL Migration & Provision Buckets -->
     <section
       v-if="activeStep === 1"
       class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6"
@@ -115,8 +113,6 @@
         </div>
       </div>
     </section>
-
-    <!-- STEP 2: Verify Schema & Storage -->
     <section
       v-else-if="activeStep === 2"
       class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6"
@@ -365,7 +361,6 @@
         </div>
       </div>
     </section>
-    <!-- STEP 3: Site Branding (moved after verification) -->
     <section
       v-else-if="activeStep === 3"
       class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6"
@@ -439,7 +434,6 @@
         </div>
       </div>
     </section>
-    <!-- STEP 4: Create Admin (mirrors Signup styling) -->
     <section
       v-else-if="activeStep === 4"
       class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-8"
@@ -463,7 +457,6 @@
       </div>
       <template v-if="!adminExists">
         <form @submit.prevent="createAdmin" class="space-y-6" novalidate>
-          <!-- Email -->
           <div>
             <label
               class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -480,7 +473,6 @@
               required
             />
           </div>
-          <!-- Password -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label
@@ -531,7 +523,6 @@
               }}</span>
             </div>
           </div>
-          <!-- Username -->
           <div>
             <div class="flex items-center justify-between mb-1">
               <label
@@ -568,7 +559,6 @@
               {{ usernameError }}
             </div>
           </div>
-          <!-- Display Name -->
           <div>
             <label
               class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
@@ -588,7 +578,6 @@
               required
             />
           </div>
-          <!-- Actions -->
           <div class="flex items-center gap-3">
             <button
               type="button"
@@ -916,7 +905,6 @@ async function verifyEnvironment() {
                 continue;
               }
             } catch {
-              /* ignore */
             }
           }
           b.status = "fail";
@@ -1086,10 +1074,6 @@ async function createAdmin() {
   }
 }
 
-/**
- * Attempts to mark installation complete. Returns true on success or if already complete.
- * When silent=true, suppress success toast.
- */
 async function markInstallationComplete(silent = false): Promise<boolean> {
   if (!tempClient) return false;
   try {

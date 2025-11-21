@@ -181,5 +181,3 @@ const logout = async () => {
   window.location.href = "/";
 };
 </script>
-
-<!-- Global .menu-item styles are defined in styles/index.css -->

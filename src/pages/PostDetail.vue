@@ -1,17 +1,12 @@
 <template>
   <div class="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10">
-    <!-- Loading Spinner -->
     <div v-if="loading" class="flex justify-center items-center py-32">
       <div class="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
     </div>
-
-    <!-- Not Found -->
     <div v-else-if="!post" class="text-center py-32">
       <Icon icon="mdi:alert-circle-outline" class="text-5xl text-gray-300 dark:text-gray-600 mb-6" />
       <p class="text-sm text-gray-500 dark:text-gray-400">Post not found. Please check the URL.</p>
     </div>
-
-    <!-- Post Content -->
     <div v-else>
       <Post :post="post" :user="user" />
       <div class="mt-14">
@@ -112,7 +107,6 @@ async function fetchPost() {
     post.value = null;
   } else {
     post.value = data;
-  // Expose for router afterEach JSON-LD (non-reactive assignment)
   window.__PLUMA_CURRENT_POST = data;
   }
 

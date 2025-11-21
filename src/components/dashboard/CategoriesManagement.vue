@@ -9,13 +9,11 @@
     </button>
 
     <Dialog :open="isOpen" @close="() => (isOpen = false)" class="relative z-50">
-      <!-- Overlay -->
       <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" />
       <div class="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel
           class="w-full max-w-sm sm:max-w-md overflow-auto rounded-2xl bg-white dark:bg-gray-800 p-4 sm:p-6 text-left shadow-xl"
         >
-          <!-- Header -->
           <div class="flex items-center justify-between mb-4">
             <DialogTitle class="text-lg font-semibold text-gray-900 dark:text-gray-100">
               <Icon
@@ -32,7 +30,6 @@
             </button>
           </div>
 
-          <!-- Add Category -->
           <div class="flex flex-col sm:flex-row gap-2 mb-4">
             <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-green-500 transition">
               <Icon icon="mdi:format-list-bulleted" class="ml-3 text-gray-500 dark:text-gray-400 text-base" />
@@ -52,7 +49,6 @@
             </button>
           </div>
 
-          <!-- Search Categories -->
           <div class="mb-4 relative">
             <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition">
               <Icon icon="mdi:magnify" class="ml-3 text-gray-500 dark:text-gray-400 text-base" />
@@ -64,7 +60,6 @@
             </div>
           </div>
 
-          <!-- List Categories -->
           <ul
             class="divide-y divide-gray-200 dark:divide-gray-700 max-h-60 overflow-y-auto"
           >
@@ -73,7 +68,6 @@
               :key="cat.id"
               class="flex items-center justify-between py-2"
             >
-              <!-- Category Name / Edit Input -->
               <div class="flex-1 pr-2">
                 <template v-if="editingId === cat.id">
                   <input
@@ -86,7 +80,6 @@
                   <span class="text-gray-900 dark:text-gray-100">{{ cat.name }}</span>
                 </template>
               </div>
-              <!-- Actions -->
               <div class="flex flex-col sm:flex-row gap-2">
                 <template v-if="editingId === cat.id">
                   <button
@@ -124,7 +117,6 @@
             </li>
           </ul>
 
-          <!-- Footer -->
           <div class="mt-4 text-right">
             <button
               @click="isOpen = false"

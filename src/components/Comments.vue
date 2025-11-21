@@ -17,9 +17,7 @@
       </span>
     </h3>
 
-    <!-- Controls: Filter (moderators) & Sort (everyone) -->
     <div class="flex flex-wrap items-center gap-4 mb-4 text-sm">
-      <!-- Moderator Filter Select -->
       <div v-if="canModerate" class="flex flex-col gap-1">
         <span
           class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
@@ -93,7 +91,6 @@
         </SelectRoot>
       </div>
 
-      <!-- Sort Order Select -->
       <div class="flex flex-col gap-1">
         <span
           class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
@@ -157,7 +154,6 @@
       </div>
     </div>
 
-    <!-- New Comment Form (authenticated users only) -->
     <div v-if="sessionUser" class="mb-8">
       <form @submit.prevent="submitComment" class="space-y-3">
         <div class="relative group">
@@ -251,7 +247,6 @@
       to comment.
     </div>
 
-    <!-- Comments List -->
     <div v-if="loading" class="flex justify-center py-10">
       <Icon icon="mdi:loading" class="animate-spin text-blue-500" />
     </div>
@@ -732,7 +727,6 @@ function clearComment() {
 .comment-content {
   overflow-wrap: anywhere;
   word-break: break-word;
-  /* Ensure very long uninterrupted strings still wrap */
   max-width: 100%;
 }
 </style>

@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen">
-    <!-- Hero -->
     <section class="relative overflow-hidden">
       <div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div>
       <div class="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-3xl"></div>
@@ -11,7 +10,6 @@
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white">Archive</h1>
             <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed">Browse all archived posts by category or date.</p>
           </div>
-          <!-- Search Trigger (non-editable) -->
           <div v-if="showSearch" class="w-full max-w-xl">
             <div
               role="button"
@@ -33,8 +31,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Category Pills (Archive routes) -->
     <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
         <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
@@ -46,13 +42,9 @@
         </button>
       </div>
     </section>
-
-    <!-- Feed -->
     <main class="relative -mt-4">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <h2 class="sr-only">Archived Posts</h2>
-
-        <!-- Empty & Loading States -->
         <div v-if="posts.length === 0 && loading" class="space-y-10">
           <div v-for="n in 3" :key="n" class="animate-pulse bg-white/90 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/60 rounded-2xl overflow-hidden shadow-sm backdrop-blur-sm">
             <div class="h-56 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700"></div>
@@ -78,11 +70,8 @@
           <Icon icon="mdi:note-remove" class="block mx-auto text-5xl text-gray-400 dark:text-gray-500 mb-4" />
           <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">No archived posts found.</p>
         </div>
-
-        <!-- Posts List -->
         <div class="space-y-12">
           <article v-for="post in posts" :key="post.id" class="group relative bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-            <!-- Media -->
             <router-link :to="`/archive/post/${post.slug}`" class="block group">
               <div class="relative w-full aspect-[16/8] md:aspect-[16/6] overflow-hidden bg-gray-100 dark:bg-gray-700">
                 <img v-if="post.cover_image_url && !imageErrorMap[post.id]" :src="post.cover_image_url" :alt="post.title" class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-[1.05]" loading="lazy" draggable="false" @dragstart.prevent @error="onImageError(post.id)" />
@@ -92,8 +81,6 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-gray-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
             </router-link>
-
-            <!-- Content -->
             <div class="p-6 md:p-8">
               <div class="flex flex-wrap items-center gap-3 text-[11px] font-medium mb-4">
                 <router-link :to="`/archive/category/${post.category?.slug || 'uncategorized'}`" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50">
@@ -126,8 +113,6 @@
             </div>
           </article>
         </div>
-
-        <!-- Intersection trigger -->
         <div ref="loadMoreTrigger" class="h-12"></div>
         <div v-if="loading && posts.length > 0" class="flex justify-center py-8">
           <Icon icon="mdi:loading" class="animate-spin text-blue-500" width="32" />
@@ -150,12 +135,10 @@ import { useSettings, fetchSettings } from '@/stores/settingsStore'
 const router = useRouter()
 function openGlobalSearch(){ const evt = new CustomEvent('pluma:open-global-search', { detail: { query: '' } }); window.dispatchEvent(evt) }
 
-// Settings
 const { featuresEnabled } = useSettings();
 onMounted(() => { fetchSettings() })
 const showSearch = computed(() => featuresEnabled.value.search !== false)
 
-// Categories (for pills)
 const categories = ref([])
 const categoriesLoaded = ref(false)
 const categoryActive = ref('all')
@@ -169,7 +152,6 @@ async function loadCategories(){
 }
 function goToCategory(slug){ if(slug==='all'){ categoryActive.value='all'; router.push('/archive'); return } categoryActive.value = slug; router.push(`/archive/category/${slug}`) }
 
-// Posts list (archived)
 const posts = ref([])
 const imageErrorMap = ref({})
 function onImageError(id){ imageErrorMap.value = { ...imageErrorMap.value, [id]: true } }

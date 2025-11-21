@@ -54,7 +54,6 @@ table a {
   all: unset;
 }
 
-/* Light theme: show github.css */
 body[data-theme="light"] .hljs {
   all: revert;
 }
@@ -63,14 +62,12 @@ body[data-theme="dark"] .hljs {
   all: revert;
 }
 
-/* Ensure pre is the container */
 pre {
   @apply relative bg-white dark:bg-gray-900 p-2 pt-10 pb-10 rounded border border-gray-300 dark:border-gray-700 my-4 overflow-auto;
 }
 
-/* The actual scrollable code container */
 pre > .code-scroll {
-  @apply overflow-auto max-h-[500px]; /* customize max height */
+  @apply overflow-auto max-h-[500px];
 }
 
 .copy-btn,
@@ -167,7 +164,6 @@ kbd {
   @apply bg-gray-100 dark:bg-gray-800 p-1 rounded border border-gray-300 dark:border-gray-600;
 }
 
-/* Global dropdown menu item styling */
 .menu-item {
   @apply w-full px-3 py-2 rounded-md flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none outline-none transition;
 }

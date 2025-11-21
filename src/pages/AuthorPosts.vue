@@ -1,6 +1,5 @@
 <template>
   <div class="max-w-5xl mx-auto">
-    <!-- Header -->
     <div class="mt-10 mb-12 text-center" v-if="!loading && author">
       <div class="inline-flex flex-col items-center gap-4">
         <div class="relative">
@@ -34,12 +33,20 @@
             <span v-if="author.role" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 capitalize">
               <Icon icon="mdi:shield-account" class="text-sm" /> {{ author.role }}
             </span>
+            <a
+              v-if="rssHref"
+              :href="rssHref"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[11px] font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/50 transition"
+            >
+              <Icon icon="mdi:rss" class="text-sm" />
+              Follow RSS
+            </a>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Loading header skeleton -->
     <div v-if="loading" class="mt-10 mb-12 flex flex-col items-center animate-pulse">
       <div class="w-28 h-28 rounded-2xl bg-gray-200 dark:bg-gray-700 mb-4" />
       <div class="h-7 w-48 rounded bg-gray-200 dark:bg-gray-700 mb-3" />
@@ -48,14 +55,10 @@
         <div class="h-5 w-20 rounded bg-gray-200 dark:bg-gray-700" />
       </div>
     </div>
-
-    <!-- Not found state -->
     <div v-if="!loading && !author" class="text-center my-24">
       <Icon icon="mdi:account-off" class="text-5xl text-gray-400 mb-4" />
       <p class="text-sm text-gray-600 dark:text-gray-400">Author not found.</p>
     </div>
-
-    <!-- Global Search Trigger -->
     <div v-if="featuresEnabled.search && author" class="w-full max-w-xl mx-auto mb-8">
       <div
         role="button"
@@ -76,8 +79,6 @@
         </span>
       </div>
     </div>
-
-    <!-- Posts -->
     <PostLoader v-if="author" filterBy="author" :filterValue="$route.params.username" />
   </div>
 </template>
@@ -87,7 +88,7 @@
 import PostLoader from '@/components/PostLoader.vue'
 import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSettings } from '@/stores/settingsStore'
 const { featuresEnabled } = useSettings();
@@ -101,6 +102,12 @@ const route = useRoute()
 const author = ref(null)
 const loading = ref(false)
 const postCount = ref(null)
+const rssHref = computed(() => {
+  if (typeof window === 'undefined') return ''
+  const username = author.value?.username
+  if (!username) return ''
+  return `${window.location.origin}/rss.xml?author=${encodeURIComponent(username)}`
+})
 
 async function fetchAuthor() {
   loading.value = true

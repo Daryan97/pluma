@@ -95,7 +95,6 @@
                 :key="link.id"
                 class="group relative border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-900/30 flex flex-col gap-2"
               >
-                <!-- Top row: label + url become stacked on small screens -->
                 <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 items-center">
                   <input
                     v-model.trim="link.label"
@@ -110,7 +109,6 @@
                     class="h-9 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-3"
                   />
                 </div>
-                <!-- Second row: icon picker, icon field & actions wrap on very small screens -->
                 <div class="flex flex-wrap items-center gap-2 relative">
                   <button
                     type="button"
@@ -123,7 +121,6 @@
                       class="w-5 h-5"
                     />
                   </button>
-                  <!-- Teleported Icon Picker -->
                   <Teleport to="body">
                     <div
                       v-if="openIconIndex === i"
@@ -252,13 +249,12 @@ const toast = useToast();
 
 const siteName = ref("");
 const siteDescription = ref("");
-const links = ref([]); // {id,label,url,icon}
+const links = ref([]);
 const collapsed = ref(false);
 const saving = ref(false);
 const message = ref("");
 const error = ref(false);
 const pendingAdds = ref(0);
-// Icon picker state
 const openIconIndex = ref(null);
 const pickerCoords = ref({ top: 0, left: 0 });
 const pickerStyle = computed(() => ({
@@ -266,7 +262,6 @@ const pickerStyle = computed(() => ({
   left: pickerCoords.value.left + "px",
 }));
 const iconSearch = ref("");
-// Logical grouped icon sets for easier discovery
 const iconGroups = [
   { label: 'Social', icons: ['mdi:facebook','mdi:facebook-messenger','mdi:instagram','mdi:twitter','mdi:reddit','mdi:pinterest','mdi:tumblr','mdi:snapchat','mdi:mastodon','mdi:vk','mdi:wechat','mdi:sina-weibo','ic:baseline-tiktok'] },
   { label: 'Media / Streaming', icons: ['mdi:youtube','mdi:vimeo','mdi:twitch','mdi:mixcloud','mdi:bandcamp','mdi:lastfm','mdi:flickr'] },
@@ -301,22 +296,20 @@ function toggleIconPicker(i, evt) {
 function positionPicker(triggerEl) {
   if (!triggerEl) return;
   const btn = triggerEl.getBoundingClientRect();
-  const panelWidth = 288; // w-72
-  const panelHeight = 340; // approximate max height
+  const panelWidth = 288;
+  const panelHeight = 340;
   const gap = 6;
-  // Horizontal
   let left = btn.left;
   if (left + panelWidth > window.innerWidth - 8)
     left = window.innerWidth - panelWidth - 8;
   if (left < 8) left = 8;
-  // Vertical decide below vs above
   const spaceBelow = window.innerHeight - btn.bottom;
   let top;
   if (spaceBelow >= panelHeight + 8) {
-    top = btn.bottom + gap; // below
+    top = btn.bottom + gap;
   } else {
-    top = btn.top - panelHeight - gap; // above
-    if (top < 8) top = Math.max(8, btn.bottom + gap); // fallback if not enough space above
+    top = btn.top - panelHeight - gap;
+    if (top < 8) top = Math.max(8, btn.bottom + gap);
   }
   pickerCoords.value = { top: Math.round(top), left: Math.round(left) };
 }
@@ -328,20 +321,13 @@ function selectIcon(i, iconName) {
 function closeIconPicker() {
   openIconIndex.value = null;
 }
-function handleGlobalClick(e) {
-  // (Legacy handler kept for potential future use)
-  if (openIconIndex.value === null) return;
-  if (e.target.closest && e.target.closest("[data-social-links]")) return; // clicks inside list are handled
-}
 const keydownHandler = (e) => {
   if (e.key === "Escape") openIconIndex.value = null;
 };
 const outsideHandler = (e) => {
   if (openIconIndex.value === null) return;
-  // If click inside panel keep open
   const panel = document.querySelector(".icon-picker-panel");
   if (panel && panel.contains(e.target)) return;
-  // If click on toggle button keep (toggle logic handles it)
   const toggleBtn = e.target.closest("button[aria-expanded]");
   if (toggleBtn) return;
   openIconIndex.value = null;
@@ -359,7 +345,6 @@ onMounted(() => {
   };
   window.addEventListener("scroll", reposition, true);
   window.addEventListener("resize", reposition);
-  // store for cleanup
   window.__plumaIconPickerReposition = reposition;
 });
 onBeforeUnmount(() => {
@@ -394,7 +379,6 @@ function init() {
     url: l.url || "",
     icon: l.icon || "mdi:link-variant",
   }));
-  // Collapse if many links to keep layout balanced vs LogoUpload
   collapsed.value = links.value.length > 4;
 }
 
@@ -432,11 +416,6 @@ function addSocialLink() {
     return;
   }
   internalAdd();
-  if (import.meta.env.DEV)
-    console.debug(
-      "[BrandingMetaForm] Added social link placeholder",
-      links.value.length
-    );
 }
 function removeSocialLink(i) {
   links.value.splice(i, 1);
@@ -445,7 +424,7 @@ function removeSocialLink(i) {
 function moveLink(i, delta) {
   const newIndex = i + delta;
   if (newIndex < 0 || newIndex >= links.value.length) return;
-  openIconIndex.value = null; // close picker to avoid mismatch
+  openIconIndex.value = null;
   const arr = [...links.value];
   const [item] = arr.splice(i, 1);
   arr.splice(newIndex, 0, item);
@@ -479,7 +458,6 @@ async function save() {
       siteDescription: siteDescription.value,
       socialLinks: cleaned,
     });
-    // apply to projectInfo immediately for UI update
     projectInfo.applyBranding({
       siteName: siteName.value,
       siteDescription: siteDescription.value,

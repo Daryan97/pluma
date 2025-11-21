@@ -7,7 +7,6 @@
     </h1>
 
   <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-auto">
-      <!-- Auth User Info -->
       <section
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col"
       >
@@ -124,8 +123,6 @@
           </form>
         </div>
       </section>
-
-      <!-- Profile Table Info -->
       <section
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col"
       >
@@ -221,8 +218,6 @@
           </form>
         </div>
       </section>
-
-      <!-- Avatar Management -->
       <section
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col md:col-span-2 lg:col-span-1"
       >
@@ -248,7 +243,6 @@
         </header>
 
         <div class="flex flex-col items-center gap-4">
-          <!-- Hidden file input -->
           <input
             ref="avatarInputRef"
             type="file"
@@ -321,8 +315,6 @@
           </p>
         </div>
       </section>
-
-      <!-- Linked Accounts -->
       <section
         v-if="enabledProviders.length > 0"
         class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700 flex flex-col md:col-span-3 lg:col-span-3"
@@ -375,7 +367,6 @@
               class="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition bg-gradient-to-br from-blue-500/5 to-transparent"
             />
           </div>
-          <!-- Expand/Collapse if many providers -->
         </div>
         <div v-if="hasOverflow" class="flex justify-center mt-2">
           <button
@@ -398,6 +389,7 @@ import { useToast } from "vue-toastification";
 import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
+import { getBrowserOrigin } from "@/lib/utils";
 
 const toast = useToast();
 const route = useRoute();
@@ -420,22 +412,17 @@ const emailAuthInput = ref("");
 const savingEmail = ref(false);
 const lastRequestedEmail = ref("");
 
-// Provider settings
 const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
 const enabledProviders = computed(() =>
   ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
 );
 
-// Collapsible list logic for Linked Accounts (mirror Login)
-const COLLAPSED_COUNT = 8; // show more items here since tiles are larger
+const COLLAPSED_COUNT = 8;
 const expanded = ref(false);
 const hasOverflow = computed(() => enabledProviders.value.length > COLLAPSED_COUNT);
 const visibleProviders = computed(() =>
   expanded.value ? enabledProviders.value : enabledProviders.value.slice(0, COLLAPSED_COUNT)
 );
-
-// Brand tints for icon circle
-// provider helpers now sourced from settings store
 
 const isLinked = (provider) =>
   !!authUser.value.identities?.some((i) => i.provider === provider);
@@ -572,7 +559,7 @@ async function saveEmail() {
   if (emailAuthInput.value && emailAuthInput.value !== authUser.value.email) {
     const { data, error } = await supabase.auth.updateUser(
       { email: emailAuthInput.value },
-      { emailRedirectTo: `${window.location.origin}/profile` }
+      { emailRedirectTo: `${getBrowserOrigin()}/profile` }
     );
 
     if (error) {
@@ -702,7 +689,7 @@ async function linkProvider(provider) {
   const { data, error } = await supabase.auth.linkIdentity({
     provider,
     options: {
-      redirectTo: `${window.location.origin}/profile`,
+      redirectTo: `${getBrowserOrigin()}/profile`,
       skipBrowserRedirect: true,
     },
   });

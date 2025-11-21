@@ -565,7 +565,6 @@
       @confirm="confirmAction"
       @cancel="closeDialog"
     />
-    <!-- Role change confirmation now handled inside MembersManagement component -->
     </template>
   </div>
 </template>
@@ -911,11 +910,11 @@ const pendingComments = ref([]);
 const loadingPending = ref(false);
 const pendingPage = ref(1);
 const pendingPageSize = 10;
-const pendingTotal = ref(0); // total for current filter
-const commentsTotalCount = ref(0); // total for 'all'
+const pendingTotal = ref(0);
+const commentsTotalCount = ref(0);
 const pendingTotalPages = computed(() => Math.max(1, Math.ceil(pendingTotal.value / pendingPageSize)));
 const pendingSearchQuery = ref("");
-const commentsFilter = ref('all'); // 'all' | 'approved' | 'pending'
+const commentsFilter = ref('all');
 let pendingSearchTimeout = null;
 
 function setCommentsFilter(f){
@@ -956,7 +955,6 @@ async function fetchPendingComments(clear = false) {
       .select(`id, content, created_at, approved, post:posts(id, title, slug, author_id), author:profiles(id, username, display_name)`, { count: 'exact' })
       .order('created_at', { ascending: false });
 
-    // Apply filter
     if (commentsFilter.value === 'approved') {
       base = base.eq('approved', true);
     } else if (commentsFilter.value === 'pending') {
@@ -994,9 +992,7 @@ async function fetchPendingComments(clear = false) {
       }
     }
 
-    // Always update counts
     await updatePendingCount();
-    // total for all comments (only once per fetch or if filter not all)
     const { count: allCount } = await supabase.from('comments').select('id', { count: 'exact', head: true });
     commentsTotalCount.value = allCount || 0;
   } finally {
