@@ -18,7 +18,7 @@ A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) a
 
     ```bash
     git clone
-     cd pluma-frontend
+    cd pluma-frontend
      ```
 
 2. Install dependencies:
