@@ -12,6 +12,10 @@ A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) a
 - Responsive design for mobile and desktop
 - SEO-friendly with sitemap and RSS feed generation
 
+## Demo
+
+A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma.daryandev.com). You can sign up as a new user to explore the platform's features (except admin functionalities).
+
 ## Setup
 
 1. Clone the repository:
