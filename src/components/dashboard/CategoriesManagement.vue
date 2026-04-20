@@ -1,8 +1,8 @@
 <template>
-  <div>
+  <div v-bind="$attrs">
     <button
       @click="isOpen = true"
-      class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      class="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
     >
       <Icon icon="mdi:format-list-bulleted" class="text-base" />
       <span>Manage Categories</span>

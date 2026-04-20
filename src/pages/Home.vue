@@ -15,26 +15,26 @@
       >
         <div class="flex flex-col items-center text-center gap-8">
           <div class="space-y-5 max-w-3xl">
-            <div v-if="showWelcome">
+            <div v-if="showWelcome" class="w-full flex justify-center">
               <button
                 v-if="latestPost"
                 type="button"
                 @click="openLatestPost"
                 @keydown.enter.prevent="openLatestPost"
                 @keydown.space.prevent="openLatestPost"
-                class="group inline-flex items-center max-w-full gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition"
+                class="group flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 px-4 py-2 w-full max-w-lg sm:w-auto sm:max-w-none rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition text-center"
                 :aria-label="'Open latest post: ' + latestPost.title"
               >
-                <Icon icon="mdi:star-four-points" class="text-base shrink-0" />
-                <span class="truncate" :title="latestPost.title">{{ latestPost.title }}</span>
+                <Icon icon="mdi:star-four-points" class="text-base shrink-0 mx-auto sm:mx-0" />
+                <span class="flex-1 text-center sm:text-left leading-snug break-words" :title="latestPost.title">{{ latestPost.title }}</span>
                 <Icon
                   icon="mdi:arrow-right"
-                  class="text-sm opacity-60 group-hover:translate-x-0.5 transition-transform"
+                  class="text-sm shrink-0 mx-auto sm:mx-0 opacity-60 group-hover:translate-x-0.5 transition-transform"
                 />
               </button>
               <span
                 v-else
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                class="flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 rounded-full text-[11px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
               >
                 <Icon icon="mdi:lightning-bolt" class="text-base" /> Welcome
               </span>
@@ -89,7 +89,7 @@
             class="max-w-2xl w-full pt-4"
             v-if="statsLoaded && enabledStats.length > 0"
           >
-            <div class="grid gap-6" :style="{ gridTemplateColumns: `repeat(${enabledStats.length}, minmax(0, 1fr))` }">
+            <div class="grid gap-6" :style="statsGridStyle">
               <div v-for="s in enabledStats" :key="s.key" class="text-center">
                 <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {{ s.value }}
@@ -199,6 +199,9 @@ const statsLoaded = ref(false);
 const { statsEnabled } = useStatsSettings();
 const { featuresEnabled } = useSettings();
 const enabledStats = computed(() => stats.value.filter(s => statsEnabled.value[s.key]));
+const statsGridStyle = computed(() => ({
+  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+}));
 
 async function loadStats() {
   await fetchStatsSettings();

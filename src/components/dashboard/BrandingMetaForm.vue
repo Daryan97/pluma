@@ -1,20 +1,20 @@
 <template>
   <div
-    class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6"
+    class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6 min-w-0 w-full"
   >
-    <div class="flex items-start gap-3">
+    <div class="flex flex-wrap items-start gap-3 sm:flex-nowrap">
       <div
         class="p-2 rounded-lg bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300"
       >
         <Icon icon="mdi:brush" class="w-6 h-6" />
       </div>
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <h2
-          class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase"
+          class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words"
         >
           Site Meta
         </h2>
-        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
           Update public site name, description and social links. Stored under
           key <code>branding</code> in <code>settings</code>.
         </p>
@@ -47,7 +47,7 @@
         ></textarea>
       </div>
       <div class="space-y-3">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <label
             class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
             >Social Links
@@ -55,7 +55,7 @@
               >({{ links.length }})</span
             ></label
           >
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2 justify-end">
             <button
               v-if="links.length"
               type="button"
@@ -109,7 +109,7 @@
                     class="h-9 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-3"
                   />
                 </div>
-                <div class="flex flex-wrap items-center gap-2 relative">
+                <div class="flex flex-wrap items-center gap-2 relative w-full">
                   <button
                     type="button"
                     @click.stop="toggleIconPicker(i, $event)"
@@ -179,7 +179,7 @@
                     class="flex-1 min-w-[140px] h-8 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                     @focus="openIconIndex = null"
                   />
-                  <div class="flex items-center gap-1 ml-auto">
+                  <div class="flex flex-wrap items-center gap-1 ml-auto w-full sm:w-auto justify-end">
                     <button
                       type="button"
                       @click="moveLink(i, -1)"

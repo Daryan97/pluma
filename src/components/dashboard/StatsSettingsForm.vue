@@ -1,16 +1,16 @@
 <template>
   <div
-    class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6"
+    class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6 min-w-0 w-full"
   >
-    <div class="flex items-start gap-3 mb-6">
+    <div class="flex flex-wrap items-start gap-3 mb-6 sm:flex-nowrap">
       <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
         <Icon icon="mdi:chart-bar" class="w-6 h-6" />
       </div>
-      <div class="flex-1">
-        <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words">
           Homepage Features & Stats
         </h2>
-        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
           Enable or disable homepage sections and stats below.
         </p>
       </div>
@@ -22,7 +22,7 @@
           <div
             v-for="feature in featureOptions"
             :key="feature.key"
-            class="flex items-center justify-between group rounded-xl px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow transition"
+            class="flex flex-wrap items-center gap-3 justify-between group rounded-xl px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow transition"
           >
             <div class="flex items-center gap-3 min-w-0">
               <Icon
@@ -41,7 +41,7 @@
               :aria-label="feature.label"
               @click="localFeatures[feature.key] = !localFeatures[feature.key]"
               :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-4',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-auto',
                 localFeatures[feature.key]
                   ? 'bg-blue-500'
                   : 'bg-gray-300 dark:bg-gray-700',
@@ -64,7 +64,7 @@
           <div
             v-for="stat in statOptions"
             :key="stat.key"
-            class="flex items-center justify-between group rounded-xl px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow transition"
+            class="flex flex-wrap items-center gap-3 justify-between group rounded-xl px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 hover:shadow transition"
           >
             <div class="flex items-center gap-3 min-w-0">
               <Icon
@@ -83,7 +83,7 @@
               :aria-label="stat.label"
               @click="localEnabled[stat.key] = !localEnabled[stat.key]"
               :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-4',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-auto',
                 localEnabled[stat.key]
                   ? 'bg-blue-500'
                   : 'bg-gray-300 dark:bg-gray-700',

@@ -298,6 +298,26 @@ router.afterEach((to) => {
     ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title, datePublished: p.created_at, dateModified: p.updated_at || p.created_at, author: p.author?.display_name || p.author?.username || 'Unknown', keywords: (p.tags || []).join(', '), mainEntityOfPage: canonicalHref };
   }
   if (ld) { const script = document.createElement('script'); script.id = 'ld-primary'; script.type = 'application/ld+json'; script.textContent = JSON.stringify(ld); document.head.appendChild(script); }
+
+  const snapshot = {
+    title: document.title,
+    description: desc,
+    canonical: canonicalHref,
+    type: to.name === 'PostDetail' ? 'article' : 'website',
+    siteName: projectInfo.name,
+    image: to.name === 'PostDetail' && window.__PLUMA_CURRENT_POST?.cover_image_url
+      ? window.__PLUMA_CURRENT_POST.cover_image_url
+      : window.__PLUMA_META_SNAPSHOT?.image,
+    structuredData: ld || null,
+  }
+  window.__PLUMA_META_SNAPSHOT = snapshot
+  try {
+    window.localStorage?.setItem('pluma:metaSnapshot', JSON.stringify(snapshot))
+  } catch (error) {
+    if (import.meta.env?.DEV) {
+      console.warn('[router] Unable to persist meta snapshot', error)
+    }
+  }
 })
 
 export default router

@@ -180,10 +180,7 @@
         <router-link
           to="/"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline text-gray-700 dark:text-gray-300"
-          @mouseup.prevent="
-            mobileMenuOpen = false;
-            mobileCategoriesOpen = false;
-          "
+          @click="go('/')"
         >
           <Icon
             icon="mdi:home-outline"
@@ -217,10 +214,7 @@
               :key="category.id"
               :to="`/category/${category.slug || category.name}`"
               class="flex items-center gap-2 h-8 px-3 rounded hover:bg-gray-200 dark:hover:bg-gray-700/60"
-              @mouseup.prevent="
-                mobileMenuOpen = false;
-                mobileCategoriesOpen = false;
-              "
+              @click="go(`/category/${category.slug || category.name}`)"
             >
               <Icon
                 icon="mdi:tag-outline"
@@ -236,10 +230,7 @@
         <router-link
           to="/archive"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline text-gray-700 dark:text-gray-300"
-          @mouseup.prevent="
-            mobileMenuOpen = false;
-            mobileCategoriesOpen = false;
-          "
+          @click="go('/archive')"
         >
           <Icon
             icon="mdi:archive-outline"
@@ -252,6 +243,7 @@
           v-if="role === 'admin' || role === 'author'"
           to="/dashboard"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline"
+          @click="go('/dashboard')"
         >
           <Icon
             icon="mdi:view-dashboard-outline"

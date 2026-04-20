@@ -1,5 +1,6 @@
 <template>
   <div class="relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+    <RouteLoadingOverlay />
     <Navbar />
     <main>
       <router-view />
@@ -11,4 +12,5 @@
 <script setup>
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
+import RouteLoadingOverlay from "@/components/RouteLoadingOverlay.vue";
 </script>

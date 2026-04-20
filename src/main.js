@@ -10,6 +10,7 @@ import './styles/index.css'
 import 'highlight.js/styles/github.css'
 import 'highlight.js/styles/github-dark.css'
 import { useBranding, fetchBranding as fetchBrandingStore } from '@/stores/brandingStore'
+import { useRouteLoadingStore } from '@/stores/routeLoadingStore'
 import { projectInfo } from '@/config/projectInfo'
 
 const pinia = createPinia()
@@ -25,6 +26,16 @@ const app = createApp(App)
 app.mount('#app')
 
 const { fetchBranding, faviconUrl, logoVersion, siteName, siteDescription, socialLinks } = useBranding()
+const routeLoadingStore = useRouteLoadingStore()
+
+router.beforeResolve((to, from, next) => {
+    if (to.path !== from.path) routeLoadingStore.start()
+    next()
+})
+
+router.afterEach(() => {
+    routeLoadingStore.stop()
+})
 
 function updateFavicon(url) {
     if (!url) return;

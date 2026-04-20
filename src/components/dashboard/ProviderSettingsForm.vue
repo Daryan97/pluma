@@ -1,29 +1,35 @@
 <template>
-  <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6">
-    <div class="flex items-start gap-3 mb-6">
+  <div class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-6 space-y-6 min-w-0 w-full">
+    <div class="flex flex-wrap items-start gap-3 mb-6 sm:flex-nowrap">
       <div class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
         <Icon icon="mdi:lock-open-variant-outline" class="w-6 h-6" />
       </div>
-      <div class="flex-1">
-        <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words">
           Authentication Providers
         </h2>
-        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
           Enable or disable third-party login providers for your site. Only enabled providers will appear on the login and profile pages.
         </p>
       </div>
     </div>
     <form @submit.prevent="save" class="space-y-8">
-      <div class="rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-amber-800 dark:text-amber-200 text-[12px] flex items-start gap-2">
+      <div class="rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-amber-800 dark:text-amber-200 text-[12px] flex flex-col sm:flex-row sm:items-start gap-2 break-words">
         <Icon icon="mdi:alert-circle-outline" class="text-amber-600 dark:text-amber-300 mt-0.5" />
-        <div>
+        <div class="min-w-0 space-y-2">
           <p class="font-semibold">Important</p>
-          <p class="mt-0.5">
+          <p class="mt-0.5 break-words">
             Enabling a provider here only controls visibility in the UI. You must also configure the provider in your Supabase project (Auth → Providers) and whitelist the redirect URLs below, otherwise sign-in/linking will fail.
           </p>
-          <ul class="mt-2 space-y-1 list-disc list-inside">
-            <li>Sign in redirect: <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40">{{ appOrigin }}</code></li>
-            <li>Link accounts redirect: <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40">{{ appOrigin + '/profile' }}</code></li>
+          <ul class="mt-2 space-y-1 list-disc list-inside break-words">
+            <li>
+              Sign in redirect:
+              <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40 break-all">{{ appOrigin }}</code>
+            </li>
+            <li>
+              Link accounts redirect:
+              <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40 break-all">{{ appOrigin + '/profile' }}</code>
+            </li>
           </ul>
         </div>
       </div>

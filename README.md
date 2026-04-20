@@ -47,7 +47,7 @@ A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma
      npm run dev
      ```
 
-6. Open your browser and navigate to the local server (e.g., `http://localhost:5175`).
+6. Open your browser and navigate to the local server (e.g., `http://localhost:5173`).
 
 ### Quick Deployment
 

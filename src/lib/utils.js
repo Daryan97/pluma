@@ -1,15 +1,21 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getRuntimeEnvSync } from "@/lib/runtimeEnv";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
 export function getBrowserOrigin() {
-  if (typeof window !== 'undefined') {
+  const configuredSiteUrl = getRuntimeEnvSync()?.VITE_SITE_URL?.trim();
+  if (configuredSiteUrl) {
+    return configuredSiteUrl.replace(/\/+$/, "");
+  }
 
+  if (typeof window !== 'undefined') {
     return window.location.origin;
   }
+
   return '';
 }
 
