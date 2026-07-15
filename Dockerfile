@@ -3,6 +3,8 @@ FROM node:20-bullseye-slim AS build-stage
 WORKDIR /app
 
 COPY package*.json ./
+# Needed before npm install so postinstall (patch-package) can apply patches.
+COPY patches ./patches
 RUN npm install --legacy-peer-deps
 COPY . .
 # Runtime env is still supplied at container start; Nuxt reads process.env in Nitro.

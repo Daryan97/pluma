@@ -25,6 +25,7 @@
     "markdown-it": "^14.1.0",
     "md-editor-v3": "^5.8.2",
     "nuxt": "^3.21.8",
+    "oxc-parser": "^0.132.0",
     "pinia": "^3.0.3",
     "radix-vue": "^1.9.17",
     "reka-ui": "^2.4.0",
