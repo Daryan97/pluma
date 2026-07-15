@@ -90,14 +90,13 @@
     </div>
 
     <div
-      ref="markdownContainer"
+      ref="markdownRoot"
       class="prose prose-lg dark:prose-invert max-w-none text-gray-900 dark:text-gray-100"
       itemprop="articleBody"
     >
       <Markdown
         :source="post.content"
         class="markdown-content"
-        ref="markdownContainer"
       />
     </div>
 
@@ -187,10 +186,11 @@
 const { t } = useI18n()
 const localePath = useLocalePath()
 
-import { ref, nextTick, watch, computed } from "vue";
+import { ref, nextTick, watch, computed, onMounted } from "vue";
 import Markdown from "vue3-markdown-it";
 import { Icon } from "@iconify/vue";
-import NoImage from "./NoImage.vue";import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
+import NoImage from "./NoImage.vue";
+import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
 
 const toast = useToast();
 
@@ -216,7 +216,7 @@ const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
 const twitterShareUrl = computed(() => {
   const url = encodeURIComponent(getBrowserUrl());
-  const text = encodeURIComponent(props.post?.title || t('posts.shareText'));
+  const text = encodeURIComponent(props.post?.title || t("posts.shareText"));
   return `https://x.com/intent/tweet?text=${text}&url=${url}`;
 });
 
@@ -228,7 +228,7 @@ async function copyLink() {
     linkCopied.value = true;
     setTimeout(() => (linkCopied.value = false), 2000);
   } catch {
-    toast.error(t('posts.copyFailed'));
+    toast.error(t("posts.copyFailed"));
   }
 }
 
@@ -239,11 +239,11 @@ async function nativeShare() {
       url: getBrowserUrl(),
     });
   } catch {
-    toast.error(t('posts.shareCancelled'));
+    toast.error(t("posts.shareCancelled"));
   }
 }
 
-const markdownContainer = ref(null);
+const markdownRoot = ref(null);
 const coverImageError = ref(false);
 
 function formatDate(dateStr) {
@@ -255,23 +255,33 @@ function formatDate(dateStr) {
   });
 }
 
+function resolveMarkdownEl() {
+  const el = markdownRoot.value;
+  if (!el) return null;
+  return el.querySelector?.(".markdown-content") || el;
+}
+
 function addEnhancements() {
   nextTick(() => {
-    const preBlocks = markdownContainer.value?.querySelectorAll("pre") || [];
+    const root = resolveMarkdownEl();
+    if (!root?.querySelectorAll) return;
 
-    preBlocks.forEach((pre) => {
-      const existing = pre.querySelector(".code-scroll");
-      if (existing) return;
-
+    root.querySelectorAll("pre").forEach((pre) => {
       const code = pre.querySelector("code");
       if (!code) return;
 
-      const wrapper = document.createElement("div");
-      wrapper.className = "code-scroll";
-      code.parentNode.insertBefore(wrapper, code);
-      wrapper.appendChild(code);
+      if (!pre.querySelector(".code-scroll")) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "code-scroll";
+        code.parentNode.insertBefore(wrapper, code);
+        wrapper.appendChild(code);
+      }
 
-      const language = code.className.match(/language-(\w+)/)?.[1];
+      const language =
+        code.className.match(/language-([\w+-]+)/)?.[1] ||
+        pre.className.match(/language-([\w+-]+)/)?.[1] ||
+        "";
+
       if (language && !pre.querySelector(".language-label")) {
         const label = document.createElement("span");
         label.className = "language-label";
@@ -281,16 +291,17 @@ function addEnhancements() {
 
       if (!pre.querySelector(".copy-btn")) {
         const btn = document.createElement("button");
+        btn.type = "button";
         btn.className = "copy-btn";
-        btn.innerText = t('posts.codeCopy');
+        btn.innerText = t("posts.codeCopy");
         btn.onclick = async () => {
           try {
             await navigator.clipboard.writeText(code.innerText);
-            btn.innerText = t('posts.codeCopied');
-            setTimeout(() => (btn.innerText = t('posts.codeCopy')), 1500);
+            btn.innerText = t("posts.codeCopied");
+            setTimeout(() => (btn.innerText = t("posts.codeCopy")), 1500);
           } catch {
-            btn.innerText = t('posts.codeFailed');
-            setTimeout(() => (btn.innerText = t('posts.codeCopy')), 1500);
+            btn.innerText = t("posts.codeFailed");
+            setTimeout(() => (btn.innerText = t("posts.codeCopy")), 1500);
           }
         };
         pre.appendChild(btn);
@@ -305,20 +316,29 @@ function addEnhancements() {
             : null;
         const navStart = navigationEntry?.startTime ?? 0;
         const renderTime = Math.round(performance.now() - navStart);
-        window.opener.postMessage({ __pluma_e2e_time: true, time: renderTime }, getBrowserOrigin());
+        window.opener.postMessage(
+          { __pluma_e2e_time: true, time: renderTime },
+          getBrowserOrigin()
+        );
       }
-    } catch (e) {
-
+    } catch {
+      /* ignore */
     }
   });
 }
 
 watch(
-  () => props.post,
+  () => props.post?.content,
   () => {
     coverImageError.value = false;
     addEnhancements();
+    setTimeout(addEnhancements, 50);
   },
   { immediate: true }
 );
+
+onMounted(() => {
+  addEnhancements();
+  setTimeout(addEnhancements, 100);
+});
 </script>
