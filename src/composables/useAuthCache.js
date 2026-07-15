@@ -80,19 +80,27 @@ export function useAuthCache() {
     if (
       !force &&
       profileCache.value &&
-      profileCache.value.id === userId
+      profileCache.value.id === userId &&
+      // Older cache entries omitted avatar_url — treat as incomplete.
+      Object.prototype.hasOwnProperty.call(profileCache.value, 'avatar_url')
     ) {
       return profileCache.value
     }
 
     const { data: prof, error } = await supabase
       .from('profiles')
-      .select('id, username, display_name, role')
+      .select('id, username, display_name, role, avatar_url')
       .eq('id', userId)
       .single()
 
     if (error || !prof) {
-      profileCache.value = { id: userId, username: null, display_name: null, role: null }
+      profileCache.value = {
+        id: userId,
+        username: null,
+        display_name: null,
+        role: null,
+        avatar_url: null,
+      }
       return profileCache.value
     }
 
@@ -101,6 +109,7 @@ export function useAuthCache() {
       username: prof.username || null,
       display_name: prof.display_name || null,
       role: prof.role || null,
+      avatar_url: prof.avatar_url || null,
     }
     return profileCache.value
   }

@@ -554,12 +554,12 @@ const archiveChecked = computed(
 );
 const hasArchivePosts = computed(() => !!archivePresence.value);
 
-async function getUser() {
+async function getUser({ force = false } = {}) {
   try {
     const auth = useAuthCache();
     // Prefer cached session to avoid another auth lock round-trip.
     let userId = auth.sessionUserId.value;
-    if (!auth.sessionChecked.value) {
+    if (!auth.sessionChecked.value || force) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -569,30 +569,18 @@ async function getUser() {
     }
 
     if (userId) {
-      let profile = auth.profileCache.value;
-      if (!profile || profile.id !== userId) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("username, display_name, role, avatar_url")
-          .eq("id", userId)
-          .single();
-        profile = data
-          ? {
-              id: userId,
-              username: data.username || null,
-              display_name: data.display_name || null,
-              role: data.role || null,
-              avatar_url: data.avatar_url || null,
-            }
-          : { id: userId, username: null, display_name: null, role: null };
-        auth.profileCache.value = profile;
-      }
-      user.value = profile.username
+      const profile = await auth.ensureProfile(supabase, userId, { force });
+      user.value = profile?.username
         ? profile
-        : { username: profile.username || "user" };
-      displayName.value = profile.display_name || profile.username || "";
-      role.value = profile.role || "reader";
-      avatar_url.value = profile.avatar_url || null;
+        : {
+            username: profile?.username || "user",
+            display_name: profile?.display_name || null,
+            role: profile?.role || null,
+            avatar_url: profile?.avatar_url || null,
+          };
+      displayName.value = profile?.display_name || profile?.username || "";
+      role.value = profile?.role || "reader";
+      avatar_url.value = profile?.avatar_url || null;
     } else {
       user.value = null;
       displayName.value = "";
@@ -690,15 +678,20 @@ onMounted(() => {
       showSearch.value = true;
     }
   });
-  window.addEventListener("profileUpdated", getUser);
+  window.addEventListener("profileUpdated", onProfileUpdated);
   window.addEventListener("pluma:open-global-search", handleOpenGlobalSearch);
 });
+
+function onProfileUpdated() {
+  getUser({ force: true });
+}
 
 onUnmounted(() => {
   window.removeEventListener(
     "pluma:open-global-search",
     handleOpenGlobalSearch
   );
+  window.removeEventListener("profileUpdated", onProfileUpdated);
 });
 
 const roleLabel = computed(() => {

@@ -8,8 +8,8 @@
         class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden ring-1 ring-gray-300 dark:ring-gray-600"
       >
         <AvatarImage
-          v-if="avatarUrl"
-          :src="avatarUrl"
+          v-if="resolvedAvatarUrl"
+          :src="resolvedAvatarUrl"
           alt="User Avatar"
           class="w-full h-full object-cover"
         />
@@ -36,8 +36,8 @@
             class="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden ring-1 ring-gray-300 dark:ring-gray-600"
           >
             <AvatarImage
-              v-if="avatarUrl"
-              :src="avatarUrl"
+              v-if="resolvedAvatarUrl"
+              :src="resolvedAvatarUrl"
               :alt="displayName"
               class="w-full h-full object-cover"
             />
@@ -137,6 +137,9 @@ const props = defineProps({
 
 const open = ref(false);
 const router = useRouter();
+const resolvedAvatarUrl = computed(
+  () => props.avatarUrl || props.user?.avatar_url || null
+);
 const displayName = computed(
   () => props.user?.display_name || props.user?.username || t("nav.guest")
 );
