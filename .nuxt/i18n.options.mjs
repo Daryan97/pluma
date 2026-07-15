@@ -166,7 +166,7 @@ export const nuxtI18nOptions = {
   rootRedirect: undefined,
   detectBrowserLanguage: false,
   differentDomains: false,
-  baseUrl: "http://localhost:5173",
+  baseUrl: "http://localhost:3000",
   customRoutes: "page",
   pages: {},
   skipSettingLocaleOnNavigate: false,

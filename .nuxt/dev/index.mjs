@@ -904,12 +904,12 @@ const _inlineRuntimeConfig = {
   "public": {
     "supabaseUrl": "https://fzsazbuqdwwcoavibjiy.supabase.co",
     "supabaseAnonKey": "sb_publishable_ouXo2hj0agfnUUySksEY5A_Yq3TJr0L",
-    "siteUrl": "http://localhost:5173",
+    "siteUrl": "http://localhost:3000",
     "siteLocale": "en",
     "env": "development",
     "twitterSite": "",
     "i18n": {
-      "baseUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:3000",
       "defaultLocale": "en",
       "defaultDirection": "ltr",
       "strategy": "prefix_except_default",
@@ -2514,22 +2514,7 @@ const plugins = [
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {
-  "/index.mjs": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"222d2-rf3opSGWz1t/5TygkHC878NFoy4\"",
-    "mtime": "2026-07-15T02:24:27.071Z",
-    "size": 139986,
-    "path": "index.mjs"
-  },
-  "/index.mjs.map": {
-    "type": "application/json",
-    "etag": "\"872c3-U3uVlRuoivAuJc24ZKW3Eq1FVjs\"",
-    "mtime": "2026-07-15T02:24:27.071Z",
-    "size": 553667,
-    "path": "index.mjs.map"
-  }
-};
+const assets = {};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -3011,8 +2996,9 @@ function returnIslandResponse(event, response) {
 const ISLAND_PATH_PREFIX = "/__nuxt_island/";
 const VALID_COMPONENT_NAME_RE = /^[a-z][\w.-]*$/i;
 async function getIslandContext(event) {
-	let url = event.path || "";
-	url.replace(/\?.*$/, "");
+	// Strip query before path parsing so DCE of the prerender branch
+	// cannot leave a discarded String#replace call.
+	let url = (event.path || "").replace(/\?.*$/, "");
 	if (!url.startsWith(ISLAND_PATH_PREFIX)) {
 		throw createError({
 			statusCode: 400,
@@ -3469,10 +3455,10 @@ const readyz_get = defineEventHandler(async (event) => {
     return { ok: false, reason: "missing_supabase_env" };
   }
   try {
-    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
+    const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/health`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` }
     });
-    if (!res.ok && res.status !== 200 && res.status !== 404) {
+    if (!res.ok) {
       setResponseStatus(event, 503);
       return { ok: false, reason: "supabase_unreachable", status: res.status };
     }

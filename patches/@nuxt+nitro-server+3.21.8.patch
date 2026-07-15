@@ -1,0 +1,22 @@
+diff --git a/node_modules/@nuxt/nitro-server/dist/runtime/handlers/island.mjs b/node_modules/@nuxt/nitro-server/dist/runtime/handlers/island.mjs
+index 1176449..2b9cb10 100644
+--- a/node_modules/@nuxt/nitro-server/dist/runtime/handlers/island.mjs
++++ b/node_modules/@nuxt/nitro-server/dist/runtime/handlers/island.mjs
+@@ -127,12 +127,13 @@ function returnIslandResponse(event, response) {
+ const ISLAND_PATH_PREFIX = "/__nuxt_island/";
+ const VALID_COMPONENT_NAME_RE = /^[a-z][\w.-]*$/i;
+ async function getIslandContext(event) {
+-	let url = event.path || "";
+-	const islandPath = url.replace(/\?.*$/, "");
+-	if (import.meta.prerender && event.path && await islandPropCache.hasItem(islandPath)) {
++	// Strip query before path parsing so DCE of the prerender branch
++	// cannot leave a discarded String#replace call.
++	let url = (event.path || "").replace(/\?.*$/, "");
++	if (import.meta.prerender && event.path && await islandPropCache.hasItem(url)) {
+ 		
+ 		
+-		url = await islandPropCache.getItem(islandPath);
++		url = await islandPropCache.getItem(url);
+ 	}
+ 	if (!url.startsWith(ISLAND_PATH_PREFIX)) {
+ 		throw createError({
