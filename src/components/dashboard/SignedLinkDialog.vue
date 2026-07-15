@@ -9,16 +9,16 @@
           class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2"
         >
           <Icon icon="mdi:link-variant" class="w-5 h-5 text-blue-600" />
-          Temporary Link
+          {{ t('media.signedLink.title') }}
         </DialogTitle>
-        <DialogDescription class="text-sm text-gray-600 dark:text-gray-300 mt-1"
-          >Generate a signed URL for temporary access.</DialogDescription
-        >
+        <DialogDescription class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+          {{ t('media.signedLink.description') }}
+        </DialogDescription>
         <div class="mt-4 space-y-4">
           <div class="space-y-2">
             <label
               class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-              >Duration (seconds)</label
+              >{{ t('media.signedLink.duration') }}</label
             >
             <div class="flex items-center gap-2">
               <button
@@ -30,7 +30,7 @@
                     Math.max(1, (parseInt(secondsInput, 10) || 0) - 1)
                   ))
                 "
-                aria-label="Decrease duration"
+                :aria-label="t('media.signedLink.decreaseDuration')"
               >
                 <Icon icon="mdi:minus" class="text-lg" />
               </button>
@@ -56,13 +56,13 @@
                     Math.min(MAX_SECONDS, Math.max(1, (parseInt(secondsInput, 10) || 0) + 1))
                   ))
                 "
-                aria-label="Increase duration"
+                :aria-label="t('media.signedLink.increaseDuration')"
               >
                 <Icon icon="mdi:plus" class="text-lg" />
               </button>
             </div>
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              How long the link should remain valid. Default 300s.
+              {{ t('media.signedLink.durationHint') }}
             </p>
             <p v-if="error" class="text-[11px] text-red-600 dark:text-red-400">
               {{ error }}
@@ -71,19 +71,19 @@
           <div v-if="generatedUrl" class="space-y-2">
             <label
               class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-              >Generated URL</label
+              >{{ t('media.signedLink.generatedUrl') }}</label
             >
             <div class="relative">
               <input
                 :value="generatedUrl"
                 readonly
-                class="w-full rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[12px] text-gray-700 dark:text-gray-200 pr-20"
+                class="w-full rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[12px] text-gray-700 dark:text-gray-200 pe-20"
               />
               <button
                 type="button"
                 @click="copy"
-                class="absolute top-1/2 -translate-y-1/2 right-2 inline-flex items-center gap-1 h-6 px-1 rounded bg-blue-600 text-white dark:bg-blue-500/90 dark:text-white text-[10px] font-medium shadow hover:bg-blue-700 dark:hover:bg-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-800 transition-colors"
-                aria-label="Copy URL"
+                class="absolute top-1/2 -translate-y-1/2 end-2 inline-flex items-center gap-1 h-6 px-1 rounded bg-blue-600 text-white dark:bg-blue-500/90 dark:text-white text-[10px] font-medium shadow hover:bg-blue-700 dark:hover:bg-blue-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-800 transition-colors"
+                :aria-label="t('media.signedLink.copyUrlAria')"
               >
                 <Icon
                   icon="mdi:content-copy"
@@ -91,8 +91,8 @@
                   v-if="!urlCopied"
                 />
                 <Icon icon="mdi:check" class="w-3.5 h-3.5" v-else />
-                <span v-if="!urlCopied">Copy</span>
-                <span v-else>Copied!</span>
+                <span v-if="!urlCopied">{{ t('common.copy') }}</span>
+                <span v-else>{{ t('common.copied') }}</span>
               </button>
             </div>
           </div>
@@ -102,21 +102,21 @@
             @click="cancel"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
           >
-            <Icon icon="mdi:close-circle-outline" class="w-4 h-4" /> Cancel
+            <Icon icon="mdi:close-circle-outline" class="w-4 h-4" /> {{ t('common.cancel') }}
           </button>
           <button
             v-if="!generatedUrl"
             @click="confirmInternal"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Icon icon="mdi:link-plus" class="w-4 h-4" /> Generate
+            <Icon icon="mdi:link-plus" class="w-4 h-4" /> {{ t('media.signedLink.generate') }}
           </button>
           <button
             v-else
             @click="closeAfter"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 focus:outline-none focus:ring-2 focus:ring-green-500/50"
           >
-            <Icon icon="mdi:check-circle-outline" class="w-4 h-4" /> Done
+            <Icon icon="mdi:check-circle-outline" class="w-4 h-4" /> {{ t('media.signedLink.done') }}
           </button>
         </div>
       </DialogPanel>
@@ -125,6 +125,8 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+
 import { ref, watch } from "vue";
 import {
   Dialog,
@@ -188,11 +190,11 @@ function confirmInternal() {
   error.value = "";
   const secs = parseInt(secondsInput.value, 10);
   if (!secs || secs <= 0) {
-    error.value = "Enter a positive number";
+    error.value = t("media.signedLink.positiveNumber");
     return;
   }
   if (secs > MAX_SECONDS) {
-    error.value = `Maximum allowed is ${MAX_SECONDS} seconds`;
+    error.value = t("media.signedLink.maxSeconds", { max: MAX_SECONDS });
     return;
   }
   emit("generate", secs, (url) => {

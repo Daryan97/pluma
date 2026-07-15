@@ -38,7 +38,7 @@
         class="block mx-auto text-5xl text-gray-400 dark:text-gray-500 mb-4"
       />
       <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">
-        No posts found.
+        {{ t("posts.noPosts") }}
       </p>
     </div>
 
@@ -48,7 +48,7 @@
         :key="post.id"
         class="group relative bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
       >
-        <router-link :to="`/posts/${post.slug}`" class="block group">
+        <router-link :to="localePath(`/posts/${post.slug}`)" class="block group">
           <div
             class="relative w-full aspect-[16/8] md:aspect-[16/6] overflow-hidden bg-gray-100 dark:bg-gray-700"
           >
@@ -76,7 +76,7 @@
             class="flex flex-wrap items-center gap-3 text-[11px] font-medium mb-4"
           >
             <router-link
-              :to="`/category/${post.category?.slug || 'uncategorized'}`"
+              :to="localePath(`/category/${post.category?.slug || 'uncategorized'}`)"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50"
             >
               <Icon icon="mdi:folder" class="text-sm" />
@@ -89,7 +89,7 @@
               {{ formatDate(post.created_at) }}
             </span>
             <router-link
-              :to="`/author/${getAuthorUsername(post.author)}`"
+              :to="localePath(`/author/${getAuthorUsername(post.author)}`)"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
             >
               <Icon icon="mdi:account" class="text-sm" />
@@ -97,7 +97,7 @@
             </router-link>
           </div>
           <router-link
-            :to="`/posts/${post.slug}`"
+            :to="localePath(`/posts/${post.slug}`)"
             class="group/title block mb-3"
           >
             <h2
@@ -115,11 +115,11 @@
           </div>
           <div class="flex items-center justify-between">
             <router-link
-              :to="`/posts/${post.slug}`"
+              :to="localePath(`/posts/${post.slug}`)"
               class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             >
               <Icon icon="mdi:arrow-right" class="text-base" />
-              Read More
+              {{ t("common.readMore") }}
             </router-link>
           </div>
         </div>
@@ -136,7 +136,7 @@
       v-if="noMorePosts && posts.length > 0"
       class="text-center text-gray-500 mt-8 text-sm"
     >
-      No more posts.
+      {{ t("posts.noMore") }}
     </div>
   </div>
 </template>
@@ -147,9 +147,11 @@ import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import Markdown from "vue3-markdown-it";
-import { projectInfo } from "@/config/projectInfo";
-import { useToast } from "vue-toastification";
-import NoImage from "./NoImage.vue";
+import { projectInfo } from "@/config/projectInfo";import NoImage from "./NoImage.vue";
+
+const { t } = useI18n();
+const localePath = useLocalePath();
+const { contentLocale } = useContentLocale();
 
 const posts = ref([]);
 const imageErrorMap = ref({});
@@ -177,7 +179,7 @@ const props = defineProps({
 });
 
 function getAuthorName(author) {
-  if (!author) return "Unknown author";
+  if (!author) return t("common.unknownAuthor");
   return author.display_name || author.username;
 }
 
@@ -187,7 +189,7 @@ function getAuthorUsername(author) {
 }
 
 function getCategoryName(category) {
-  return category ? category.name : "Uncategorized";
+  return category ? category.name : t("common.uncategorized");
 }
 
 function formatDate(dateStr) {
@@ -222,6 +224,7 @@ async function loadPosts() {
         .from("categories")
         .select("id")
         .eq("slug", props.filterValue)
+        .eq("locale", contentLocale.value)
         .single();
       if (catErr) {
         loading.value = false;
@@ -252,13 +255,15 @@ async function loadPosts() {
     content,
     tags,
     slug,
+    locale,
     cover_image_url,
     created_at,
-  category:categories ( id, name, slug ),
+  category:categories ( id, name, slug, locale ),
     author:profiles ( id, username, display_name, role )
   `
     )
     .eq("status", "published")
+    .eq("locale", contentLocale.value)
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
@@ -283,7 +288,11 @@ async function loadPosts() {
   const { data, error } = await query;
 
   if (error) {
-    toast.error("Failed to load posts: " + (error.message || "Unknown error"));
+    toast.error(
+      error.message
+        ? t('posts.loadFailed', { message: error.message })
+        : t('posts.loadError')
+    );
     loading.value = false;
     return;
   } else {
@@ -325,8 +334,8 @@ onUnmounted(() => {
   }
 });
 watch(
-  [() => props.filterBy, () => props.filterValue],
-  ([newFilterBy, newFilterValue]) => {
+  [() => props.filterBy, () => props.filterValue, contentLocale],
+  () => {
     posts.value = [];
     offset = 0;
     noMorePosts.value = false;

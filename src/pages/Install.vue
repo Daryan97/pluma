@@ -92,13 +92,9 @@
           </button>
         </div>
         <label
-          class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none pt-2"
+          class="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none pt-2"
         >
-          <input
-            type="checkbox"
-            v-model="provisionConfirmed"
-            class="rounded border-gray-300 dark:border-gray-600 focus:ring-green-500"
-          />
+          <Checkbox v-model="provisionConfirmed" aria-label="Confirm SQL was run" />
           I ran the SQL successfully
         </label>
         <div class="flex items-center gap-3 pt-2">
@@ -134,8 +130,8 @@
             policies. Supabase credentials are
             {{
               usingEnvCreds
-                ? "loaded from environment (.env)"
-                : "entered below"
+                ? "loaded from runtime environment"
+                : "not configured"
             }}.
           </p>
         </div>
@@ -174,15 +170,24 @@
               >
             </div>
           </div>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400">
-            To override, unset these env vars and restart the server.
+          <p
+            v-if="envLoading"
+            class="text-[11px] text-gray-500 dark:text-gray-400"
+          >
+            Loading runtime credentials…
+          </p>
+          <p
+            v-else
+            class="text-[11px] text-gray-500 dark:text-gray-400"
+          >
+            To override, set container env vars and restart the server.
           </p>
         </div>
         <div class="flex items-center gap-3 pt-2">
           <button
             type="button"
             @click="verifyEnvironment"
-            :disabled="verifying || !url || !anonKey"
+            :disabled="envLoading || verifying || !url || !anonKey"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-400 border border-blue-200/70 dark:border-blue-800/40"
           >
             <Icon
@@ -642,11 +647,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from "vue";
+definePageMeta({
+  // Install wizard is English-only — no /ku/install, /ar/install, etc.
+  i18n: false,
+});
+defineI18nRoute(false);
+
+import { ref, computed, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { useToast } from "vue-toastification";
+import { getRuntimeEnvSync, loadRuntimeEnv } from "@/lib/runtimeEnv";
+import Checkbox from "@/components/ui/Checkbox.vue";
 
 // @ts-ignore - .sql raw import
 import migrationSqlRaw from "../install/pluma_initial.sql?raw";
@@ -654,6 +666,23 @@ import { projectInfo } from "@/config/projectInfo";
 
 const toast = useToast();
 const router = useRouter();
+const { locale, setLocale } = useI18n();
+
+useHead({
+  htmlAttrs: { lang: "en", dir: "ltr" },
+});
+
+async function forceEnglishUi() {
+  try {
+    if (unref(locale) !== "en") {
+      await setLocale("en");
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+await forceEnglishUi();
 
 interface StepDef {
   step: number;
@@ -697,22 +726,28 @@ const siteDescription = ref("");
 const brandingSubmitting = ref(false);
 const brandingSaved = ref(false);
 const activeStep = ref<number>(1);
-const envUrl = (import.meta as any).env?.VITE_SUPABASE_URL as
-  | string
-  | undefined;
-const envAnon = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as
-  | string
-  | undefined;
-const url = ref<string>(
-  envUrl || ""
-);
-const anonKey = ref<string>(
-  envAnon || ""
-);
+const url = ref<string>("");
+const anonKey = ref<string>("");
+const envLoading = ref(true);
 const urlError = ref<string>("");
 const keyError = ref<string>("");
 let tempClient: SupabaseClient | null = null;
-const usingEnvCreds = computed(() => !!envUrl && !!envAnon);
+const usingEnvCreds = computed(() => !!url.value && !!anonKey.value);
+
+function applyRuntimeEnv(env: Record<string, string | undefined>) {
+  url.value = env.VITE_SUPABASE_URL || "";
+  anonKey.value = env.VITE_SUPABASE_ANON_KEY || "";
+}
+
+applyRuntimeEnv(getRuntimeEnvSync());
+
+onMounted(async () => {
+  try {
+    applyRuntimeEnv(await loadRuntimeEnv());
+  } finally {
+    envLoading.value = false;
+  }
+});
 const maskedAnonKey = computed(() =>
   anonKey.value
     ? anonKey.value.slice(0, 16) + "..." + anonKey.value.slice(-8)
@@ -732,12 +767,15 @@ const tableChecks = ref<CheckItem[]>([
   { name: "posts", type: "table", status: "pending" },
   { name: "comments", type: "table", status: "pending" },
   { name: "settings", type: "table", status: "pending" },
+  { name: "series", type: "table", status: "pending" },
 ]);
 const functionChecks = ref<CheckItem[]>([
   { name: "is_admin", type: "function", status: "pending" },
   { name: "is_author", type: "function", status: "pending" },
   { name: "handle_new_user", type: "function", status: "pending" },
   { name: "touch_updated_at", type: "function", status: "pending" },
+  { name: "publish_due_posts", type: "function", status: "pending" },
+  { name: "get_post_by_preview_token", type: "function", status: "pending" },
 ]);
 const bucketChecks = ref<CheckItem[]>([
   {
@@ -881,6 +919,33 @@ async function verifyEnvironment() {
             .limit(1);
           if (error) throw error;
           f.status = "ok";
+        } else if (f.name === "publish_due_posts") {
+          const { error } = await tempClient.rpc(f.name);
+          if (
+            error &&
+            /could not find|does not exist|PGRST202|schema cache/i.test(
+              error.message || ""
+            )
+          ) {
+            throw error;
+          }
+          f.status = "ok";
+        } else if (f.name === "get_post_by_preview_token") {
+          const { error } = await tempClient.rpc(f.name, {
+            p_token: "00000000-0000-0000-0000-000000000000",
+          });
+          if (
+            error &&
+            /could not find|does not exist|PGRST202|schema cache/i.test(
+              error.message || ""
+            )
+          ) {
+            throw error;
+          }
+          f.status = "ok";
+        } else {
+          f.status = "fail";
+          f.detail = "No verification path for this function";
         }
       } catch (e: any) {
         f.status = "fail";

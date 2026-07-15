@@ -12,11 +12,10 @@
         <h2
           class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words"
         >
-          Site Meta
+          {{ t('settings.siteMeta.title') }}
         </h2>
         <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
-          Update public site name, description and social links. Stored under
-          key <code>branding</code> in <code>settings</code>.
+          {{ t('settings.siteMeta.description') }}
         </p>
       </div>
     </div>
@@ -24,33 +23,55 @@
       <div>
         <label
           class="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1"
-          >Site Name</label
+          >{{ t('settings.siteMeta.siteName') }}</label
         >
         <input
           v-model.trim="siteName"
           type="text"
           class="w-full h-11 rounded-md px-3 bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Your Site"
+          :placeholder="t('settings.siteMeta.siteNamePlaceholder')"
           required
         />
       </div>
       <div>
         <label
           class="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1"
-          >Description</label
+          >{{ t('settings.siteMeta.siteDescription') }}</label
         >
         <textarea
           v-model.trim="siteDescription"
           rows="3"
           class="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          placeholder="Short tagline"
+          :placeholder="t('settings.siteMeta.siteDescriptionPlaceholder')"
         ></textarea>
+      </div>
+      <div>
+        <label
+          class="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1"
+          >{{ t('settings.siteMeta.twitterHandle') }}</label
+        >
+        <div
+          class="flex items-center h-11 rounded-md bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 overflow-hidden"
+        >
+          <span class="ps-3 text-sm text-gray-400 select-none">@</span>
+          <input
+            v-model.trim="twitterHandle"
+            type="text"
+            class="flex-1 h-full px-2 bg-transparent text-sm focus:outline-none"
+            :placeholder="t('settings.siteMeta.twitterHandlePlaceholder')"
+            autocomplete="off"
+            maxlength="15"
+          />
+        </div>
+        <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+          {{ t('settings.siteMeta.twitterHint') }}
+        </p>
       </div>
       <div class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <label
             class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-            >Social Links
+            >{{ t('settings.siteMeta.socialLinks') }}
             <span v-if="links.length" class="font-normal text-gray-400"
               >({{ links.length }})</span
             ></label
@@ -66,14 +87,14 @@
                 :icon="collapsed ? 'mdi:chevron-down' : 'mdi:chevron-up'"
                 class="text-sm"
               />
-              {{ collapsed ? "Expand" : "Collapse" }}
+              {{ collapsed ? t('settings.siteMeta.expand') : t('settings.siteMeta.collapse') }}
             </button>
             <button
               type="button"
               @click="addSocialLink"
               class="inline-flex items-center gap-1 h-7 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700/60"
             >
-              <Icon icon="mdi:plus" class="text-sm" /> Add
+              <Icon icon="mdi:plus" class="text-sm" /> {{ t('settings.siteMeta.add') }}
             </button>
           </div>
         </div>
@@ -81,12 +102,12 @@
           v-if="links.length === 0"
           class="text-[11px] text-gray-500 dark:text-gray-400"
         >
-          No links added.
+          {{ t('settings.siteMeta.noLinks') }}
         </div>
         <transition name="fade">
           <div
             v-show="!collapsed"
-            class="max-h-64 overflow-auto pr-1 custom-scroll space-y-3"
+            class="max-h-64 overflow-auto pe-1 custom-scroll space-y-3"
             data-social-links
           >
             <ul class="space-y-3">
@@ -99,13 +120,14 @@
                   <input
                     v-model.trim="link.label"
                     type="text"
-                    placeholder="Label"
+                    data-link-label
+                    :placeholder="t('settings.siteMeta.labelPlaceholder')"
                     class="h-9 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-2"
                   />
                   <input
                     v-model.trim="link.url"
                     type="text"
-                    placeholder="https://"
+                    :placeholder="t('settings.siteMeta.urlPlaceholder')"
                     class="h-9 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:col-span-3"
                   />
                 </div>
@@ -115,6 +137,7 @@
                     @click.stop="toggleIconPicker(i, $event)"
                     class="w-8 h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300 shrink-0 hover:ring-2 hover:ring-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     :aria-expanded="openIconIndex === i"
+                    :aria-label="t('settings.siteMeta.pickIcon')"
                   >
                     <Icon
                       :icon="link.icon || 'mdi:link-variant'"
@@ -132,20 +155,21 @@
                         <input
                           v-model.trim="iconSearch"
                           type="text"
-                          placeholder="Search (e.g. twitter)"
+                          :placeholder="t('settings.siteMeta.iconSearchPlaceholder')"
                           class="icon-picker-search flex-1 h-8 px-2 rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <button
                           type="button"
                           @click="closeIconPicker"
                           class="h-8 px-2 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
+                          :aria-label="t('common.close')"
                         >
                           ✕
                         </button>
                       </div>
-                      <div class="max-h-56 overflow-auto space-y-3 pr-1 custom-scroll">
+                      <div class="max-h-56 overflow-auto space-y-3 pe-1 custom-scroll">
                         <template v-if="filteredGroups.length">
-                          <div v-for="group in filteredGroups" :key="group.label" class="space-y-1">
+                          <div v-for="group in filteredGroups" :key="group.key" class="space-y-1">
                             <div class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ group.label }}</div>
                             <div class="grid grid-cols-5 gap-2">
                               <button v-for="ic in group.icons" :key="ic" type="button" @click="selectIcon(i, ic)" :title="ic" class="group w-12 h-12 rounded-md border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center gap-0.5 text-[9px] text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500" :class="{ 'ring-2 ring-blue-500': ic === link.icon }">
@@ -156,8 +180,8 @@
                           </div>
                         </template>
                         <div v-else class="text-[11px] text-gray-500 dark:text-gray-400 py-4 text-center">
-                          <span class="block">No matches</span>
-                          <a href="https://icon-sets.iconify.design/mdi/" target="_blank" rel="noopener" class="underline block">See all icons</a>
+                          <span class="block">{{ t('settings.siteMeta.noMatches') }}</span>
+                          <a href="https://icon-sets.iconify.design/mdi/" target="_blank" rel="noopener" class="underline block">{{ t('settings.siteMeta.seeAllIcons') }}</a>
                         </div>
                       </div>
                       <div class="flex justify-between pt-1">
@@ -166,25 +190,26 @@
                           @click="selectIcon(i, 'mdi:link-variant')"
                           class="text-[11px] px-2 py-1 rounded bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
                         >
-                          Reset
+                          {{ t('common.reset') }}
                         </button>
-                        <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ totalIcons }} icons</span>
+                        <span class="text-[10px] text-gray-400 dark:text-gray-500">{{ t('settings.siteMeta.iconsCount', { count: totalIcons }) }}</span>
                       </div>
                     </div>
                   </Teleport>
                   <input
                     v-model.trim="link.icon"
                     type="text"
-                    placeholder="mdi:icon-name"
+                    :placeholder="t('settings.siteMeta.iconPlaceholder')"
                     class="flex-1 min-w-[140px] h-8 rounded-md px-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                     @focus="openIconIndex = null"
                   />
-                  <div class="flex flex-wrap items-center gap-1 ml-auto w-full sm:w-auto justify-end">
+                  <div class="flex flex-wrap items-center gap-1 ms-auto w-full sm:w-auto justify-end">
                     <button
                       type="button"
                       @click="moveLink(i, -1)"
                       :disabled="i === 0"
-                      title="Move up"
+                      :title="t('settings.siteMeta.moveUp')"
+                      :aria-label="t('settings.siteMeta.moveUp')"
                       class="inline-flex items-center justify-center h-8 w-8 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-40"
                     >
                       <Icon icon="mdi:arrow-up" class="text-sm" />
@@ -193,7 +218,8 @@
                       type="button"
                       @click="moveLink(i, 1)"
                       :disabled="i === links.length - 1"
-                      title="Move down"
+                      :title="t('settings.siteMeta.moveDown')"
+                      :aria-label="t('settings.siteMeta.moveDown')"
                       class="inline-flex items-center justify-center h-8 w-8 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-40"
                     >
                       <Icon icon="mdi:arrow-down" class="text-sm" />
@@ -203,7 +229,7 @@
                       @click="removeSocialLink(i)"
                       class="inline-flex items-center gap-1 h-8 px-2 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60"
                     >
-                      <Icon icon="mdi:delete" class="text-sm" /> Remove
+                      <Icon icon="mdi:delete" class="text-sm" /> {{ t('common.remove') }}
                     </button>
                   </div>
                 </div>
@@ -223,7 +249,7 @@
             :class="saving ? 'animate-spin' : ''"
             class="text-base"
           />
-          <span>{{ saving ? "Saving..." : "Save Changes" }}</span>
+          <span>{{ saving ? t('common.saving') : t('common.save') }}</span>
         </button>
       </div>
     </form>
@@ -231,6 +257,9 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import {
   ref,
   watch,
@@ -241,14 +270,12 @@ import {
 } from "vue";
 import { Icon } from "@iconify/vue";
 import { useBranding, updateBranding } from "@/stores/brandingStore";
-import { projectInfo } from "@/config/projectInfo";
-import { useToast } from "vue-toastification";  
-
-const branding = useBranding();
+import { projectInfo } from "@/config/projectInfo";const branding = useBranding();
 const toast = useToast();
 
 const siteName = ref("");
 const siteDescription = ref("");
+const twitterHandle = ref("");
 const links = ref([]);
 const collapsed = ref(false);
 const saving = ref(false);
@@ -262,20 +289,24 @@ const pickerStyle = computed(() => ({
   left: pickerCoords.value.left + "px",
 }));
 const iconSearch = ref("");
-const iconGroups = [
-  { label: 'Social', icons: ['mdi:facebook','mdi:facebook-messenger','mdi:instagram','mdi:twitter','mdi:reddit','mdi:pinterest','mdi:tumblr','mdi:snapchat','mdi:mastodon','mdi:vk','mdi:wechat','mdi:sina-weibo','ic:baseline-tiktok'] },
-  { label: 'Media / Streaming', icons: ['mdi:youtube','mdi:vimeo','mdi:twitch','mdi:mixcloud','mdi:bandcamp','mdi:lastfm','mdi:flickr'] },
-  { label: 'Messaging / Communication', icons: ['mdi:discord','mdi:slack','mdi:telegram','mdi:whatsapp','mdi:signal','mdi:skype'] },
-  { label: 'Developer / Code', icons: ['mdi:github','mdi:github-face','mdi:gitlab','mdi:bitbucket','mdi:codepen','mdi:stack-overflow'] },
-  { label: 'Content / Publishing', icons: ['mdi:medium','mdi:wordpress','mdi:newspaper','mdi:forum','mdi:dribbble','mdi:behance'] },
-  { label: 'Community / Support', icons: ['mdi:patreon','mdi:steam','mdi:meetup','mdi:quora','mdi:disqus'] },
-  { label: 'Corporate / Platform', icons: ['mdi:google','mdi:apple','mdi:android','mdi:microsoft'] },
-  { label: 'General / Other', icons: ['mdi:link-variant','mdi:web','mdi:email','mdi:email-outline','mdi:earth','mdi:phone','mdi:account','mdi:star','mdi:bookmark','mdi:pen','mdi:feather','mdi:camera','mdi:cloud','mdi:message','mdi:rss'] }
+const iconGroupDefs = [
+  { key: 'social', icons: ['mdi:facebook','mdi:facebook-messenger','mdi:instagram','mdi:twitter','mdi:reddit','mdi:pinterest','mdi:tumblr','mdi:snapchat','mdi:mastodon','mdi:vk','mdi:wechat','mdi:sina-weibo','ic:baseline-tiktok'] },
+  { key: 'media', icons: ['mdi:youtube','mdi:vimeo','mdi:twitch','mdi:mixcloud','mdi:bandcamp','mdi:lastfm','mdi:flickr'] },
+  { key: 'messaging', icons: ['mdi:discord','mdi:slack','mdi:telegram','mdi:whatsapp','mdi:signal','mdi:skype'] },
+  { key: 'developer', icons: ['mdi:github','mdi:github-face','mdi:gitlab','mdi:bitbucket','mdi:codepen','mdi:stack-overflow'] },
+  { key: 'content', icons: ['mdi:medium','mdi:wordpress','mdi:newspaper','mdi:forum','mdi:dribbble','mdi:behance'] },
+  { key: 'community', icons: ['mdi:patreon','mdi:steam','mdi:meetup','mdi:quora','mdi:disqus'] },
+  { key: 'corporate', icons: ['mdi:google','mdi:apple','mdi:android','mdi:microsoft'] },
+  { key: 'general', icons: ['mdi:link-variant','mdi:web','mdi:email','mdi:email-outline','mdi:earth','mdi:phone','mdi:account','mdi:star','mdi:bookmark','mdi:pen','mdi:feather','mdi:camera','mdi:cloud','mdi:message','mdi:rss'] }
 ];
 const filteredGroups = computed(()=> {
   const term = iconSearch.value.trim().toLowerCase();
-  return iconGroups
-    .map(g=> ({ label: g.label, icons: g.icons.filter(ic => !term || ic.includes(term)) }))
+  return iconGroupDefs
+    .map(g=> ({
+      key: g.key,
+      label: t(`settings.siteMeta.iconGroups.${g.key}`),
+      icons: g.icons.filter(ic => !term || ic.includes(term)),
+    }))
     .filter(g=> g.icons.length);
 });
 const totalIcons = computed(()=> filteredGroups.value.reduce((sum,g)=> sum + g.icons.length, 0));
@@ -373,6 +404,7 @@ function safeId() {
 function init() {
   siteName.value = branding.siteName.value || "";
   siteDescription.value = branding.siteDescription.value || "";
+  twitterHandle.value = (branding.twitterHandle.value || "").replace(/^@/, "");
   links.value = (branding.socialLinks.value || []).map((l) => ({
     id: safeId(),
     label: l.label || "",
@@ -405,7 +437,7 @@ function internalAdd() {
   nextTick(() => {
     const container = document.querySelector("[data-social-links]");
     if (container) {
-      const inputs = container.querySelectorAll('input[placeholder="Label"]');
+      const inputs = container.querySelectorAll("input[data-link-label]");
       inputs[inputs.length - 1]?.focus();
     }
   });
@@ -432,7 +464,7 @@ function moveLink(i, delta) {
   nextTick(() => {
     const container = document.querySelector("[data-social-links]");
     if (container) {
-      const inputs = container.querySelectorAll('input[placeholder="Label"]');
+      const inputs = container.querySelectorAll("input[data-link-label]");
       inputs[newIndex]?.focus();
     }
   });
@@ -456,6 +488,7 @@ async function save() {
       faviconFile: null,
       siteName: siteName.value,
       siteDescription: siteDescription.value,
+      twitterHandle: twitterHandle.value,
       socialLinks: cleaned,
     });
     projectInfo.applyBranding({
@@ -463,11 +496,15 @@ async function save() {
       siteDescription: siteDescription.value,
       socialLinks: cleaned,
     });
-    toast.success("Branding updated");
+    toast.success(t('settings.siteMeta.updated'));
+    try {
+      const { refreshDocumentSeo } = await import("@/utils/refreshDocumentSeo");
+      refreshDocumentSeo?.();
+    } catch (_) {}
     error.value = false;
   } catch (e) {
     console.error(e);
-    toast.error("Error saving branding");
+    toast.error(t('settings.siteMeta.saveFailed'));
     error.value = true;
   } finally {
     saving.value = false;

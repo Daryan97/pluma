@@ -11,10 +11,10 @@
         </div>
         <div class="flex-1">
           <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase">
-            Logos & Favicon
+            {{ t('settings.logos.title') }}
           </h2>
           <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
-            Upload or replace visual branding assets. These display across navigation, footer and browser tab.
+            {{ t('settings.logos.description') }}
           </p>
         </div>
       </div>
@@ -24,7 +24,7 @@
         <div>
           <label
             class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
-            >Light Logo</label
+            >{{ t('settings.logos.lightLogo') }}</label
           >
           <div
             class="relative flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-md text-gray-500 dark:text-gray-400 hover:border-blue-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -37,6 +37,7 @@
             @keydown.space.prevent="onZoneClick('light', $event)"
             role="button"
             tabindex="0"
+            :aria-label="t('settings.logos.lightLogo')"
           >
             <input
               type="file"
@@ -51,7 +52,7 @@
             >
               <img
                 :src="lightPreview"
-                alt="Light Logo Preview"
+                :alt="t('settings.logos.lightPreviewAlt')"
                 class="max-h-20 object-contain"
                 loading="lazy"
               />
@@ -61,12 +62,12 @@
                 class="text-xs text-red-600 hover:underline"
                 data-remove
               >
-                Remove
+                {{ t('common.remove') }}
               </button>
             </div>
             <template v-else>
               <Icon icon="mdi:image-outline" class="text-3xl" />
-              <p class="text-xs">Click or drop file</p>
+              <p class="text-xs">{{ t('settings.logos.clickOrDrop') }}</p>
             </template>
           </div>
         </div>
@@ -74,7 +75,7 @@
         <div>
           <label
             class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
-            >Dark Logo</label
+            >{{ t('settings.logos.darkLogo') }}</label
           >
           <div
             class="relative flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-md text-gray-500 dark:text-gray-400 hover:border-blue-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -87,6 +88,7 @@
             @keydown.space.prevent="onZoneClick('dark', $event)"
             role="button"
             tabindex="0"
+            :aria-label="t('settings.logos.darkLogo')"
           >
             <input
               type="file"
@@ -101,7 +103,7 @@
             >
               <img
                 :src="darkPreview"
-                alt="Dark Logo Preview"
+                :alt="t('settings.logos.darkPreviewAlt')"
                 class="max-h-20 object-contain bg-gray-900 p-1 rounded"
                 loading="lazy"
               />
@@ -111,19 +113,19 @@
                 class="text-xs text-red-600 hover:underline"
                 data-remove
               >
-                Remove
+                {{ t('common.remove') }}
               </button>
             </div>
             <template v-else>
               <Icon icon="mdi:image-outline" class="text-3xl" />
-              <p class="text-xs">Click or drop file</p>
+              <p class="text-xs">{{ t('settings.logos.clickOrDrop') }}</p>
             </template>
           </div>
         </div>
         <div>
           <label
             class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"
-            >Favicon</label
+            >{{ t('settings.logos.favicon') }}</label
           >
           <div
             class="relative flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed rounded-md text-gray-500 dark:text-gray-400 hover:border-blue-400 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,6 +138,7 @@
             @keydown.space.prevent="onZoneClick('favicon', $event)"
             role="button"
             tabindex="0"
+            :aria-label="t('settings.logos.favicon')"
           >
             <input
               type="file"
@@ -150,7 +153,7 @@
             >
               <img
                 :src="faviconPreview"
-                alt="Favicon Preview"
+                :alt="t('settings.logos.faviconPreviewAlt')"
                 class="h-12 w-12 object-contain bg-white dark:bg-gray-900 p-1 rounded"
                 loading="lazy"
               />
@@ -160,17 +163,17 @@
                 class="text-xs text-red-600 hover:underline"
                 data-remove
               >
-                Remove
+                {{ t('common.remove') }}
               </button>
             </div>
             <template v-else>
               <Icon icon="mdi:star-four-points-outline" class="text-3xl" />
-              <p class="text-xs">Click or drop file</p>
+              <p class="text-xs">{{ t('settings.logos.clickOrDrop') }}</p>
             </template>
           </div>
         </div>
       </div>
-      <div class="grid md:grid-cols-2 gap-6" aria-label="Branding previews">
+      <div class="grid md:grid-cols-2 gap-6" :aria-label="t('settings.logos.previewsAria')">
         <div
           v-if="darkDisplaySrc && lightDisplaySrc && faviconDisplaySrc"
           class="flex justify-center md:col-span-2"
@@ -178,7 +181,7 @@
           <span
             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900/30 text-green-300 text-[10px]"
           >
-            <Icon icon="mdi:check" class="text-xs" /> All assets set
+            <Icon icon="mdi:check" class="text-xs" /> {{ t('settings.logos.allAssetsSet') }}
           </span>
         </div>
         <div
@@ -188,7 +191,7 @@
             <h3
               class="text-xs font-semibold uppercase tracking-wide text-gray-600"
             >
-              Light Preview
+              {{ t('settings.logos.lightPreview') }}
             </h3>
             <div class="flex items-center gap-2">
               <span v-if="lightDims.w" class="text-[10px] text-gray-400"
@@ -200,7 +203,7 @@
                 @click="remove('light')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition text-[10px]"
               >
-                <Icon icon="mdi:delete" class="text-xs" /> Remove
+                <Icon icon="mdi:delete" class="text-xs" /> {{ t('common.remove') }}
               </button>
               <button
                 v-else-if="lightPreview"
@@ -208,7 +211,7 @@
                 @click="clearFile('light')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700/60 text-[10px]"
               >
-                <Icon icon="mdi:close" class="text-xs" /> Clear
+                <Icon icon="mdi:close" class="text-xs" /> {{ t('common.clear') }}
               </button>
             </div>
           </div>
@@ -219,7 +222,7 @@
               <template v-if="lightDisplaySrc">
                 <img
                   :src="lightDisplaySrc"
-                  alt="Light logo"
+                  :alt="t('settings.logos.lightLogoAlt')"
                   class="h-8 max-w-[140px] object-contain"
                   loading="lazy"
                 />
@@ -233,15 +236,15 @@
               </template>
               <span
                 class="text-sm font-medium text-gray-700 truncate max-w-[140px]"
-                >{{ branding.siteName.value || "Site Name" }}</span
+                >{{ branding.siteName.value || t('settings.logos.siteNameFallback') }}</span
               >
             </div>
             <div
-              class="flex items-center gap-2 text-[10px] text-gray-500 ml-auto opacity-70 select-none"
+              class="flex items-center gap-2 text-[10px] text-gray-500 ms-auto opacity-70 select-none"
             >
-              <span class="hidden sm:inline">Home</span>
-              <span class="hidden sm:inline">Posts</span>
-              <span class="hidden md:inline">About</span>
+              <span class="hidden sm:inline">{{ t('settings.logos.navHome') }}</span>
+              <span class="hidden sm:inline">{{ t('settings.logos.navPosts') }}</span>
+              <span class="hidden md:inline">{{ t('settings.logos.navAbout') }}</span>
             </div>
           </div>
           <div
@@ -255,7 +258,7 @@
                   <img
                     v-if="faviconDisplaySrc"
                     :src="faviconDisplaySrc"
-                    alt="Fav"
+                    :alt="t('settings.logos.favAlt')"
                     class="h-4 w-4 object-contain"
                     loading="lazy"
                   />
@@ -267,10 +270,10 @@
                 </div>
                 <span
                   class="text-[11px] font-medium text-gray-700 truncate max-w-[130px]"
-                  >{{ branding.siteName.value || "Site Name" }}</span
+                  >{{ branding.siteName.value || t('settings.logos.siteNameFallback') }}</span
                 >
               </div>
-              <span class="ml-auto text-[9px] text-gray-400">Tab</span>
+              <span class="ms-auto text-[9px] text-gray-400">{{ t('settings.logos.tab') }}</span>
             </div>
             <div class="flex items-center gap-1">
               <button
@@ -278,6 +281,7 @@
                 type="button"
                 @click="remove('favicon')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 hover:bg-red-100 transition text-[10px]"
+                :aria-label="t('settings.logos.removeFavicon')"
               >
                 <Icon icon="mdi:delete" class="text-xs" />
               </button>
@@ -286,6 +290,7 @@
                 type="button"
                 @click="clearFile('favicon')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700/60 text-[10px]"
+                :aria-label="t('settings.logos.clearFavicon')"
               >
                 <Icon icon="mdi:close" class="text-xs" />
               </button>
@@ -296,26 +301,26 @@
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px]"
               v-if="!lightDisplaySrc"
             >
-              <Icon icon="mdi:alert-circle-outline" class="text-xs" /> Missing
-              light logo
+              <Icon icon="mdi:alert-circle-outline" class="text-xs" />
+              {{ t('settings.logos.missingLightLogo') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px]"
               v-if="lightDisplaySrc"
             >
-              <Icon icon="mdi:check" class="text-xs" /> Light logo set
+              <Icon icon="mdi:check" class="text-xs" /> {{ t('settings.logos.lightLogoSet') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px]"
               v-if="faviconDisplaySrc"
             >
-              <Icon icon="mdi:star-four-points" class="text-xs" /> Favicon set
+              <Icon icon="mdi:star-four-points" class="text-xs" /> {{ t('settings.logos.faviconSet') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 text-[10px]"
               v-if="!faviconDisplaySrc"
             >
-              <Icon icon="mdi:alert" class="text-xs" /> Missing favicon
+              <Icon icon="mdi:alert" class="text-xs" /> {{ t('settings.logos.missingFavicon') }}
             </span>
           </div>
         </div>
@@ -326,7 +331,7 @@
             <h3
               class="text-xs font-semibold uppercase tracking-wide text-gray-300"
             >
-              Dark Preview
+              {{ t('settings.logos.darkPreview') }}
             </h3>
             <div class="flex items-center gap-2">
               <span v-if="darkDims.w" class="text-[10px] text-gray-500"
@@ -338,7 +343,7 @@
                 @click="remove('dark')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-900/30 text-red-300 hover:bg-red-900/50 transition text-[10px]"
               >
-                <Icon icon="mdi:delete" class="text-xs" /> Remove
+                <Icon icon="mdi:delete" class="text-xs" /> {{ t('common.remove') }}
               </button>
               <button
                 v-else-if="darkPreview"
@@ -346,7 +351,7 @@
                 @click="clearFile('dark')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 text-[10px]"
               >
-                <Icon icon="mdi:close" class="text-xs" /> Clear
+                <Icon icon="mdi:close" class="text-xs" /> {{ t('common.clear') }}
               </button>
             </div>
           </div>
@@ -357,7 +362,7 @@
               <template v-if="darkDisplaySrc">
                 <img
                   :src="darkDisplaySrc"
-                  alt="Dark logo"
+                  :alt="t('settings.logos.darkLogoAlt')"
                   class="h-8 max-w-[140px] object-contain"
                   loading="lazy"
                 />
@@ -371,15 +376,15 @@
               </template>
               <span
                 class="text-sm font-medium text-gray-200 truncate max-w-[140px]"
-                >{{ branding.siteName.value || "Site Name" }}</span
+                >{{ branding.siteName.value || t('settings.logos.siteNameFallback') }}</span
               >
             </div>
             <div
-              class="flex items-center gap-2 text-[10px] text-gray-400 ml-auto opacity-70 select-none"
+              class="flex items-center gap-2 text-[10px] text-gray-400 ms-auto opacity-70 select-none"
             >
-              <span class="hidden sm:inline">Home</span>
-              <span class="hidden sm:inline">Posts</span>
-              <span class="hidden md:inline">About</span>
+              <span class="hidden sm:inline">{{ t('settings.logos.navHome') }}</span>
+              <span class="hidden sm:inline">{{ t('settings.logos.navPosts') }}</span>
+              <span class="hidden md:inline">{{ t('settings.logos.navAbout') }}</span>
             </div>
           </div>
           <div
@@ -392,7 +397,7 @@
                 <img
                   v-if="faviconDisplaySrc"
                   :src="faviconDisplaySrc"
-                  alt="Fav"
+                  :alt="t('settings.logos.favAlt')"
                   class="h-4 w-4 object-contain"
                   loading="lazy"
                 />
@@ -402,9 +407,9 @@
               </div>
               <span
                 class="text-[11px] font-medium text-gray-300 truncate max-w-[130px]"
-                >{{ branding.siteName.value || "Site Name" }}</span
+                >{{ branding.siteName.value || t('settings.logos.siteNameFallback') }}</span
               >
-              <span class="ml-auto text-[9px] text-gray-500">Tab</span>
+              <span class="ms-auto text-[9px] text-gray-500">{{ t('settings.logos.tab') }}</span>
             </div>
             <div class="flex items-center gap-1">
               <button
@@ -412,7 +417,8 @@
                 type="button"
                 @click="remove('favicon')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-900/30 text-red-300 hover:bg-red-900/50 transition text-[10px]"
-                title="Remove favicon"
+                :title="t('settings.logos.removeFavicon')"
+                :aria-label="t('settings.logos.removeFavicon')"
               >
                 <Icon icon="mdi:delete" class="text-xs" />
               </button>
@@ -421,7 +427,8 @@
                 type="button"
                 @click="clearFile('favicon')"
                 class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-700/40 text-gray-300 hover:bg-gray-700/60 text-[10px]"
-                title="Clear favicon"
+                :title="t('settings.logos.clearFavicon')"
+                :aria-label="t('settings.logos.clearFavicon')"
               >
                 <Icon icon="mdi:close" class="text-xs" />
               </button>
@@ -432,26 +439,26 @@
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300 text-[10px]"
               v-if="!darkDisplaySrc"
             >
-              <Icon icon="mdi:alert-circle-outline" class="text-xs" /> Missing
-              dark logo
+              <Icon icon="mdi:alert-circle-outline" class="text-xs" />
+              {{ t('settings.logos.missingDarkLogo') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-900/30 text-green-300 text-[10px]"
               v-if="darkDisplaySrc"
             >
-              <Icon icon="mdi:check" class="text-xs" /> Dark logo set
+              <Icon icon="mdi:check" class="text-xs" /> {{ t('settings.logos.darkLogoSet') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-900/30 text-blue-300 text-[10px]"
               v-if="faviconDisplaySrc"
             >
-              <Icon icon="mdi:star-four-points" class="text-xs" /> Favicon set
+              <Icon icon="mdi:star-four-points" class="text-xs" /> {{ t('settings.logos.faviconSet') }}
             </span>
             <span
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-900/30 text-rose-300 text-[10px]"
               v-if="!faviconDisplaySrc"
             >
-              <Icon icon="mdi:alert" class="text-xs" /> Missing favicon
+              <Icon icon="mdi:alert" class="text-xs" /> {{ t('settings.logos.missingFavicon') }}
             </span>
           </div>
         </div>
@@ -462,8 +469,7 @@
           class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 py-4 px-2 sm:px-0"
         >
           <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
-            Accepted: <span class="font-medium">PNG, JPG, SVG</span> (logos) •
-            <span class="font-medium">ICO, PNG</span> (favicon) • Max 2MB each.
+            {{ t('settings.logos.accepted') }}
           </p>
           <div class="flex items-center gap-3">
             <button
@@ -471,7 +477,7 @@
               :disabled="uploading || (!lightFile && !darkFile && !faviconFile)"
               class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-50"
             >
-              <Icon icon="mdi:backup-restore" class="text-sm" /> Reset
+              <Icon icon="mdi:backup-restore" class="text-sm" /> {{ t('common.reset') }}
             </button>
             <button
               @click="upload"
@@ -483,7 +489,7 @@
                 :class="uploading ? 'animate-spin' : ''"
                 class="text-base"
               />
-              <span>{{ uploading ? "Uploading..." : "Upload" }}</span>
+              <span>{{ uploading ? t('common.uploading') : t('common.upload') }}</span>
             </button>
           </div>
         </div>
@@ -493,6 +499,9 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { ref, computed, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import {
@@ -500,10 +509,7 @@ import {
   updateBranding,
   fetchBranding,
   removeBrandingVariant,
-} from "@/stores/brandingStore";
-import { useToast } from "vue-toastification";
-
-const branding = useBranding();
+} from "@/stores/brandingStore";const branding = useBranding();
 const toast = useToast();
 
 const lightInput = ref(null);
@@ -588,11 +594,11 @@ function validate(file, variant) {
     allowed = ["image/x-icon", "image/vnd.microsoft.icon", "image/png"];
   }
   if (!allowed.includes(file.type)) {
-    error.value = "Unsupported file type";
+    error.value = t('settings.logos.unsupportedType');
     return false;
   }
   if (file.size > 2000 * 1024) {
-    error.value = "File too large (>2MB)";
+    error.value = t('settings.logos.fileTooLarge');
     return false;
   }
   return true;
@@ -689,14 +695,15 @@ async function upload() {
       faviconFile: faviconFile.value,
     });
     await fetchBranding(true);
-    toast.success("Branding updated");
+    toast.success(t('settings.logos.updated'));
     clearFile("light");
     clearFile("dark");
     clearFile("favicon");
   } catch (e) {
     console.error(e);
-    error.value = e.message || "Upload failed";
-    toast.error("Upload failed");
+    const step = e?.step ? ` (${e.step})` : "";
+    error.value = (e.message || t('settings.logos.uploadFailed')) + step;
+    toast.error(e.message || t('settings.logos.uploadFailed'));
   } finally {
     uploading.value = false;
   }
@@ -705,12 +712,10 @@ async function upload() {
 async function remove(kind) {
   try {
     await removeBrandingVariant(kind);
-    toast.success(
-      `${kind.charAt(0).toUpperCase() + kind.slice(1)} logo removed`
-    );
+    toast.success(t(`settings.logos.removed.${kind}`));
   } catch (e) {
     console.error(e);
-    toast.error("Remove failed");
+    toast.error(t('settings.logos.removeFailed'));
   }
 }
 </script>

@@ -9,10 +9,10 @@
       <h1
         class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
       >
-        Welcome back
+        {{ t("auth.welcomeBack") }}
       </h1>
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        Sign in to continue.
+        {{ t("auth.signInContinue") }}
       </p>
     </div>
 
@@ -25,13 +25,13 @@
             class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             <Icon icon="mdi:email-outline" class="text-base text-blue-500" />
-            Email
+            {{ t("auth.email") }}
           </label>
           <input
             v-model.trim="email"
             type="email"
             autocomplete="email"
-            placeholder="you@example.com"
+            :placeholder="t('auth.email')"
             class="w-full h-11 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 px-3 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             required
           />
@@ -42,7 +42,7 @@
               class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               <Icon icon="mdi:lock-outline" class="text-base text-blue-500" />
-              Password
+              {{ t("auth.password") }}
             </label>
             <button
               type="button"
@@ -50,8 +50,8 @@
               class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
               :disabled="forgotLoading || loginLoading || magicLinkLoading"
             >
-              <span v-if="!forgotLoading">Forgot?</span>
-              <span v-else>Sending...</span>
+              <span v-if="!forgotLoading">{{ t("auth.forgot") }}</span>
+              <span v-else>{{ t("auth.sending") }}</span>
             </button>
           </div>
           <div class="relative">
@@ -66,7 +66,7 @@
             <button
               type="button"
               @click="showPassword = !showPassword"
-              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
               class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
             >
               <Icon
@@ -83,7 +83,7 @@
         >
           <Icon v-if="loginLoading" icon="mdi:loading" class="animate-spin" />
           <Icon v-else icon="mdi:login" class="text-lg" />
-          <span>{{ loginLoading ? "Logging in..." : "Login" }}</span>
+          <span>{{ loginLoading ? t("auth.loggingIn") : t("auth.login") }}</span>
         </button>
         <button
           type="button"
@@ -98,7 +98,7 @@
           />
           <Icon v-else icon="mdi:magic-staff" class="text-lg" />
           <span>{{
-            magicLinkLoading ? "Sending link..." : "Send Magic Link"
+            magicLinkLoading ? t("auth.sendingLink") : t("auth.sendMagicLink")
           }}</span>
         </button>
         <div v-if="enabledProviders.length > 0" class="space-y-4">
@@ -107,7 +107,7 @@
               <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
             </div>
             <div class="relative flex justify-center">
-              <span class="bg-white dark:bg-gray-800 px-3 text-[11px] font-medium text-gray-500 dark:text-gray-400">Or continue with</span>
+              <span class="bg-white dark:bg-gray-800 px-3 text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ t("auth.orContinueWith") }}</span>
             </div>
           </div>
           <div v-if="!smallGridMode" class="grid gap-2 text-black">
@@ -119,7 +119,7 @@
               :style="{ backgroundColor: brandBg(provider), borderColor: brandBorder(provider) }"
               @click="signInWithProvider(provider)"
               :disabled="loginLoading || magicLinkLoading || forgotLoading"
-              :aria-label="`Continue with ${providerLabel(provider)}`"
+              :aria-label="t('auth.continueWith', { provider: providerLabel(provider) })"
             >
               <Icon :icon="providerIcon(provider)" class="text-base" :style="{ color: providerGlyphColor(provider) || undefined }" />
               <span>{{ providerLabel(provider) }}</span>
@@ -131,7 +131,7 @@
               :key="provider"
               type="button"
               :title="providerLabel(provider)"
-              :aria-label="`Continue with ${providerLabel(provider)}`"
+              :aria-label="t('auth.continueWith', { provider: providerLabel(provider) })"
               @click="signInWithProvider(provider)"
               class="inline-flex items-center justify-center h-10 w-10 rounded-md text-gray-700 dark:text-gray-300 hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50 disabled:pointer-events-none border"
               :style="{ backgroundColor: brandBg(provider), borderColor: brandBorder(provider) }"
@@ -147,7 +147,11 @@
               @click="expanded = !expanded"
               class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
             >
-              {{ expanded ? 'Show less' : `Show ${enabledProviders.length - COLLAPSED_COUNT} more` }}
+              {{
+                expanded
+                  ? t('common.showLess')
+                  : t('common.showMore', { count: enabledProviders.length - COLLAPSED_COUNT })
+              }}
             </button>
           </div>
         </div>
@@ -155,11 +159,11 @@
         <p
           class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center"
         >
-          Don’t have an account?
-          <router-link
-            to="/signup"
+          {{ t("auth.noAccount") }}
+          <NuxtLink
+            :to="localePath('/signup')"
             class="text-blue-600 dark:text-blue-400 hover:underline"
-            >Sign up</router-link
+            >{{ t("auth.signup") }}</NuxtLink
           >
         </p>
       </form>
@@ -168,14 +172,16 @@
 </template>
 
 <script setup>
+definePageMeta({ requireAnonymous: true, ssr: false })
+
 import { ref, computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { supabase } from "@/services/supabase";
-import { Icon } from "@iconify/vue";
-import { useToast } from "vue-toastification";
-import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
+import { Icon } from "@iconify/vue";import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 import { getBrowserOrigin } from "@/lib/utils";
 
+const { t } = useI18n();
+const localePath = useLocalePath();
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
@@ -186,6 +192,7 @@ const forgotLoading = ref(false);
 
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 
 const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
 const enabledProviders = computed(() =>
@@ -216,7 +223,7 @@ async function signInWithProvider(provider) {
 
 const forgotPassword = async () => {
   if (!email.value) {
-    toast.warning("Please enter your email address first.");
+    toast.warning(t("auth.pleaseEnterEmail"));
     return;
   }
   forgotLoading.value = true;
@@ -227,13 +234,13 @@ const forgotPassword = async () => {
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success("Password reset link sent to your email.");
+    toast.success(t("auth.resetLinkSent"));
   }
 };
 
 const sendMagicLink = async () => {
   if (!email.value) {
-    toast.warning("Please enter your email to receive a magic link.");
+    toast.warning(t("auth.pleaseEnterEmailMagic"));
     return;
   }
   magicLinkLoading.value = true;
@@ -245,13 +252,13 @@ const sendMagicLink = async () => {
   if (error) {
     toast.error(error.message);
   } else {
-    toast.success("Magic link sent! Check your email.");
+    toast.success(t("auth.magicLinkSent"));
   }
 };
 
 const login = async () => {
   if (!email.value || !password.value) {
-    toast.warning("Please enter both email and password.");
+    toast.warning(t("auth.pleaseEnterBoth"));
     return;
   }
   
@@ -266,11 +273,16 @@ const login = async () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Welcome back!");
-      router.push("/dashboard");
+      toast.success(t("auth.welcomeBackToast"));
+      const redirect = typeof route.query.redirect === "string" ? route.query.redirect : "";
+      if (redirect.startsWith("/") && !redirect.startsWith("//")) {
+        router.push(redirect);
+      } else {
+        router.push(localePath("/dashboard"));
+      }
     }
   } catch (err) {
-    toast.error("An unexpected error occurred.");
+    toast.error(t("common.unexpectedError"));
     console.error("Login error:", err);
   } finally {
     loginLoading.value = false;

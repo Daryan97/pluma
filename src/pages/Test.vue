@@ -1,389 +1,550 @@
 <template>
-  <div class="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-10">
-    <header>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-        Internal Test & Debug
-      </h1>
-      <p
-        class="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 rounded-md px-4 py-3"
+  <div class="max-w-6xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8">
+    <header class="space-y-4">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300 mb-2">
+            <Icon icon="mdi:flask-outline" class="text-base" />
+            Dev only
+          </div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+            Internal Test &amp; Debug
+          </h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
+            Development diagnostics for Supabase, auth, branding, i18n, and feeds.
+            Guarded by <code class="text-xs">devOnly</code> meta and
+            <code class="text-xs">VITE_ENV=development</code>.
+          </p>
+        </div>
+        <button
+          type="button"
+          :disabled="suiteRunning"
+          class="inline-flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          @click="runQuickSuite"
+        >
+          <Icon
+            :icon="suiteRunning ? 'mdi:loading' : 'mdi:play-circle-outline'"
+            :class="suiteRunning ? 'animate-spin' : ''"
+            class="text-lg"
+          />
+          {{ suiteRunning ? "Running…" : "Run quick suite" }}
+        </button>
+      </div>
+
+      <div
+        v-if="suiteSummary"
+        class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4"
       >
-        This page exposes internal debugging utilities. It is guarded by
-        <code>devOnly</code> route meta and <code>VITE_ENV=development</code>.
-        It should never be accessible in production environments.
-      </p>
-    </header>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
-    >
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Storage Buckets
-        </h2>
-        <div class="flex gap-2">
-          <button
-            @click="listBuckets"
-            :disabled="loading"
-            class="h-8 px-3 text-xs rounded font-medium border border-indigo-500/20 dark:border-indigo-400/20 bg-indigo-500/10 dark:bg-indigo-400/10 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/20 dark:hover:bg-indigo-400/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        <div class="flex flex-wrap gap-2 mb-3">
+          <span
+            v-for="item in suiteSummary.checks"
+            :key="item.name"
+            class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium"
+            :class="
+              item.ok
+                ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            "
           >
-            {{ loading && action === "list" ? "Listing..." : "List" }}
+            <Icon :icon="item.ok ? 'mdi:check' : 'mdi:close'" class="text-sm" />
+            {{ item.name }}
+          </span>
+        </div>
+        <pre class="text-[11px] leading-tight overflow-x-auto text-gray-700 dark:text-gray-300">{{
+          formatJson(suiteSummary)
+        }}</pre>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+    <!-- Storage -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:bucket-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Storage buckets
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              List or inspect Supabase storage buckets.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button type="button" :class="btnSoft" :disabled="loading" @click="listBuckets">
+            {{ loading && action === "list" ? "Listing…" : "List" }}
           </button>
           <button
-            @click="checkBucket"
+            type="button"
+            :class="btnSoft"
             :disabled="loading || !bucketName"
-            class="h-8 px-3 text-xs rounded font-medium border border-blue-500/20 dark:border-blue-400/20 bg-blue-500/10 dark:bg-blue-400/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 dark:hover:bg-blue-400/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            @click="checkBucket"
           >
-            {{ loading && action === "check" ? "Checking..." : "Check" }}
+            {{ loading && action === "check" ? "Checking…" : "Check" }}
           </button>
         </div>
       </div>
-      <div class="flex flex-wrap gap-3">
+      <div :class="cardSlotClass">
         <input
           v-model="bucketName"
           type="text"
           placeholder="bucket name"
-          class="flex-1 min-w-[200px] h-9 px-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          :class="inputClass"
         />
       </div>
-      <p class="text-xs text-gray-500 dark:text-gray-400">
-        Enter a bucket name or list all buckets.
-      </p>
-      <p v-if="errorMsg" class="text-xs text-red-600 dark:text-red-400">
-        {{ errorMsg }}
-      </p>
-      <pre
-        v-if="result"
-        class="text-[11px] leading-tight p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-x-auto max-h-72"
-        >{{ result }}</pre
-      >
+      <pre :class="result || errorMsg ? preClass : emptyPreClass">{{
+        errorMsg ? "ERROR: " + errorMsg : result || "No result yet."
+      }}</pre>
     </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
-    >
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Full Stats
-        </h2>
-        <div class="flex gap-2">
-          <button
-            @click="loadFullStats"
-            :disabled="statsLoading"
-            class="h-8 px-3 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60"
-          >
-            {{ statsLoading ? 'Refreshing...' : 'Refresh' }}
-          </button>
+
+    <!-- Stats -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:chart-box-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Full stats
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Aggregate counts for posts, users, categories, series, comments.
+            </p>
+          </div>
         </div>
-      </div>
-      <p class="text-sm text-gray-500 dark:text-gray-400">Quick aggregate counters for the site (posts, users, categories, buckets, recent activity).</p>
-      <div>
-        <div v-if="statsRls" class="mb-2 p-3 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-sm text-yellow-800 dark:text-yellow-200">
-          Queries appear to be blocked by Row Level Security (RLS) or permission issues.
-          <div class="mt-1 text-xs text-yellow-700 dark:text-yellow-300">{{ statsRlsMsg || 'Check RLS policies, service role, or use an authenticated account with sufficient permissions.' }}</div>
-        </div>
-        <pre
-          v-if="statsResult"
-          class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
-          >{{ statsResult }}</pre
-        >
-        <p v-else class="text-gray-400">No stats loaded yet.</p>
-      </div>
-    </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
-    >
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Auth & Session
-        </h2>
-        <div class="flex gap-2">
-          <button
-            @click="refreshSession"
-            class="h-8 px-3 text-xs rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60"
-          >
-            Refresh
-          </button>
-          <button
-            @click="signOut"
-            :disabled="!sessionUser"
-            class="h-8 px-3 text-xs rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50 disabled:opacity-40"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2 text-[11px]">
-        <span
-          class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-          >User: {{ sessionUser?.email || "none" }}</span
-        >
-        <span
-          class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-          >Role: {{ profileRole || "n/a" }}</span
-        >
-        <span
-          class="px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-          >Expires: {{ sessionExpiry || "n/a" }}</span
-        >
-      </div>
-      <pre
-        v-if="sessionRaw"
-        class="text-[11px] leading-tight p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-x-auto max-h-72"
-        >{{ sessionRaw }}</pre
-      >
-    </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
-    >
-      <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Settings & Branding Snapshot
-        </h2>
-        <button
-          @click="loadSettings"
-          class="h-8 px-3 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/60"
-        >
-          Settings
+        <button type="button" :class="btnSoft" :disabled="statsLoading" @click="loadFullStats">
+          {{ statsLoading ? "Refreshing…" : "Refresh" }}
         </button>
+      </div>
+      <div :class="cardSlotClass">
+        <span v-if="statsRls" class="text-[11px] text-amber-700 dark:text-amber-300 truncate">
+          RLS may be blocking some counts.
+        </span>
+      </div>
+      <pre :class="statsResult ? preClass : emptyPreClass">{{
+        statsResult || "No stats loaded yet."
+      }}</pre>
+    </section>
+
+    <!-- Auth -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:account-key-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Auth &amp; session
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Current session and profile role.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button type="button" :class="btnSoft" @click="refreshSession">Refresh</button>
+          <button type="button" :class="btnDanger" :disabled="!sessionUser" @click="signOut">
+            Sign out
+          </button>
+        </div>
+      </div>
+      <div :class="cardSlotClass">
+        <span :class="chipClass">User: {{ sessionUser?.email || "none" }}</span>
+        <span :class="chipClass">Role: {{ profileRole || "n/a" }}</span>
+        <span :class="chipClass">Expires: {{ sessionExpiry || "n/a" }}</span>
+      </div>
+      <pre :class="sessionRaw ? preClass : emptyPreClass">{{
+        sessionRaw || "No session data."
+      }}</pre>
+    </section>
+
+    <!-- Locale / i18n -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:translate" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Locale &amp; i18n
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Cookie, branding locales, posts by locale.
+            </p>
+          </div>
+        </div>
         <button
-          @click="loadBranding"
-          class="h-8 px-3 text-xs rounded bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-300 hover:bg-pink-200 dark:hover:bg-pink-900/60"
+          type="button"
+          :class="btnSoft"
+          :disabled="localeDiagLoading"
+          @click="loadLocaleDiagnostics"
         >
-          Branding
+          {{ localeDiagLoading ? "Loading…" : "Refresh" }}
         </button>
+      </div>
+      <div :class="cardSlotClass">
+        <span :class="chipClass">UI: {{ locale }}</span>
+        <span :class="chipClass">Cookie: {{ localeCookie || "(none)" }}</span>
+        <span :class="chipClass">Primary: {{ branding.primaryLocale?.value || "—" }}</span>
+        <span :class="chipClass">Content: {{ contentLocale }}</span>
+      </div>
+      <pre :class="localeDiagRaw ? preClass : emptyPreClass">{{
+        localeDiagRaw || "No locale diagnostics yet."
+      }}</pre>
+    </section>
+
+    <!-- Feeds / health -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:rss" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Feeds &amp; health
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Probe public feed and health endpoints.
+            </p>
+          </div>
+        </div>
+        <button type="button" :class="btnSoft" :disabled="feedsLoading" @click="probeFeeds">
+          {{ feedsLoading ? "Probing…" : "Probe" }}
+        </button>
+      </div>
+      <div :class="cardSlotClass">
+        <span class="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+          Origin: {{ getCurrentSiteOrigin() || "—" }}
+        </span>
+      </div>
+      <pre :class="feedsRaw ? preClass : emptyPreClass">{{
+        feedsRaw || "No feed probe yet."
+      }}</pre>
+    </section>
+
+    <!-- Runtime env -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:cog-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Runtime config
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Public runtime values (secrets masked).
+            </p>
+          </div>
+        </div>
+        <button type="button" :class="btnSoft" @click="loadRuntimeEnv">Refresh</button>
+      </div>
+      <div :class="cardSlotClass" />
+      <pre :class="runtimeRaw ? preClass : emptyPreClass">{{
+        runtimeRaw || "No runtime data yet."
+      }}</pre>
+    </section>
+
+    <!-- Settings & branding -->
+    <section :class="cardWideClass">
+      <div class="flex flex-wrap items-center gap-2 min-h-0">
+        <span :class="iconWrap">
+          <Icon icon="mdi:palette-outline" class="w-5 h-5" />
+        </span>
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 flex-1">
+          Settings &amp; branding
+        </h2>
+        <button type="button" :class="btnSoft" @click="loadSettings">Settings</button>
+        <button type="button" :class="btnSoft" @click="loadBranding">Branding</button>
       </div>
       <div
-        class="grid md:grid-cols-2 gap-4 text-[11px] text-gray-800 dark:text-gray-200"
+        v-if="settingsRaw"
+        class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] min-h-0"
       >
         <div>
-          <h3 class="font-medium mb-1">Settings</h3>
-          <div v-if="settingsRaw" class="space-y-2">
-            <pre
-              class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
-              >{{ settingsRaw }}</pre
-            >
-            <div class="grid grid-cols-2 gap-2 text-sm">
-              <div class="text-gray-600 dark:text-gray-300">Installation</div>
-              <div class="text-gray-800 dark:text-gray-100">
-                {{ installationDisplay() }}
-              </div>
-              <div class="text-gray-600 dark:text-gray-300">Auth Providers</div>
-              <div class="text-gray-800 dark:text-gray-100">
-                {{ authProvidersDisplay() }}
-              </div>
-              <div class="text-gray-600 dark:text-gray-300">Site Origin</div>
-              <div class="text-gray-800 dark:text-gray-100">
-                {{ siteOriginDisplay() }}
-              </div>
-              <div class="text-gray-600 dark:text-gray-300">Site Title</div>
-              <div class="text-gray-800 dark:text-gray-100">
-                {{ siteTitleDisplay() }}
-              </div>
-            </div>
+          <div class="text-gray-500">Installation</div>
+          <div class="truncate">{{ installationDisplay() }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500">Auth providers</div>
+          <div class="truncate">{{ authProvidersDisplay() }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500">Site origin</div>
+          <div class="truncate">{{ siteOriginDisplay() }}</div>
+        </div>
+        <div>
+          <div class="text-gray-500">Site title</div>
+          <div class="truncate">{{ siteTitleDisplay() }}</div>
+        </div>
+      </div>
+      <div v-else :class="cardSlotClass" />
+      <div class="grid md:grid-cols-2 gap-4 min-h-0 h-full">
+        <pre :class="settingsRaw ? preClass : emptyPreClass">{{
+          settingsRaw || "No settings data"
+        }}</pre>
+        <pre :class="brandingRaw ? preClass : emptyPreClass">{{
+          brandingRaw || "No branding data"
+        }}</pre>
+      </div>
+    </section>
+
+    <!-- RLS -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:shield-key-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              RLS probe
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Select * limit 5 from a table.
+            </p>
           </div>
-          <p v-else class="text-gray-400">No data</p>
-        </div>
-        <div>
-          <h3 class="font-medium mb-1">Branding</h3>
-          <pre
-            v-if="brandingRaw"
-            class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
-            >{{ brandingRaw }}</pre
-          >
-          <p v-else class="text-gray-400">No data</p>
         </div>
       </div>
-    </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
-    >
-      <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          RLS Probe
-        </h2>
+      <div :class="cardSlotClass">
         <button
-          v-for="t in rlsTables"
-          :key="t"
-          @click="probeTable(t)"
-          class="px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 text-xs"
+          v-for="tbl in rlsTables"
+          :key="tbl"
+          type="button"
+          :class="btnChip"
+          @click="probeTable(tbl)"
         >
-          {{ t }}
+          {{ tbl }}
         </button>
       </div>
-      <pre
-        v-if="rlsResult"
-        class="text-[11px] leading-tight p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-x-auto max-h-72"
-        >{{ rlsResult }}</pre
-      >
+      <pre :class="rlsResult ? preClass : emptyPreClass">{{
+        rlsResult || "Pick a table to probe."
+      }}</pre>
     </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
-    >
-      <div class="flex items-center gap-2">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Latency
-        </h2>
-        <button
-          @click="measureLatency"
-          class="h-8 px-3 text-xs rounded bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 hover:bg-teal-200 dark:hover:bg-teal-900/60"
-        >
-          Ping
-        </button>
-        <span class="text-[11px] text-gray-500 dark:text-gray-400">{{
-          latencyMs !== null ? latencyMs + " ms" : "—"
-        }}</span>
-      </div>
-    </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-3"
-    >
-      <div class="flex items-center gap-2 flex-wrap">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Local Storage
-        </h2>
-        <button
-          @click="readLocalStorage"
-          class="h-8 px-3 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600"
-        >
-          Read
-        </button>
-        <button
-          @click="clearLocalStorage"
-          class="h-8 px-3 text-xs rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/50"
-        >
-          Clear
-        </button>
-      </div>
-      <pre
-        v-if="localStorageDump"
-        class="text-[11px] leading-tight p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-x-auto max-h-72"
-        >{{ localStorageDump }}</pre
-      >
-    </section>
-    <section
-      class="bg-white dark:bg-gray-800 shadow-sm rounded-xl p-6 space-y-4"
-    >
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Dev Tools
-        </h2>
-        <div class="flex gap-2">
-          <button
-            @click="toggleTheme"
-            class="h-8 px-3 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
-          >
-            Toggle Theme
-          </button>
-          <button
-            @click="seedCategories"
-            class="h-8 px-3 text-xs rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
-          >
-            Seed Categories
-          </button>
-          <button
-            @click="latencyDistribution"
-            class="h-8 px-3 text-xs rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
-          >
-            Latency Dist
-          </button>
-          <button
-            @click="concurrencyBenchmark"
-            class="h-8 px-3 text-xs rounded bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300"
-          >
-            Concurrency
-          </button>
-          <button
-            @click="e2eRenderTime"
-            class="h-8 px-3 text-xs rounded bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300"
-          >
-            E2E Render
-          </button>
-        </div>
-      </div>
 
-      <div class="grid md:grid-cols-2 gap-3">
-        <div class="space-y-2">
-          <button
-            @click="createDummyPost"
-            class="w-full h-9 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-sm"
-          >
-            Create Dummy Post
-          </button>
-          <button
-            @click="archiveLatest"
-            class="w-full h-9 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm"
-          >
-            Archive Latest Post
-          </button>
-          <button
-            @click="unarchiveLatest"
-            class="w-full h-9 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm"
-          >
-            Unarchive Latest Post
-          </button>
+    <!-- Latency -->
+    <section :class="cardClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:timer-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Latency
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Round-trip ping to settings.
+            </p>
+          </div>
         </div>
-        <div class="space-y-2">
-          <button
-            @click="listTestPosts"
-            class="w-full h-9 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
-          >
-            List Test Posts
-          </button>
-          <button
-            @click="deleteTestPosts"
-            class="w-full h-9 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-sm"
-          >
-            Delete Test Posts
-          </button>
-        </div>
+        <button type="button" :class="btnSoft" @click="measureLatency">Ping</button>
       </div>
-
-      <div>
-        <h3 class="font-medium mb-1">Result</h3>
-        <pre
-          v-if="devResult"
-          class="p-3 rounded bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-[11px] leading-tight text-gray-800 dark:text-gray-200 overflow-x-auto max-h-64"
-          >{{ devResult }}</pre
-        >
-        <p v-else class="text-gray-400">No action yet.</p>
+      <div :class="cardSlotClass">
+        <span class="text-[11px] text-gray-500 dark:text-gray-400">
+          {{ latencyMs !== null ? `${latencyMs} ms` : "—" }}
+        </span>
       </div>
+      <pre :class="latencyMs !== null ? preClass : emptyPreClass">{{
+        latencyMs !== null
+          ? formatJson({ ping_ms: latencyMs, at: new Date().toISOString() })
+          : "Click Ping to measure."
+      }}</pre>
     </section>
+
+    <!-- Local storage -->
+    <section :class="cardWideClass">
+      <div :class="cardHeaderClass">
+        <div class="flex items-center gap-2 min-w-0">
+          <span :class="iconWrap">
+            <Icon icon="mdi:database-outline" class="w-5 h-5" />
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100">
+              Local storage
+            </h2>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+              Dump or clear this origin’s localStorage.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button type="button" :class="btnSoft" @click="readLocalStorage">Read</button>
+          <button type="button" :class="btnDanger" @click="askClearLocalStorage">Clear</button>
+        </div>
+      </div>
+      <div :class="cardSlotClass" />
+      <pre :class="localStorageDump ? preClass : emptyPreClass">{{
+        localStorageDump || "No localStorage dump yet."
+      }}</pre>
+    </section>
+
+    <!-- Dev tools -->
+    <section :class="cardWideClass">
+      <div class="flex flex-wrap items-center gap-2 min-h-0">
+        <span :class="iconWrap">
+          <Icon icon="mdi:tools" class="w-5 h-5" />
+        </span>
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-800 dark:text-gray-100 flex-1">
+          Dev tools
+        </h2>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" :class="btnChip" @click="toggleTheme">Toggle theme</button>
+          <button type="button" :class="btnChip" @click="seedCategories">Seed categories</button>
+          <button type="button" :class="btnChip" @click="latencyDistribution">Latency dist</button>
+          <button type="button" :class="btnChip" @click="concurrencyBenchmark">Concurrency</button>
+          <button type="button" :class="btnChip" :disabled="e2eRunning" @click="e2eRenderTime">
+            {{ e2eRunning ? "E2E…" : "E2E render" }}
+          </button>
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 min-h-0">
+        <button type="button" :class="btnBlock" @click="createDummyPost">Create dummy post</button>
+        <button type="button" :class="btnBlock" @click="createMultiLocalePost">
+          Create multi-locale post
+        </button>
+        <button type="button" :class="btnBlock" @click="archiveLatest">Archive latest post</button>
+        <button type="button" :class="btnBlock" @click="unarchiveLatest">
+          Unarchive latest post
+        </button>
+        <button type="button" :class="btnBlock" @click="listTestPosts">List test posts</button>
+        <button type="button" :class="btnBlockDanger" @click="askDeleteTestPosts">
+          Delete test posts
+        </button>
+      </div>
+      <pre :class="devResult ? preClass : emptyPreClass">{{
+        devResult || "No action yet."
+      }}</pre>
+    </section>
+    </div>
+
+    <ConfirmDialog
+      v-if="confirmOpen"
+      :open="confirmOpen"
+      :title="confirmTitle"
+      :description="confirmDescription"
+      :body="t('common.areYouSure')"
+      :confirm-label="confirmLabel"
+      @confirm="onConfirm"
+      @cancel="confirmOpen = false"
+    />
   </div>
 </template>
 
 <script setup>
+definePageMeta({ devOnly: true });
+
+import { ref, computed, onUnmounted } from "vue";
+import { Icon } from "@iconify/vue";
 import { supabase } from "@/services/supabase";
-import { ref } from "vue";
-import { fetchBranding } from "@/stores/brandingStore";
+import { useBranding, fetchBranding } from "@/stores/brandingStore";
 import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
+
+const { t, locale, locales, defaultLocale } = useI18n();
+const localePath = useLocalePath();
+const branding = useBranding();
+const { contentLocale } = useContentLocale();
+const runtimeConfig = useRuntimeConfig();
+const localeCookieName = ["pluma", "locale"].join("_");
+const localeCookieRef = useCookie(localeCookieName);
+
+const cardClass = "test-card rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5 sm:p-6 h-full gap-4";
+const cardWideClass = "test-card-wide rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm p-5 sm:p-6 h-full gap-4 lg:col-span-2";
+const iconWrap = "p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 shrink-0";
+const btnSoft = "inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/40 hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-50";
+const btnDanger = "inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200/70 dark:border-red-800/40 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50";
+const btnChip = "inline-flex items-center h-8 px-3 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700";
+const btnBlock = "w-full h-9 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700/60";
+const btnBlockDanger = "w-full h-9 rounded-md text-sm font-medium bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50";
+const inputClass = "w-full h-9 px-3 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500";
+const preClass = "test-pre leading-tight p-3 rounded-lg bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 overflow-auto w-full h-full min-h-0";
+const chipClass = "px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200";
+const cardHeaderClass = "flex flex-wrap items-start justify-between gap-3 min-h-0 overflow-hidden self-stretch";
+const cardSlotClass = "min-h-0 flex items-start content-start gap-2 flex-wrap overflow-auto self-stretch";
+const emptyPreClass = "test-pre leading-tight p-3 rounded-lg bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 overflow-auto w-full h-full min-h-0";
+
+const localeCookie = computed(() => localeCookieRef.value || "");
 
 const devResult = ref("");
+const suiteRunning = ref(false);
+const suiteSummary = ref(null);
+const e2eRunning = ref(false);
+let e2eCleanup = null;
+const confirmOpen = ref(false);
+const confirmTitle = ref("");
+const confirmDescription = ref("");
+const confirmLabel = ref("");
+let confirmAction = null;
 
-function setDevResult(obj) {
+/** Origin of the page you're on — not VITE_SITE_URL (which may be a fixed port). */
+function getCurrentSiteOrigin() {
+  if (import.meta.client && typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return getBrowserOrigin();
+}
+
+function formatJson(obj) {
   try {
-    devResult.value =
-      typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    return typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
   } catch {
-    devResult.value = String(obj);
+    return String(obj);
   }
 }
 
+function setDevResult(obj) {
+  devResult.value = formatJson(obj);
+}
+
+function askConfirm(title, description, label, action) {
+  confirmTitle.value = title;
+  confirmDescription.value = description;
+  confirmLabel.value = label;
+  confirmAction = action;
+  confirmOpen.value = true;
+}
+
+function onConfirm() {
+  confirmOpen.value = false;
+  const fn = confirmAction;
+  confirmAction = null;
+  if (typeof fn === "function") fn();
+}
+
 function toggleTheme() {
-  const current = document.body.dataset.theme === "dark" ? "dark" : "light";
+  const current = document.documentElement.getAttribute("data-theme") || "light";
   const next = current === "dark" ? "light" : "dark";
-  document.body.dataset.theme = next;
+  document.documentElement.setAttribute("data-theme", next);
+  document.documentElement.style.colorScheme = next;
+  try {
+    localStorage.setItem("theme", next);
+  } catch {
+    /* ignore */
+  }
   setDevResult(`Theme -> ${next}`);
 }
 
 async function seedCategories() {
   setDevResult("Seeding...");
   try {
+    const loc = branding.primaryLocale?.value || unref(locale) || "en";
     const defaults = [
-      { name: "Announcements", slug: "announcements" },
-      { name: "Tutorials", slug: "tutorials" },
-      { name: "Guides", slug: "guides" },
+      { name: "Announcements", slug: "announcements", locale: loc },
+      { name: "Tutorials", slug: "tutorials", locale: loc },
+      { name: "Guides", slug: "guides", locale: loc },
     ];
     const { data, error } = await supabase
       .from("categories")
-      .upsert(defaults, { onConflict: ["slug"] })
+      .upsert(defaults, { onConflict: "locale,slug" })
       .select("*");
     if (error) throw error;
     setDevResult(data);
@@ -412,6 +573,7 @@ async function createDummyPost() {
       tags: ["test"],
       status: "published",
       slug,
+      locale: branding.primaryLocale?.value || unref(locale) || "en",
       comments_disabled: true,
       author_id: userId,
     };
@@ -419,10 +581,48 @@ async function createDummyPost() {
     const { data, error } = await supabase
       .from("posts")
       .insert([payload])
-      .select("id,slug")
+      .select("id,slug,locale")
       .single();
     if (error) throw error;
     setDevResult(data);
+  } catch (e) {
+    setDevResult("ERROR: " + (e.message || String(e)));
+  }
+}
+
+async function createMultiLocalePost() {
+  setDevResult("Creating multi-locale posts...");
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    if (!userId) throw new Error("No authenticated user in session");
+
+    await fetchBranding(true);
+    const enabled = branding.enabledLocales?.value?.length
+      ? branding.enabledLocales.value
+      : ["en"];
+    const groupId = crypto.randomUUID();
+    const stamp = Date.now();
+    const slug = `test-multi-${stamp}`;
+    const rows = enabled.map((loc) => ({
+      title: `Test Multi ${stamp} (${loc})`,
+      content: `Multi-locale test body (${loc}).`,
+      tags: ["test", "multi"],
+      status: "published",
+      slug,
+      locale: loc,
+      translation_group_id: groupId,
+      comments_disabled: true,
+      author_id: userId,
+    }));
+    const { data, error } = await supabase
+      .from("posts")
+      .insert(rows)
+      .select("id,slug,locale,translation_group_id");
+    if (error) throw error;
+    setDevResult({ groupId, count: data?.length || 0, rows: data });
   } catch (e) {
     setDevResult("ERROR: " + (e.message || String(e)));
   }
@@ -433,10 +633,10 @@ function msStats(arr) {
   const sorted = [...arr].sort((a, b) => a - b);
   const sum = sorted.reduce((s, v) => s + v, 0);
   const avg = sum / sorted.length;
-  const p = (p) => {
+  const p = (pct) => {
     const idx = Math.min(
       sorted.length - 1,
-      Math.floor((p / 100) * sorted.length)
+      Math.floor((pct / 100) * sorted.length)
     );
     return sorted[idx];
   };
@@ -457,20 +657,19 @@ async function latencyDistribution() {
     const reps = 20;
     const times = [];
     let failures = 0;
-    for (let i = 0; i < reps; i++) {
+    for (let i = 0; !(i >= reps); i++) {
       const t0 = performance.now();
       try {
         await supabase.from("settings").select("key").limit(1);
-      } catch (e) {
+      } catch {
         failures++;
       }
-      const t1 = performance.now();
-      times.push(Math.round(t1 - t0));
+      times.push(Math.round(performance.now() - t0));
       await new Promise((r) => setTimeout(r, 100));
     }
     setDevResult({
       op: "settings.select",
-      reps: reps,
+      reps,
       failures,
       stats: msStats(times),
       raw: times,
@@ -486,28 +685,34 @@ async function concurrencyBenchmark() {
     const total = 30;
     const parallel = 6;
     const start = performance.now();
-    let created = 0,
-      failed = 0;
+    let created = 0;
+    let failed = 0;
     const sessionResp = await supabase.auth.getSession();
     const userId = sessionResp?.data?.session?.user?.id;
-    if (!userId)
-      return setDevResult("No authenticated user for concurrency benchmark");
+    if (!userId) return setDevResult("No authenticated user for concurrency benchmark");
+    const loc = branding.primaryLocale?.value || unref(locale) || "en";
 
     const batches = Math.ceil(total / parallel);
-    for (let b = 0; b < batches; b++) {
+    for (let b = 0; !(b >= batches); b++) {
       const ops = [];
-      for (let i = 0; i < parallel && b * parallel + i < total; i++) {
-        const t = Date.now() + "-" + b + "-" + i;
-        const payload = {
-          title: "Perf Test " + t,
-          content: "perf",
-          slug: ("perf-" + t).replace(/[^a-z0-9-]/g, "-"),
-          status: "published",
-          comments_disabled: true,
-          author_id: userId,
-        };
+      for (let i = 0; !(i >= parallel) && !(b * parallel + i >= total); i++) {
+        const stamp = `${Date.now()}-${b}-${i}`;
         ops.push(
-          supabase.from("posts").insert([payload]).select("id").single()
+          supabase
+            .from("posts")
+            .insert([
+              {
+                title: "Perf Test " + stamp,
+                content: "perf",
+                slug: ("perf-" + stamp).replace(/[^a-z0-9-]/g, "-"),
+                status: "published",
+                locale: loc,
+                comments_disabled: true,
+                author_id: userId,
+              },
+            ])
+            .select("id")
+            .single()
         );
       }
       const results = await Promise.allSettled(ops);
@@ -531,80 +736,135 @@ async function concurrencyBenchmark() {
 }
 
 async function e2eRenderTime() {
-  setDevResult("Measuring end-to-end render time for PostDetail...");
+  if (e2eRunning.value) return;
+  e2eRunning.value = true;
+  setDevResult("Measuring end-to-end render time for PostDetail…");
+
+  if (typeof e2eCleanup === "function") {
+    try {
+      e2eCleanup();
+    } catch {
+      /* ignore */
+    }
+    e2eCleanup = null;
+  }
+
   try {
     const { data: posts, error: pErr } = await supabase
       .from("posts")
-      .select("slug")
+      .select("slug,locale,status")
+      .eq("status", "published")
       .order("created_at", { ascending: false })
       .limit(1);
     if (pErr) throw pErr;
-    const slug = posts?.[0]?.slug;
-    if (!slug) return setDevResult("No posts available to test");
+    const postRow = posts?.[0];
+    if (!postRow?.slug) {
+      e2eRunning.value = false;
+      setDevResult("No published posts available to test");
+      return;
+    }
 
-    const url = getBrowserOrigin() + "/posts/" + slug;
-    const w = window.open(url, "_blank");
-    if (!w) return setDevResult("Popup blocked; allow popups for this site");
+    const path = localePath(`/posts/${postRow.slug}`, postRow.locale || unref(locale));
+    const url = getCurrentSiteOrigin() + path;
+
+    // Same-origin iframe avoids popup blockers / noopener WindowProxy issues.
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("title", "e2e-render-probe");
+    iframe.style.cssText =
+      "position:fixed;inset:auto;left:-9999px;top:0;width:1024px;height:768px;opacity:0;pointer-events:none;border:0;";
+    document.body.appendChild(iframe);
 
     const start = performance.now();
-    const pollInterval = 250;
-    const maxMs = 10000;
-    let elapsed = 0;
-    let stopped = false;
+    const maxMs = 15000;
+    let finished = false;
+    let pollTimer = null;
+    let timeoutTimer = null;
 
-    const stop = (msg) => {
-      if (stopped) return;
-      stopped = true;
+    const finish = (payload) => {
+      if (finished) return;
+      finished = true;
+      if (pollTimer) clearInterval(pollTimer);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
       try {
-        if (!w.closed) w.close();
-      } catch (e) {}
-      setDevResult(msg);
+        iframe.remove();
+      } catch {
+        /* ignore */
+      }
+      e2eCleanup = null;
+      e2eRunning.value = false;
+      setDevResult(payload);
     };
 
-    const poll = setInterval(() => {
-      elapsed = Math.round(performance.now() - start);
-      if (w.closed) {
-        clearInterval(poll);
-        stop({
+    e2eCleanup = () => finish({ url, cancelled: true });
+
+    const lookForArticle = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return false;
+        const ready =
+          doc.readyState === "complete" || doc.readyState === "interactive";
+        if (!ready) return false;
+        const article =
+          doc.querySelector("article[itemtype*='Article']") ||
+          doc.querySelector("article") ||
+          doc.querySelector(".markdown-content");
+        return !!article;
+      } catch (e) {
+        finish({
           url,
-          render_ms: "popup closed before measurement",
-          elapsed_ms: elapsed,
+          path,
+          locale: postRow.locale,
+          render_ms: null,
+          error: e.message || String(e),
+          message: "Cannot read iframe document (cross-origin?).",
+        });
+        return true;
+      }
+    };
+
+    iframe.addEventListener("load", () => {
+      // Vue may hydrate after the load event — poll briefly.
+      if (lookForArticle()) {
+        finish({
+          url,
+          path,
+          locale: postRow.locale,
+          slug: postRow.slug,
+          render_ms: Math.round(performance.now() - start),
+          method: "iframe",
         });
         return;
       }
-      try {
-        const doc = w.document;
-        if (!doc) return;
-        const article =
-          doc.querySelector("article") ||
-          doc.querySelector("[data-post-root]") ||
-          doc.querySelector(".markdown-content");
-        if (article) {
-          clearInterval(poll);
-          const renderMs = Math.round(performance.now() - start);
-          const roundTrip = Math.round(performance.now() - start);
-          stop({ url, render_ms: renderMs, elapsed_ms: roundTrip });
+      pollTimer = setInterval(() => {
+        if (lookForArticle()) {
+          finish({
+            url,
+            path,
+            locale: postRow.locale,
+            slug: postRow.slug,
+            render_ms: Math.round(performance.now() - start),
+            method: "iframe",
+          });
         }
-      } catch (e) {
-        clearInterval(poll);
-        stop({
-          url,
-          render_ms: null,
-          message:
-            "Opened popup but cannot access DOM due to same-origin policy. For exact timing, add a postMessage report from PostDetail.",
-        });
-      }
-      if (elapsed >= maxMs) {
-        clearInterval(poll);
-        stop({
-          url,
-          render_ms: null,
-          message:
-            "Timed out waiting for article (10s). Page may be slow or blocked.",
-        });
-      }
-    }, pollInterval);
+      }, 100);
+    });
+
+    timeoutTimer = setTimeout(() => {
+      finish({
+        url,
+        path,
+        locale: postRow.locale,
+        slug: postRow.slug,
+        render_ms: null,
+        elapsed_ms: Math.round(performance.now() - start),
+        message: "Timed out waiting for article element (15s).",
+        method: "iframe",
+      });
+    }, maxMs);
+
+    iframe.src = url;
   } catch (e) {
+    e2eRunning.value = false;
     setDevResult("ERROR: " + (e.message || String(e)));
   }
 }
@@ -657,8 +917,8 @@ async function listTestPosts() {
   try {
     const { data, error } = await supabase
       .from("posts")
-      .select("id,title,slug,status,created_at")
-      .or("title.ilike.%Test Post%,title.ilike.%Perf Test%")
+      .select("id,title,slug,status,locale,created_at")
+      .or("title.ilike.%Test Post%,title.ilike.%Perf Test%,title.ilike.%Test Multi%")
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw error;
@@ -668,19 +928,24 @@ async function listTestPosts() {
   }
 }
 
+function askDeleteTestPosts() {
+  askConfirm(
+    t("common.confirmAction"),
+    'Delete test posts with titles like "Test Post", "Perf Test", or "Test Multi"?',
+    t("common.remove"),
+    deleteTestPosts
+  );
+}
+
 async function deleteTestPosts() {
-  if (
-    !confirm(
-      'Delete test posts with title like "Test Post" or "Perf Test"? This will remove posts created by dev tools.'
-    )
-  )
-    return;
   setDevResult("Deleting...");
   try {
     const { data, error } = await supabase
       .from("posts")
       .delete()
-      .or("title.ilike.%Test Post%,title.ilike.%Perf Test%")
+      .or(
+        "title.ilike.%Test Post%,title.ilike.%Perf Test%,title.ilike.%Test Multi%"
+      )
       .select("id,title");
     if (error) throw error;
     setDevResult({
@@ -707,17 +972,29 @@ const settingsRaw = ref("");
 const settingsMap = ref({});
 const brandingRaw = ref("");
 
-const rlsTables = ["settings", "profiles", "posts", "comments"];
+const rlsTables = [
+  "settings",
+  "profiles",
+  "posts",
+  "comments",
+  "categories",
+  "series",
+];
 const rlsResult = ref("");
 
 const latencyMs = ref(null);
-
 const localStorageDump = ref("");
 
 const statsLoading = ref(false);
 const statsResult = ref("");
 const statsRls = ref(false);
 const statsRlsMsg = ref("");
+
+const localeDiagLoading = ref(false);
+const localeDiagRaw = ref("");
+const feedsLoading = ref(false);
+const feedsRaw = ref("");
+const runtimeRaw = ref("");
 
 async function loadFullStats() {
   statsLoading.value = true;
@@ -732,12 +1009,13 @@ async function loadFullStats() {
         .toString()
         .toLowerCase();
       if (status === 401 || status === 403) return true;
-      return /permission|forbidden|row-level|rls|not authorized|insufficient/.test(msg);
+      return /permission|forbidden|row-level|rls|not authorized|insufficient/.test(
+        msg
+      );
     }
 
     async function guardedCount(buildFn) {
       try {
-        let q = supabase.from("posts");
         const resp = await buildFn(supabase);
         if (resp?.error) throw resp.error;
         return resp?.count ?? null;
@@ -751,20 +1029,58 @@ async function loadFullStats() {
       }
     }
 
-    const total = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }));
-    const published = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "published"));
-    const drafts = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft"));
-    const archived = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).eq("status", "archived"));
+    const total = await guardedCount((s) =>
+      s.from("posts").select("id", { count: "exact", head: true })
+    );
+    const published = await guardedCount((s) =>
+      s
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "published")
+    );
+    const drafts = await guardedCount((s) =>
+      s.from("posts").select("id", { count: "exact", head: true }).eq("status", "draft")
+    );
+    const archived = await guardedCount((s) =>
+      s
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "archived")
+    );
 
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const last24h = await guardedCount((s) => s.from("posts").select("id", { count: "exact", head: true }).gte("created_at", since));
+    const last24h = await guardedCount((s) =>
+      s
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", since)
+    );
 
-    const users = await guardedCount((s) => s.from("profiles").select("id", { count: "exact", head: true }));
-    const categories = await guardedCount((s) => s.from("categories").select("id", { count: "exact", head: true }));
+    const users = await guardedCount((s) =>
+      s.from("profiles").select("id", { count: "exact", head: true })
+    );
+    const categories = await guardedCount((s) =>
+      s.from("categories").select("id", { count: "exact", head: true })
+    );
+    const series = await guardedCount((s) =>
+      s.from("series").select("id", { count: "exact", head: true })
+    );
 
-    const commentsTotal = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }));
-    const commentsApproved = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).eq("approved", true));
-    const commentsPending = await guardedCount((s) => s.from("comments").select("id", { count: "exact", head: true }).or("approved.eq.false,approved.is.null"));
+    const commentsTotal = await guardedCount((s) =>
+      s.from("comments").select("id", { count: "exact", head: true })
+    );
+    const commentsApproved = await guardedCount((s) =>
+      s
+        .from("comments")
+        .select("id", { count: "exact", head: true })
+        .eq("approved", true)
+    );
+    const commentsPending = await guardedCount((s) =>
+      s
+        .from("comments")
+        .select("id", { count: "exact", head: true })
+        .or("approved.eq.false,approved.is.null")
+    );
 
     let buckets = null;
     try {
@@ -775,29 +1091,34 @@ async function loadFullStats() {
       buckets = "error: " + (e.message || String(e));
     }
 
-    statsResult.value = JSON.stringify(
-      {
-        posts: {
-          total: total ?? null,
-          published: published ?? null,
-          drafts: drafts ?? null,
-          archived: archived ?? null,
-          last24h: last24h ?? null,
-        },
-        users: users ?? null,
-        categories: categories ?? null,
-        comments: {
-          total: commentsTotal ?? null,
-          approved: commentsApproved ?? null,
-          pending: commentsPending ?? null,
-        },
-        buckets,
-        sampled_at: new Date().toISOString(),
-        rls_blocked: statsRls.value || undefined,
+    const { data: localeRows } = await supabase.from("posts").select("locale");
+    const byLocale = {};
+    for (const row of localeRows || []) {
+      const code = row.locale || "unknown";
+      byLocale[code] = (byLocale[code] || 0) + 1;
+    }
+
+    statsResult.value = formatJson({
+      posts: {
+        total: total ?? null,
+        published: published ?? null,
+        drafts: drafts ?? null,
+        archived: archived ?? null,
+        last24h: last24h ?? null,
+        byLocale,
       },
-      null,
-      2
-    );
+      users: users ?? null,
+      categories: categories ?? null,
+      series: series ?? null,
+      comments: {
+        total: commentsTotal ?? null,
+        approved: commentsApproved ?? null,
+        pending: commentsPending ?? null,
+      },
+      buckets,
+      sampled_at: new Date().toISOString(),
+      rls_blocked: statsRls.value || undefined,
+    });
   } catch (e) {
     statsResult.value = "ERROR: " + (e.message || String(e));
   } finally {
@@ -821,19 +1142,22 @@ function authProvidersDisplay() {
   try {
     const enabled = Object.keys(ap).filter((k) => ap[k]);
     return enabled.length ? enabled.join(", ") : "none enabled";
-  } catch (e) {
+  } catch {
     return JSON.stringify(ap);
   }
 }
 
 function siteTitleDisplay() {
-  const branding = settingsMap.value["branding"] || null;
-  if (branding && branding.siteName) return branding.siteName;
+  const brandingRow = settingsMap.value["branding"] || null;
+  if (brandingRow && brandingRow.siteName) return brandingRow.siteName;
   return settingsMap.value["site_title"] || "—";
 }
 
 function siteOriginDisplay() {
-  return settingsMap.value["site_origin"] || getBrowserOrigin() || "—";
+  const configured = settingsMap.value["site_origin"] || getBrowserOrigin() || "—";
+  const current = getCurrentSiteOrigin() || "—";
+  if (configured === current) return current;
+  return `${current} (configured: ${configured})`;
 }
 
 function installationDisplay() {
@@ -844,8 +1168,8 @@ function installationDisplay() {
     ? new Date(inst.completed_at).toLocaleString()
     : null;
   return ok
-    ? `Complete — ${when || "unknown"}`
-    : `Incomplete${when ? " — " + when : ""}`;
+    ? `Complete - ${when || "unknown"}`
+    : `Incomplete${when ? " - " + when : ""}`;
 }
 
 async function checkBucket() {
@@ -856,7 +1180,7 @@ async function checkBucket() {
     );
     if (error) errorMsg.value = error.message;
     else if (!data) errorMsg.value = "Bucket not found.";
-    else result.value = JSON.stringify(data, null, 2);
+    else result.value = formatJson(data);
   } catch (e) {
     errorMsg.value = e.message || "Unknown error";
   } finally {
@@ -870,7 +1194,7 @@ async function listBuckets() {
   try {
     const { data, error } = await supabase.storage.listBuckets();
     if (error) errorMsg.value = error.message;
-    else result.value = JSON.stringify(data, null, 2);
+    else result.value = formatJson(data);
   } catch (e) {
     errorMsg.value = e.message || "Unknown error";
   } finally {
@@ -884,7 +1208,7 @@ async function refreshSession() {
     data: { session },
   } = await supabase.auth.getSession();
   sessionUser.value = session?.user || null;
-  sessionRaw.value = session ? JSON.stringify(session, null, 2) : "";
+  sessionRaw.value = session ? formatJson(session) : "";
   sessionExpiry.value = session?.expires_at
     ? new Date(session.expires_at * 1000).toLocaleString()
     : "";
@@ -907,13 +1231,13 @@ async function loadSettings() {
   try {
     const { data, error } = await supabase.from("settings").select("key,value");
     if (error) throw error;
-    settingsRaw.value = JSON.stringify(data, null, 2);
+    settingsRaw.value = formatJson(data);
     const map = {};
     for (const row of data || []) {
       try {
         map[row.key] =
           typeof row.value === "string" ? JSON.parse(row.value) : row.value;
-      } catch (_) {
+      } catch {
         map[row.key] = row.value;
       }
     }
@@ -932,7 +1256,7 @@ async function loadBranding() {
       .eq("key", "branding")
       .maybeSingle();
     if (error) throw error;
-    brandingRaw.value = JSON.stringify(data?.value || {}, null, 2);
+    brandingRaw.value = formatJson(data?.value || {});
   } catch (e) {
     brandingRaw.value = "ERROR: " + (e.message || "unknown");
   }
@@ -943,7 +1267,7 @@ async function probeTable(tbl) {
   try {
     const { data, error } = await supabase.from(tbl).select("*").limit(5);
     if (error) throw error;
-    rlsResult.value = JSON.stringify(data, null, 2);
+    rlsResult.value = formatJson(data);
   } catch (e) {
     rlsResult.value = "ERROR: " + (e.message || "unknown");
   }
@@ -953,24 +1277,217 @@ async function measureLatency() {
   const start = performance.now();
   try {
     await supabase.from("settings").select("key").limit(1);
-  } catch (_) {}
+  } catch {
+    /* ignore */
+  }
   latencyMs.value = Math.round(performance.now() - start);
 }
 
 function readLocalStorage() {
   const dump = {};
-  for (let i = 0; i < localStorage.length; i++) {
+  for (let i = 0; !(i >= localStorage.length); i++) {
     const k = localStorage.key(i);
     dump[k] = localStorage.getItem(k);
   }
-  localStorageDump.value = JSON.stringify(dump, null, 2);
+  localStorageDump.value = formatJson(dump);
 }
 
-function clearLocalStorage() {
-  if (!confirm("Clear ALL localStorage keys?")) return;
-  localStorage.clear();
-  localStorageDump.value = "";
+function askClearLocalStorage() {
+  askConfirm(
+    t("common.confirmAction"),
+    "Clear ALL localStorage keys for this origin?",
+    t("common.remove"),
+    () => {
+      localStorage.clear();
+      localStorageDump.value = "";
+    }
+  );
+}
+
+async function loadLocaleDiagnostics() {
+  localeDiagLoading.value = true;
+  try {
+    await fetchBranding(true);
+    const { data: localeRows } = await supabase.from("posts").select("locale");
+    const byLocale = {};
+    for (const row of localeRows || []) {
+      const code = row.locale || "unknown";
+      byLocale[code] = (byLocale[code] || 0) + 1;
+    }
+    const catalog = (unref(locales) || []).map((l) =>
+      typeof l === "string" ? l : { code: l.code, name: l.name, dir: l.dir }
+    );
+    localeDiagRaw.value = formatJson({
+      uiLocale: unref(locale),
+      defaultLocale: unref(defaultLocale),
+      contentLocale: unref(contentLocale),
+      cookie: localeCookieRef.value || null,
+      branding: {
+        loaded: branding.brandingLoaded?.value,
+        primary: branding.primaryLocale?.value,
+        enabled: branding.enabledLocales?.value,
+      },
+      catalog,
+      postsByLocale: byLocale,
+      href: getBrowserUrl() || null,
+      currentOrigin: getCurrentSiteOrigin(),
+      configuredOrigin: getBrowserOrigin(),
+    });
+  } catch (e) {
+    localeDiagRaw.value = "ERROR: " + (e.message || String(e));
+  } finally {
+    localeDiagLoading.value = false;
+  }
+}
+
+async function probeFeeds() {
+  feedsLoading.value = true;
+  try {
+    const origin = getCurrentSiteOrigin();
+    const paths = [
+      "/rss.xml",
+      "/sitemap.xml",
+      "/robots.txt",
+      "/readyz",
+      "/healthz",
+      "/env",
+    ];
+    const results = [];
+    for (const path of paths) {
+      const url = origin + path;
+      const t0 = performance.now();
+      try {
+        const res = await fetch(url, { method: "GET" });
+        const text = await res.text();
+        results.push({
+          path,
+          status: res.status,
+          ok: res.ok,
+          ms: Math.round(performance.now() - t0),
+          contentType: res.headers.get("content-type"),
+          bytes: text.length,
+          preview: text.slice(0, 120).replace(/\s+/g, " "),
+        });
+      } catch (e) {
+        results.push({
+          path,
+          ok: false,
+          error: e.message || String(e),
+          ms: Math.round(performance.now() - t0),
+        });
+      }
+    }
+    feedsRaw.value = formatJson({ origin, results });
+  } catch (e) {
+    feedsRaw.value = "ERROR: " + (e.message || String(e));
+  } finally {
+    feedsLoading.value = false;
+  }
+}
+
+function loadRuntimeEnv() {
+  const pub = runtimeConfig.public || {};
+  runtimeRaw.value = formatJson({
+    env: pub.env,
+    siteUrl: pub.siteUrl,
+    siteLocale: pub.siteLocale,
+    twitterSite: pub.twitterSite,
+    supabaseUrl: pub.supabaseUrl
+      ? String(pub.supabaseUrl).replace(/^(https?:\/\/[^/]+).*/, "$1/…")
+      : null,
+    supabaseAnonKey: pub.supabaseAnonKey
+      ? `${String(pub.supabaseAnonKey).slice(0, 8)}…(${String(pub.supabaseAnonKey).length} chars)`
+      : null,
+    configuredOrigin: getBrowserOrigin(),
+    currentOrigin: getCurrentSiteOrigin(),
+  });
+}
+
+async function runQuickSuite() {
+  suiteRunning.value = true;
+  suiteSummary.value = null;
+  const checks = [];
+  const push = (name, ok, detail) => checks.push({ name, ok, detail });
+
+  try {
+    await refreshSession();
+    push("session", !!sessionUser.value, sessionUser.value?.email || "anonymous");
+
+    const t0 = performance.now();
+    const { error: pingErr } = await supabase.from("settings").select("key").limit(1);
+    push("supabase", !pingErr, pingErr?.message || `${Math.round(performance.now() - t0)}ms`);
+
+    await fetchBranding(true);
+    push(
+      "branding",
+      !!branding.brandingLoaded?.value,
+      `primary=${branding.primaryLocale?.value}; enabled=${(branding.enabledLocales?.value || []).join(",")}`
+    );
+
+    await loadLocaleDiagnostics();
+    push("locale", !!localeDiagRaw.value && !String(localeDiagRaw.value).startsWith("ERROR"));
+
+    await probeFeeds();
+    let feedsOk = false;
+    try {
+      const parsed = JSON.parse(feedsRaw.value);
+      feedsOk = (parsed.results || []).some((r) => r.ok);
+    } catch {
+      feedsOk = false;
+    }
+    push("feeds", feedsOk);
+
+    loadRuntimeEnv();
+    push("runtime", !!runtimeConfig.public?.supabaseUrl);
+
+    await loadFullStats();
+    push("stats", !!statsResult.value && !String(statsResult.value).startsWith("ERROR"));
+
+    suiteSummary.value = {
+      at: new Date().toISOString(),
+      passed: checks.filter((c) => c.ok).length,
+      total: checks.length,
+      checks,
+    };
+  } catch (e) {
+    suiteSummary.value = {
+      at: new Date().toISOString(),
+      error: e.message || String(e),
+      checks,
+    };
+  } finally {
+    suiteRunning.value = false;
+  }
 }
 
 refreshSession();
+loadRuntimeEnv();
+
+onUnmounted(() => {
+  if (typeof e2eCleanup === "function") {
+    try {
+      e2eCleanup();
+    } catch {
+      /* ignore */
+    }
+  }
+});
 </script>
+
+<style scoped>
+/* Layout only — visual utilities live on the class string constants in script. */
+.test-card {
+  min-height: 26rem;
+  display: grid;
+  grid-template-rows: 4.5rem 1fr 16rem;
+}
+.test-card-wide {
+  min-height: 28rem;
+  display: grid;
+  grid-template-rows: auto auto 16rem;
+}
+.test-pre {
+  font-size: 11px;
+}
+</style>
+

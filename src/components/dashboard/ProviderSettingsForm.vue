@@ -6,10 +6,10 @@
       </div>
       <div class="flex-1 min-w-0">
         <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words">
-          Authentication Providers
+          {{ t('settings.providers.title') }}
         </h2>
         <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
-          Enable or disable third-party login providers for your site. Only enabled providers will appear on the login and profile pages.
+          {{ t('settings.providers.description') }}
         </p>
       </div>
     </div>
@@ -17,17 +17,17 @@
       <div class="rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 p-3 text-amber-800 dark:text-amber-200 text-[12px] flex flex-col sm:flex-row sm:items-start gap-2 break-words">
         <Icon icon="mdi:alert-circle-outline" class="text-amber-600 dark:text-amber-300 mt-0.5" />
         <div class="min-w-0 space-y-2">
-          <p class="font-semibold">Important</p>
+          <p class="font-semibold">{{ t('settings.providers.important') }}</p>
           <p class="mt-0.5 break-words">
-            Enabling a provider here only controls visibility in the UI. You must also configure the provider in your Supabase project (Auth → Providers) and whitelist the redirect URLs below, otherwise sign-in/linking will fail.
+            {{ t('settings.providers.importantBody') }}
           </p>
           <ul class="mt-2 space-y-1 list-disc list-inside break-words">
             <li>
-              Sign in redirect:
+              {{ t('settings.providers.signInRedirect') }}
               <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40 break-all">{{ appOrigin }}</code>
             </li>
             <li>
-              Link accounts redirect:
+              {{ t('settings.providers.linkAccountsRedirect') }}
               <code class="px-1 py-0.5 rounded bg-amber-100/60 dark:bg-amber-900/40 break-all">{{ appOrigin + '/profile' }}</code>
             </li>
           </ul>
@@ -58,7 +58,7 @@
               :aria-label="providerLabel(provider)"
               @click="localProviders[provider] = !localProviders[provider]"
               :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-4',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ms-4',
                 localProviders[provider]
                   ? 'bg-blue-500'
                   : 'bg-gray-300 dark:bg-gray-700',
@@ -83,7 +83,7 @@
         >
           <Icon v-if="saving" icon="mdi:loading" class="animate-spin text-base" />
           <Icon v-else icon="mdi:content-save" class="text-base" />
-          <span>{{ saving ? 'Saving...' : 'Save Changes' }}</span>
+          <span>{{ saving ? t('common.saving') : t('common.save') }}</span>
         </button>
         <span v-if="error" class="text-red-600 text-sm">{{ error }}</span>
       </div>
@@ -92,13 +92,14 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 
-import { ref, watch, computed, onMounted } from 'vue';
+
+import { ref, watch, onMounted } from 'vue';
 import { useSettings, fetchSettings } from '@/stores/settingsStore';
-import { Icon } from '@iconify/vue';
-import { useToast } from 'vue-toastification';
-import { getBrowserOrigin } from '@/lib/utils';
+import { Icon } from '@iconify/vue';import { getBrowserOrigin } from '@/lib/utils';
 
 onMounted(async () => {
   await fetchSettings();
@@ -127,9 +128,9 @@ async function save() {
   error.value = "";
   try {
     await saveProvidersEnabled(localProviders.value);
-    toast.success('Provider settings updated!');
+    toast.success(t('settings.providers.updated'));
   } catch (e) {
-    error.value = 'Failed to save provider settings';
+    error.value = t('settings.providers.saveFailed');
     toast.error(error.value);
   } finally {
     saving.value = false;

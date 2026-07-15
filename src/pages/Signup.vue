@@ -4,8 +4,8 @@
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4">
         <Icon icon="mdi:account-plus" class="text-3xl" />
       </div>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Create your account</h1>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Join and start publishing your thoughts.</p>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{{ t("auth.createAccount") }}</h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ t("auth.joinTagline") }}</p>
     </div>
 
     <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
@@ -13,7 +13,7 @@
         <div>
           <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             <Icon icon="mdi:email-outline" class="text-base text-blue-500" />
-            Email
+            {{ t("auth.email") }}
           </label>
           <div class="relative">
             <input
@@ -30,9 +30,9 @@
           <div class="flex items-center justify-between mb-1">
             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               <Icon icon="mdi:lock-outline" class="text-base text-blue-500" />
-              Password
+              {{ t("auth.password") }}
             </label>
-            <span class="text-[11px] text-gray-400 dark:text-gray-500">Min 8 chars</span>
+            <span class="text-[11px] text-gray-400 dark:text-gray-500">{{ t("auth.minPassword") }}</span>
           </div>
           <div class="relative group">
             <input
@@ -44,7 +44,7 @@
               required
               @input="validatePassword()"
             />
-            <button type="button" @click="showPassword = !showPassword" :aria-label="showPassword ? 'Hide password' : 'Show password'" class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500">
+            <button type="button" @click="showPassword = !showPassword" :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')" class="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500">
               <Icon :icon="showPassword ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" class="text-lg" />
             </button>
           </div>
@@ -59,7 +59,7 @@
           <div class="flex items-center justify-between mb-1">
             <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
               <Icon icon="mdi:account-circle" class="text-base text-blue-500" />
-              Username
+              {{ t("auth.username") }}
             </label>
             <span class="text-[11px] text-gray-400 dark:text-gray-500">A–Z, a–z, 0–9, - and _</span>
           </div>
@@ -98,15 +98,15 @@
         >
           <Icon v-if="submitting" icon="mdi:loading" class="animate-spin" />
           <Icon v-else icon="mdi:account-plus" class="text-lg" />
-          <span>{{ submitting ? 'Creating account...' : 'Sign Up' }}</span>
+          <span>{{ submitting ? t('auth.creatingAccount') : t('auth.signup') }}</span>
         </button>
 
         <p class="text-[13px] text-gray-600 dark:text-gray-400 pt-2 text-center">
-          Already have an account?
-          <router-link
-            to="/login"
+          {{ t('auth.haveAccount') }}
+          <NuxtLink
+            :to="localePath('/login')"
             class="text-blue-600 dark:text-blue-400 hover:underline"
-            >Login</router-link
+            >{{ t('auth.login') }}</NuxtLink
           >
         </p>
       </form>
@@ -115,12 +115,13 @@
 </template>
 
 <script setup>
+definePageMeta({ requireAnonymous: true, ssr: false })
+
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '@/services/supabase';
-import { useToast } from 'vue-toastification';
-import { Icon } from '@iconify/vue';
+import { supabase } from '@/services/supabase';import { Icon } from '@iconify/vue';
 
+const { t } = useI18n();
 const toast = useToast();
 const email = ref('');
 const password = ref('');
@@ -131,6 +132,7 @@ const showPassword = ref(false);
 const usernameError = ref('');
 const passwordStrength = reactive({ percent: 0, label: 'Weak', barClass: 'bg-red-400 dark:bg-red-500', textClass: 'text-red-500 dark:text-red-400' });
 const router = useRouter();
+const localePath = useLocalePath();
 
 function validateUsername() {
   const val = username.value;
@@ -197,10 +199,10 @@ async function handleSignup() {
       },
     });
     if (error) throw error;
-    toast.success('Account created! Check your email to confirm.');
-    router.push('/');
+    toast.success(t('auth.accountCreated') || 'Account created! Check your email to confirm.');
+    router.push(localePath('/'));
   } catch (e) {
-    toast.error(e.message || 'Signup failed');
+    toast.error(e.message || t('auth.signupFailed') || 'Signup failed');
   } finally {
     submitting.value = false;
   }

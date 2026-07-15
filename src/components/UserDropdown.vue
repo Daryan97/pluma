@@ -2,7 +2,7 @@
   <DropdownMenuRoot v-model:open="open">
     <DropdownMenuTrigger
       class="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 group"
-      aria-label="User menu"
+      :aria-label="t('nav.profile')"
     >
       <AvatarRoot
         class="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden ring-1 ring-gray-300 dark:ring-gray-600"
@@ -68,11 +68,11 @@
         <template v-if="user">
           <DropdownMenuItem @select="go('/profile')" class="menu-item">
             <Icon icon="mdi:account-edit" class="text-base" />
-            <span>Profile</span>
+            <span>{{ t("nav.profile") }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem @select="go('/change-password')" class="menu-item">
             <Icon icon="mdi:lock-reset" class="text-base" />
-            <span>Change Password</span>
+            <span>{{ t("nav.changePassword") }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             v-if="user.role === 'admin' || user.role === 'author'"
@@ -80,7 +80,7 @@
             class="menu-item"
           >
             <Icon icon="mdi:view-dashboard-outline" class="text-base" />
-            <span>Dashboard</span>
+            <span>{{ t("nav.dashboard") }}</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator
             class="h-px bg-gray-200 dark:bg-gray-700 my-1"
@@ -90,17 +90,17 @@
             class="menu-item text-red-600 dark:text-red-400 data-[highlighted]:bg-red-100 dark:data-[highlighted]:bg-red-900/40"
           >
             <Icon icon="mdi:logout" class="text-base" />
-            <span>Logout</span>
+            <span>{{ t("nav.logout") }}</span>
           </DropdownMenuItem>
         </template>
         <template v-else>
           <DropdownMenuItem @select="go('/login')" class="menu-item">
             <Icon icon="mdi:login" class="text-base" />
-            <span>Login</span>
+            <span>{{ t("nav.login") }}</span>
           </DropdownMenuItem>
           <DropdownMenuItem @select="go('/signup')" class="menu-item">
             <Icon icon="mdi:account-plus" class="text-base" />
-            <span>Signup</span>
+            <span>{{ t("nav.signup") }}</span>
           </DropdownMenuItem>
         </template>
         <DropdownMenuArrow class="fill-white dark:fill-gray-800" />
@@ -127,6 +127,9 @@ import { supabase } from "@/services/supabase";
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 
+const { t } = useI18n();
+const localePath = useLocalePath();
+
 const props = defineProps({
   user: Object,
   avatarUrl: String,
@@ -135,7 +138,7 @@ const props = defineProps({
 const open = ref(false);
 const router = useRouter();
 const displayName = computed(
-  () => props.user?.display_name || props.user?.username || "Guest"
+  () => props.user?.display_name || props.user?.username || t("nav.guest")
 );
 
 const roleInfo = computed(() => {
@@ -143,27 +146,27 @@ const roleInfo = computed(() => {
   switch (role) {
     case "admin":
       return {
-        label: "Admin",
+        label: t("roles.admin"),
         icon: "mdi:shield-crown-outline",
         classes: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
       };
     case "author":
       return {
-        label: "Author",
+        label: t("roles.author"),
         icon: "mdi:pen",
         classes:
           "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
       };
     case "reader":
       return {
-        label: "Reader",
+        label: t("roles.reader"),
         icon: "mdi:book-open-page-variant",
         classes:
           "bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300",
       };
     default:
       return {
-        label: "Guest",
+        label: t("roles.guest"),
         icon: "mdi:account-outline",
         classes:
           "bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400",
@@ -173,11 +176,11 @@ const roleInfo = computed(() => {
 
 function go(path) {
   open.value = false;
-  router.push(path);
+  router.push(localePath(path));
 }
 
 const logout = async () => {
   await supabase.auth.signOut();
-  window.location.href = "/";
+  window.location.href = localePath("/");
 };
 </script>

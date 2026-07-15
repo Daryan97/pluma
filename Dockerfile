@@ -2,28 +2,25 @@
 FROM node:20-bullseye-slim AS build-stage
 WORKDIR /app
 
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_ENV
-ARG VITE_SITE_URL
-
-ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
-ENV VITE_ENV=${VITE_ENV}
-ENV VITE_SITE_URL=${VITE_SITE_URL}
-
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY . .
+# Runtime env is still supplied at container start; Nuxt reads process.env in Nitro.
 RUN npm run build
 
-# production stage
-FROM nginx:stable-alpine AS production-stage
+# production stage — Nuxt Nitro server
+FROM node:20-alpine AS production-stage
+WORKDIR /app
 
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY docker-entrypoint.d/ /docker-entrypoint.d/
-RUN chmod +x /docker-entrypoint.d/*.sh
+ENV NODE_ENV=production
+ENV PORT=80
+ENV NITRO_PORT=80
+ENV HOST=0.0.0.0
+
+COPY --from=build-stage /app/.output ./.output
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/bin/sh", "/docker-entrypoint.sh"]
+CMD ["node", ".output/server/index.mjs"]

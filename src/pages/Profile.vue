@@ -3,7 +3,7 @@
     <h1
       class="text-3xl font-bold mb-8 text-gray-900 dark:text-white tracking-tight"
     >
-      My Profile
+      {{ t("profile.title") }}
     </h1>
 
   <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 auto-rows-auto">
@@ -19,7 +19,7 @@
             <h2
               class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
             >
-              Authentication
+              {{ t("profile.authentication") }}
             </h2>
           </div>
         </header>
@@ -35,7 +35,7 @@
                 icon="mdi:identification-card"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              ID
+              {{ t("profile.id") }}
             </dt>
             <dd class="truncate">{{ authUser.id }}</dd>
             <dt
@@ -45,7 +45,7 @@
                 icon="mdi:email-outline"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              Email
+              {{ t("auth.email") }}
             </dt>
             <dd class="break-all flex items-center gap-3 flex-wrap">
               <span>{{ authUser.email }}</span>
@@ -54,7 +54,7 @@
                 @click="startEmailEdit"
                 class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Change
+                {{ t("common.change") }}
               </button>
             </dd>
             <dt
@@ -64,17 +64,17 @@
                 icon="mdi:key"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              Password
+              {{ t("auth.password") }}
             </dt>
             <dd class="flex items-center gap-3">
               <span class="text-gray-500 dark:text-gray-400 italic"
-                >Hidden</span
+                >{{ t("common.hidden") }}</span
               >
               <button
-                @click="router.push('/change-password')"
+                @click="router.push(localePath('/change-password'))"
                 class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Change
+                {{ t("common.change") }}
               </button>
             </dd>
             <dt
@@ -84,7 +84,7 @@
                 icon="mdi:calendar-check"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              Created
+              {{ t("profile.created") }}
             </dt>
             <dd>{{ formatDate(authUser.created_at) }}</dd>
           </dl>
@@ -96,7 +96,7 @@
               <label
                 class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
               >
-                New Email:
+                {{ t("profile.newEmail") }}
               </label>
               <input
                 v-model="emailAuthInput"
@@ -110,14 +110,14 @@
                 :disabled="savingEmail"
                 class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {{ savingEmail ? "Sending…" : "Send Change Request" }}
+                {{ savingEmail ? t("auth.sending") : t("profile.sendChangeRequest") }}
               </button>
               <button
                 type="button"
                 @click="cancelEmailEdit"
                 class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
               >
-                Cancel
+                {{ t("common.cancel") }}
               </button>
             </div>
           </form>
@@ -135,7 +135,7 @@
             <h2
               class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
             >
-              Profile
+              {{ t("profile.profileSection") }}
             </h2>
           </div>
           <button
@@ -143,7 +143,7 @@
             @click="startEdit"
             class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Edit
+            {{ t("common.edit") }}
           </button>
         </header>
 
@@ -158,9 +158,9 @@
                 icon="mdi:account-circle"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              Username
+              {{ t("profile.username") }}
             </dt>
-            <dd class="truncate">{{ profile?.username || "N/A" }}</dd>
+            <dd class="truncate">{{ profile?.username || t("common.na") }}</dd>
             <dt
               class="flex items-center gap-1 font-medium text-gray-600 dark:text-gray-400"
             >
@@ -168,9 +168,9 @@
                 icon="mdi:account-box"
                 class="text-blue-500 dark:text-blue-400 text-sm"
               />
-              Display
+              {{ t("profile.display") }}
             </dt>
-            <dd class="truncate">{{ profile?.display_name || "N/A" }}</dd>
+            <dd class="truncate">{{ profile?.display_name || t("common.na") }}</dd>
           </dl>
         </div>
 
@@ -179,9 +179,7 @@
             <div class="mb-2">
               <label
                 class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
-              >
-                Username:
-              </label>
+              >{{ t('auth.username') }}:</label>
               <input
                 v-model="usernameInput"
                 class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -191,9 +189,7 @@
             <div class="mb-2">
               <label
                 class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1"
-              >
-                Display Name:
-              </label>
+              >{{ t('profile.displayName') }}</label>
               <input
                 v-model="displayNameInput"
                 class="w-full border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -204,16 +200,12 @@
               <button
                 type="submit"
                 class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Save
-              </button>
+              >{{ t('common.save') }}</button>
               <button
                 type="button"
                 @click="cancelEdit"
                 class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              >
-                Cancel
-              </button>
+              >{{ t('common.cancel') }}</button>
             </div>
           </form>
         </div>
@@ -229,16 +221,14 @@
             />
             <h2
               class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
-            >
-              Avatar
-            </h2>
+            >{{ t('profile.avatar') }}</h2>
           </div>
           <button
             v-if="avatarUrl && !uploadingAvatar"
             @click="removeAvatar"
             class="inline-flex items-center h-7 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
           >
-            Remove
+            {{ t('common.remove') }}
           </button>
         </header>
 
@@ -259,13 +249,13 @@
               <img
                 v-if="avatarUrl && !avatarPreview"
                 :src="avatarUrl"
-                alt="Avatar"
+                :alt="t('profile.avatar')"
                 class="w-full h-full object-cover"
               />
               <img
                 v-else-if="avatarPreview"
                 :src="avatarPreview"
-                alt="New Avatar Preview"
+                :alt="t('profile.newAvatarPreviewAlt')"
                 class="w-full h-full object-cover opacity-90"
               />
               <Icon v-else icon="mdi:account" class="text-6xl text-gray-400" />
@@ -274,7 +264,7 @@
               >
                 <Icon icon="mdi:camera" class="text-white text-xl mb-1" />
                 <span class="text-[11px] tracking-wide font-medium text-white"
-                  >Click to Change</span
+                  >{{ t('profile.clickToChange') }}</span
                 >
               </div>
             </button>
@@ -282,7 +272,7 @@
               v-if="avatarPreview"
               class="absolute -top-1 -right-1 bg-blue-600 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold shadow ring-2 ring-white dark:ring-gray-800 select-none"
             >
-              Preview
+              {{ t('profile.preview') }}
             </div>
           </div>
           <div class="flex gap-2" v-if="avatarPreview">
@@ -296,7 +286,7 @@
                 :class="uploadingAvatar ? 'animate-spin' : ''"
                 class="text-sm"
               />
-              <span>{{ uploadingAvatar ? "Uploading..." : "Save" }}</span>
+              <span>{{ uploadingAvatar ? t('common.uploading') : t('common.save') }}</span>
             </button>
             <button
               @click="cancelAvatarSelection"
@@ -304,14 +294,14 @@
               class="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
               <Icon icon="mdi:close" class="text-sm" />
-              <span>Cancel</span>
+              <span>{{ t('common.cancel') }}</span>
             </button>
           </div>
           <p
             v-if="!avatarPreview"
             class="text-[11px] text-gray-500 dark:text-gray-400"
           >
-            Click the avatar to upload a new one.
+            {{ t('profile.clickAvatarHint') }}
           </p>
         </div>
       </section>
@@ -327,9 +317,7 @@
             />
             <h2
               class="flex items-center text-base font-semibold tracking-wide text-gray-700 dark:text-gray-200"
-            >
-              Linked Accounts
-            </h2>
+            >{{ t('profile.linkedAccounts') }}</h2>
           </div>
         </header>
         <div class="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -352,7 +340,7 @@
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <Icon icon="mdi:link" class="text-sm" />
-                <span>Link</span>
+                <span>{{ t('profile.link') }}</span>
               </button>
               <button
                 v-else
@@ -360,7 +348,7 @@
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <Icon icon="tabler:unlink" class="text-sm" />
-                <span>Unlink</span>
+                <span>{{ t('profile.unlink') }}</span>
               </button>
             </div>
             <div
@@ -374,7 +362,7 @@
             @click="expanded = !expanded"
             class="text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
           >
-            {{ expanded ? 'Show less' : `Show ${enabledProviders.length - COLLAPSED_COUNT} more` }}
+            {{ expanded ? t('common.showLess') : t('common.showMore', { count: enabledProviders.length - COLLAPSED_COUNT }) }}
           </button>
         </div>
       </section>
@@ -383,16 +371,18 @@
 </template>
 
 <script setup>
+definePageMeta({ requiresAuth: true, ssr: false })
+
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { supabase } from "@/services/supabase";
-import { useToast } from "vue-toastification";
-import { Icon } from "@iconify/vue";
+import { supabase } from "@/services/supabase";import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 import { getBrowserOrigin } from "@/lib/utils";
 
 const toast = useToast();
 const route = useRoute();
+const { t } = useI18n();
+const localePath = useLocalePath();
 const router = useRouter();
 
 const authUser = ref({});
@@ -511,11 +501,11 @@ async function saveProfile() {
     .limit(1);
 
   if (dupError) {
-    toast.error("Error checking username uniqueness");
+    toast.error(t('profile.usernameCheckFailed'));
     return;
   }
   if (existing && existing.length > 0) {
-    toast.error("Username already taken");
+    toast.error(t('profile.usernameTaken'));
     return;
   }
 
@@ -530,10 +520,10 @@ async function saveProfile() {
     .single();
 
   if (error) {
-    toast.error("Failed to update profile");
+    toast.error(t('profile.updateFailed'));
   } else {
     profile.value = updatedProfile;
-    toast.success("Profile updated");
+    toast.success(t('profile.updated'));
     window.dispatchEvent(new Event("profileUpdated"));
     editMode.value = false;
   }
@@ -563,16 +553,16 @@ async function saveEmail() {
     );
 
     if (error) {
-      toast.error(error.message || "Failed to change email");
+      toast.error(error.message || t('profile.emailChangeFailed'));
       savingEmail.value = false;
       return;
     }
 
     authUser.value.email = data.user.email;
-    toast.success("Email change request sent");
+    toast.success(t('profile.emailChangeSent'));
     lastRequestedEmail.value = emailAuthInput.value;
   } else {
-    toast.error("Please enter a new email address");
+    toast.error(t('profile.enterNewEmail'));
     savingEmail.value = false;
     return;
   }
@@ -587,11 +577,11 @@ function onAvatarFileChange(e) {
 
   const okTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
   if (!okTypes.includes(file.type)) {
-    toast.error("Only PNG/JPEG/WEBP images are allowed");
+    toast.error(t('profile.avatarTypeError'));
     return;
   }
   if (file.size > 2 * 1024 * 1024) {
-    toast.error("File too large (max 2MB)");
+    toast.error(t('profile.avatarSizeError'));
     return;
   }
 
@@ -621,7 +611,7 @@ async function uploadAvatar() {
 
   try {
     const userId = authUser.value?.id;
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) throw new Error(t('common.notAuthenticated'));
     const originalName = avatarFile.value.name || "";
     const ext = originalName.includes(".")
       ? originalName.split(".").pop().toLowerCase()
@@ -647,12 +637,12 @@ async function uploadAvatar() {
     if (updErr) throw updErr;
 
     avatarUrl.value = pub.publicUrl;
-    toast.success("Avatar updated");
+    toast.success(t('profile.avatarUpdated'));
     window.dispatchEvent(new Event("profileUpdated"));
     cancelAvatarSelection();
   } catch (e) {
     console.error(e);
-    toast.error(e.message || "Failed to upload avatar");
+    toast.error(e.message || t('profile.uploadFailed'));
   } finally {
     uploadingAvatar.value = false;
   }
@@ -677,11 +667,11 @@ async function removeAvatar() {
     if (updErr) throw updErr;
 
     avatarUrl.value = null;
-    toast.success("Avatar removed");
+    toast.success(t('profile.avatarRemoved'));
     window.dispatchEvent(new Event("profileUpdated"));
   } catch (e) {
     console.warn("Storage removal issue", e);
-    toast.error(e.message || "Failed to remove avatar");
+    toast.error(e.message || t('profile.removeAvatarFailed'));
   }
 }
 
@@ -703,19 +693,19 @@ async function linkProvider(provider) {
 async function unlinkProvider(provider) {
   const user = authUser.value;
   if (!user) {
-    toast.error("Not authenticated");
+    toast.error(t('common.notAuthenticated'));
     return;
   }
 
   const identity = user.identities?.find((i) => i.provider === provider);
   if (!identity) {
-    toast.error(`No linked ${provider} account`);
+    toast.error(t('profile.noLinkedAccount', { provider }));
     return;
   }
 
   const identityId = identity.identity_id || identity.id;
   if (!identityId) {
-    toast.error("identity_id not found");
+    toast.error(t('profile.identityIdNotFound'));
     return;
   }
 
@@ -727,7 +717,7 @@ async function unlinkProvider(provider) {
     return;
   }
 
-  toast.success(`${provider} account unlinked`);
+  toast.success(t('profile.accountUnlinked', { provider }));
   await loadUser();
 }
 </script>

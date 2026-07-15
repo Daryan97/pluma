@@ -1,22 +1,24 @@
 <template>
   <nav
-    class="relative border-b border-gray-200 dark:border-gray-800 overflow-hidden"
+    class="relative z-50 border-b border-gray-200 dark:border-gray-800"
   >
-    <div
-      class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"
-    ></div>
-    <div
-      class="absolute inset-0 -z-10 bg-white/35 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"
-    ></div>
-    <div
-      class="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-200/40 blur-2xl mix-blend-multiply dark:hidden"
-    ></div>
-    <div
-      class="pointer-events-none absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl mix-blend-multiply dark:hidden"
-    ></div>
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden -z-10">
+      <div
+        class="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"
+      ></div>
+      <div
+        class="absolute inset-0 bg-white/35 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"
+      ></div>
+      <div
+        class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-200/40 blur-2xl mix-blend-multiply dark:hidden"
+      ></div>
+      <div
+        class="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl mix-blend-multiply dark:hidden"
+      ></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center relative z-10">
       <div class="flex items-center gap-2">
-        <router-link to="/" class="block max-h-10">
+        <NuxtLink :to="localePath('/')" class="block max-h-10">
           <img
             v-if="
               (theme.theme === 'light' && branding.lightLogoUrl.value) ||
@@ -44,31 +46,32 @@
             class="text-xl font-bold text-gray-900 dark:text-gray-100"
             >{{ branding.siteName.value || projectInfo.name }}</span
           >
-        </router-link>
+        </NuxtLink>
       </div>
       <div
         class="hidden md:flex items-center gap-2 text-gray-700 dark:text-gray-300"
         id="nav-links"
       >
-        <router-link to="/" class="nav-pill">
+        <NuxtLink :to="localePath('/')" class="nav-pill">
           <Icon icon="mdi:home-outline" class="text-lg" />
-          Home
-        </router-link>
+          {{ t("nav.home") }}
+        </NuxtLink>
         <CategoriesDropdown v-if="categories.length" :categories="categories" />
-        <router-link to="/archive" class="nav-pill">
+        <NuxtLink :to="localePath('/archive')" class="nav-pill">
           <Icon icon="mdi:archive-outline" class="text-lg" />
-          Archive
-        </router-link>
-        <router-link
+          {{ t("nav.archive") }}
+        </NuxtLink>
+        <NuxtLink
           v-if="role === 'admin' || role === 'author'"
-          to="/dashboard"
+          :to="localePath('/dashboard')"
           class="nav-pill"
         >
           <Icon icon="mdi:view-dashboard-outline" class="text-lg" />
-          Dashboard
-        </router-link>
+          {{ t("nav.dashboard") }}
+        </NuxtLink>
       </div>
       <div class="hidden md:flex items-center gap-3 relative">
+        <LocaleSwitcher v-if="!isInstallPage" />
         <button
           @click="showSearch = true"
           class="nav-pill bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
@@ -76,23 +79,27 @@
           <Icon icon="mdi:magnify" class="text-xl" />
           <span
             class="hidden lg:flex items-center text-sm text-gray-500 dark:text-gray-400"
+            dir="ltr"
           >
-            Type
+            {{ t("nav.typeSlash") }}
             <kbd
-              class="ml-1 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-sm mr-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+              class="ms-1 me-1 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-200 dark:hover:bg-gray-700"
               >/</kbd
             >
-            to search
+            {{ t("nav.toSearch") }}
           </span>
         </button>
-        <UserDropdown :user="user" :avatar-url="avatar_url" />
+        <UserDropdown v-if="authReady" :user="user" :avatar-url="avatar_url" />
+        <div
+          v-else
+          class="h-9 w-28 rounded-md bg-gray-200/70 dark:bg-gray-700/50 animate-pulse"
+          aria-hidden="true"
+        />
         <button
           @click="theme.toggleTheme()"
           class="nav-pill gap-1 bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
           :aria-label="
-            theme.theme === 'light'
-              ? 'Switch to dark mode'
-              : 'Switch to light mode'
+            theme.theme === 'light' ? t('nav.darkMode') : t('nav.lightMode')
           "
         >
           <Icon
@@ -134,11 +141,18 @@
           <p
             class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
           >
-            {{ user?.display_name || user?.username || "Guest" }}
+            <template v-if="!authReady">…</template>
+            <template v-else>{{ user?.display_name || user?.username || t("nav.guest") }}</template>
           </p>
           <div class="mt-1 flex flex-wrap items-center gap-1">
             <span
-              v-if="user"
+              v-if="!authReady"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+            >
+              …
+            </span>
+            <span
+              v-else-if="user"
               :class="roleChipClasses"
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
             >
@@ -148,37 +162,42 @@
               v-else
               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400"
             >
-              <Icon icon="mdi:account-outline" class="text-xs" /> Guest
+              <Icon icon="mdi:account-outline" class="text-xs" /> {{ t("nav.guest") }}
             </span>
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <button
-            v-if="!user"
-            @click="go('/login')"
-            class="h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60"
-          >
-            Login
-          </button>
-          <button
-            v-if="!user"
-            @click="go('/signup')"
-            class="h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
-          >
-            Signup
-          </button>
-          <button
-            v-if="user"
-            @click="go('/profile')"
-            class="h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
-          >
-            Profile
-          </button>
+          <template v-if="!authReady">
+            <div class="h-8 w-20 rounded-md bg-gray-200/70 dark:bg-gray-700/50 animate-pulse" />
+          </template>
+          <template v-else>
+            <button
+              v-if="!user"
+              @click="go('/login')"
+              class="h-8 px-3 rounded-md text-[11px] font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60"
+            >
+              {{ t("nav.login") }}
+            </button>
+            <button
+              v-if="!user"
+              @click="go('/signup')"
+              class="h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
+            >
+              {{ t("nav.signup") }}
+            </button>
+            <button
+              v-if="user"
+              @click="go('/profile')"
+              class="h-8 px-3 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
+            >
+              {{ t("nav.profile") }}
+            </button>
+          </template>
         </div>
       </div>
       <div class="flex flex-col gap-3">
-        <router-link
-          to="/"
+        <NuxtLink
+          :to="localePath('/')"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline text-gray-700 dark:text-gray-300"
           @click="go('/')"
         >
@@ -186,8 +205,8 @@
             icon="mdi:home-outline"
             class="text-gray-700 dark:text-gray-300"
           />
-          <span class="text-gray-700 dark:text-gray-300"> Home </span>
-        </router-link>
+          <span class="text-gray-700 dark:text-gray-300"> {{ t("nav.home") }} </span>
+        </NuxtLink>
         <div class="relative">
           <button
             @click="mobileCategoriesOpen = !mobileCategoriesOpen"
@@ -195,7 +214,7 @@
           >
             <span class="flex items-center gap-2">
               <Icon icon="mdi:tag-outline" />
-              Categories
+              {{ t("nav.categories") }}
             </span>
             <Icon
               :icon="
@@ -209,10 +228,10 @@
             v-if="mobileCategoriesOpen"
             class="mt-2 ml-2 flex flex-col gap-1 text-sm"
           >
-            <router-link
+            <NuxtLink
               v-for="category in categories"
               :key="category.id"
-              :to="`/category/${category.slug || category.name}`"
+              :to="localePath(`/category/${category.slug || category.name}`)"
               class="flex items-center gap-2 h-8 px-3 rounded hover:bg-gray-200 dark:hover:bg-gray-700/60"
               @click="go(`/category/${category.slug || category.name}`)"
             >
@@ -223,12 +242,12 @@
               <span class="text-gray-700 dark:text-gray-300">
                 {{ category.name }}
               </span>
-            </router-link>
+            </NuxtLink>
           </div>
         </div>
 
-        <router-link
-          to="/archive"
+        <NuxtLink
+          :to="localePath('/archive')"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline text-gray-700 dark:text-gray-300"
           @click="go('/archive')"
         >
@@ -236,12 +255,12 @@
             icon="mdi:archive-outline"
             class="text-gray-700 dark:text-gray-300"
           />
-          <span class="text-gray-700 dark:text-gray-300"> Archive </span>
-        </router-link>
+          <span class="text-gray-700 dark:text-gray-300"> {{ t("nav.archive") }} </span>
+        </NuxtLink>
 
-        <router-link
+        <NuxtLink
           v-if="role === 'admin' || role === 'author'"
-          to="/dashboard"
+          :to="localePath('/dashboard')"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline"
           @click="go('/dashboard')"
         >
@@ -249,8 +268,8 @@
             icon="mdi:view-dashboard-outline"
             class="text-gray-700 dark:text-gray-300"
           />
-          <span class="text-gray-700 dark:text-gray-300"> Dashboard </span>
-        </router-link>
+          <span class="text-gray-700 dark:text-gray-300"> {{ t("nav.dashboard") }} </span>
+        </NuxtLink>
       </div>
       <div
         class="flex flex-col gap-3 border-t pt-4 border-gray-200 dark:border-gray-700"
@@ -260,12 +279,53 @@
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline"
         >
           <Icon icon="mdi:magnify" />
-          <span>Search</span>
+          <span>{{ t("nav.search") }}</span>
           <kbd
             class="ml-auto px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-sm"
             >/</kbd
           >
         </button>
+
+        <div
+          v-if="!isInstallPage && mobileLocales.length > 1"
+          class="relative"
+        >
+          <button
+            type="button"
+            @click="mobileLocalesOpen = !mobileLocalesOpen"
+            class="w-full flex items-center justify-between gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60"
+          >
+            <span class="flex items-center gap-2">
+              <Icon icon="mdi:translate" />
+              {{ t("locale.switch") }}
+            </span>
+            <Icon
+              :icon="mobileLocalesOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'"
+              class="text-xl"
+            />
+          </button>
+
+          <div
+            v-if="mobileLocalesOpen"
+            class="mt-2 ml-2 flex flex-col gap-1 text-sm"
+          >
+            <button
+              v-for="loc in mobileLocales"
+              :key="loc.code"
+              type="button"
+              class="flex items-center gap-2 h-8 px-3 rounded hover:bg-gray-200 dark:hover:bg-gray-700/60 w-full text-start"
+              @click="switchMobileLocale(loc.code)"
+            >
+              <Icon
+                icon="mdi:translate"
+                class="text-gray-700 dark:text-gray-300"
+              />
+              <span class="text-gray-700 dark:text-gray-300">
+                {{ loc.name }}
+              </span>
+            </button>
+          </div>
+        </div>
 
         <button
           @click="theme.toggleTheme()"
@@ -278,7 +338,7 @@
                 : 'mdi:white-balance-sunny'
             "
           />
-          {{ theme.theme === "light" ? "Dark Mode" : "Light Mode" }}
+          {{ theme.theme === "light" ? t("nav.darkMode") : t("nav.lightMode") }}
         </button>
         <button
           v-if="user"
@@ -286,10 +346,11 @@
             logout();
             mobileMenuOpen = false;
             mobileCategoriesOpen = false;
+            mobileLocalesOpen = false;
           "
           class="flex items-center gap-2 h-10 px-3 rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/40 no-underline"
         >
-          <Icon icon="mdi:logout" /> Logout
+          <Icon icon="mdi:logout" /> {{ t("nav.logout") }}
         </button>
       </div>
     </div>
@@ -305,30 +366,74 @@ import { projectInfo } from "@/config/projectInfo";
 import { Icon } from "@iconify/vue";
 import UserDropdown from "@/components/UserDropdown.vue";
 import CategoriesDropdown from "../CategoriesDropdown.vue";
-import { useToast } from "vue-toastification";
+import LocaleSwitcher from "@/components/layout/LocaleSwitcher.vue";
 import { useBranding, fetchBranding } from "@/stores/brandingStore";
 import GlobalSearch from "@/components/GlobalSearch.vue";
 import { useRouter } from "vue-router";
+
+const { t, locale, locales, setLocale } = useI18n();
+const localePath = useLocalePath();
+const { contentLocale } = useContentLocale();
 
 const showSearch = ref(false);
 const initialSearchQuery = ref("");
 const theme = useThemeStore();
 const user = ref(null);
+const authReady = ref(false);
 const mobileMenuOpen = ref(false);
 const displayName = ref("");
 const role = ref("");
 const categories = ref([]);
 const avatar_url = ref(null);
 const mobileCategoriesOpen = ref(false);
+const mobileLocalesOpen = ref(false);
 const branding = useBranding();
+const localeSettings = useState("pluma-branding-locales", () => null);
 
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
+
+const isInstallPage = computed(() => {
+  const p = route.path || "";
+  return p === "/install" || p.endsWith("/install") || /(^|\/)install(\/|$)/.test(p);
+});
+
+const mobileLocales = computed(() => {
+  const list = unref(locales) || [];
+  let enabled = null;
+  if (branding.brandingLoaded?.value) {
+    enabled = branding.enabledLocales?.value || [];
+  } else if (localeSettings.value?.enabledLocales) {
+    enabled = localeSettings.value.enabledLocales;
+  }
+  // null = branding not ready → hide (avoids flashing all languages)
+  if (!Array.isArray(enabled) || !enabled.length) return [];
+  return list
+    .filter((l) => enabled.includes(l.code))
+    .map((l) => ({
+      code: l.code,
+      name: l.name || l.code,
+    }));
+});
+
+async function switchMobileLocale(code) {
+  if (!code || code === unref(locale)) {
+    mobileLocalesOpen.value = false;
+    mobileMenuOpen.value = false;
+    return;
+  }
+  mobileLocalesOpen.value = false;
+  mobileMenuOpen.value = false;
+  mobileCategoriesOpen.value = false;
+  await setLocale(code);
+}
 
 async function getCategories() {
   const { data: categoriesData, error } = await supabase
     .from("categories")
-    .select("id, name, slug");
+    .select("id, name, slug, locale")
+    .eq("locale", contentLocale.value);
   if (error) {
     categories.value = [];
   } else {
@@ -341,33 +446,46 @@ async function getCategories() {
 }
 
 async function getUser() {
-  const {
-    data: { user: currentUser },
-  } = await supabase.auth.getUser();
+  try {
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
 
-  if (currentUser) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, display_name, role, avatar_url")
-      .eq("id", currentUser.id)
-      .single();
-    user.value = profile || { username: currentUser.email };
-    displayName.value = user.value.display_name || user.value.username;
-    role.value = user.value.role || "reader";
-    avatar_url.value = user.value.avatar_url || null;
+    if (currentUser) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, display_name, role, avatar_url")
+        .eq("id", currentUser.id)
+        .single();
+      user.value = profile || { username: currentUser.email };
+      displayName.value = user.value.display_name || user.value.username;
+      role.value = user.value.role || "reader";
+      avatar_url.value = user.value.avatar_url || null;
+    } else {
+      user.value = null;
+      displayName.value = "";
+      role.value = "";
+      avatar_url.value = null;
+    }
+  } catch (e) {
+    console.warn("[nav] getUser failed", e);
+    user.value = null;
+  } finally {
+    authReady.value = true;
   }
 }
 
 async function logout() {
   await supabase.auth.signOut();
   user.value = null;
-  window.location.href = "/";
+  window.location.href = localePath("/");
 }
 
 function go(path) {
   mobileMenuOpen.value = false;
   mobileCategoriesOpen.value = false;
-  router.push(path);
+  mobileLocalesOpen.value = false;
+  router.push(localePath(path));
 }
 
 function handleOpenGlobalSearch(e) {
@@ -430,13 +548,13 @@ onUnmounted(() => {
 const roleLabel = computed(() => {
   switch (role.value) {
     case "admin":
-      return "Admin";
+      return t("roles.admin");
     case "author":
-      return "Author";
+      return t("roles.author");
     case "reader":
-      return "Reader";
+      return t("roles.reader");
     default:
-      return "User";
+      return t("roles.guest");
   }
 });
 const roleChipIcon = computed(() => {

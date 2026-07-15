@@ -7,20 +7,20 @@
           class="text-blue-600 dark:text-blue-400 text-2xl"
         />
         <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Media Library
+          {{ t('media.title') }}
         </h2>
       </div>
       <div
         class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2"
       >
-        <span>Total Buckets: {{ buckets.length }}</span>
+        <span>{{ t('media.totalBuckets') }}: {{ buckets.length }}</span>
       </div>
     </header>
 
     <div v-if="!activeBucket" class="space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <div class="text-sm font-medium text-gray-600 dark:text-gray-300">
-          Buckets
+          {{ t('media.buckets') }}
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <button
@@ -31,7 +31,7 @@
               :icon="showCreate ? 'mdi:close' : 'mdi:plus'"
               class="text-sm"
             />
-            <span>{{ showCreate ? "Cancel" : "New Bucket" }}</span>
+            <span>{{ showCreate ? t('common.cancel') : t('media.newBucket') }}</span>
           </button>
           <button
             @click="refreshBuckets"
@@ -42,7 +42,7 @@
               :icon="loadingBuckets ? 'mdi:loading' : 'mdi:refresh'"
               :class="loadingBuckets ? 'animate-spin' : 'text-sm'"
             />
-            Refresh
+            {{ t('common.refresh') }}
           </button>
         </div>
       </div>
@@ -61,10 +61,10 @@
             <h3
               class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase"
             >
-              Create Bucket
+              {{ t('media.createBucket') }}
             </h3>
             <p class="text-[12px] text-gray-500 dark:text-gray-400">
-              Define storage settings. Immutable name after creation.
+              {{ t('media.createBucketHint') }}
             </p>
           </div>
         </div>
@@ -73,12 +73,12 @@
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
             >
-              <Icon icon="mdi:label-outline" class="text-blue-500" /> Name
+              <Icon icon="mdi:label-outline" class="text-blue-500" /> {{ t('media.name') }}
             </label>
             <div class="relative">
               <input
                 v-model.trim="newBucketName"
-                placeholder="e.g. assets"
+                :placeholder="t('media.namePlaceholder')"
                 :class="[
                   'w-full h-11 rounded-md px-3 bg-white dark:bg-gray-800 border text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500',
                   bucketNameError
@@ -88,13 +88,13 @@
               />
               <span
                 v-if="newBucketName && !bucketNameError"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 text-xs inline-flex items-center gap-1"
+                class="absolute end-3 top-1/2 -translate-y-1/2 text-green-600 dark:text-green-400 text-xs inline-flex items-center gap-1"
               >
-                <Icon icon="mdi:check-circle" /> OK
+                <Icon icon="mdi:check-circle" /> {{ t('media.ok') }}
               </span>
             </div>
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              3-50 lowercase chars, digits or hyphens.
+              {{ t('media.nameHint') }}
             </p>
             <p
               v-if="bucketNameError"
@@ -107,7 +107,7 @@
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
             >
-              <Icon icon="mdi:earth" class="text-blue-500" /> Visibility
+              <Icon icon="mdi:earth" class="text-blue-500" /> {{ t('media.visibility') }}
             </label>
             <SelectRoot
               :modelValue="newBucketPublic ? 'public' : 'private'"
@@ -115,9 +115,9 @@
             >
               <SelectTrigger
                 class="w-full inline-flex h-11 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 data-[placeholder]:text-gray-400"
-                aria-label="Bucket visibility"
+                :aria-label="t('media.visibilityAria')"
               >
-                <SelectValue placeholder="Select visibility" />
+                <SelectValue :placeholder="t('media.selectVisibility')" />
                 <Icon
                   icon="radix-icons:chevron-down"
                   class="w-4 h-4 opacity-70"
@@ -137,30 +137,28 @@
                     <SelectGroup>
                       <SelectItem
                         value="public"
-                        class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-8 pr-8 pl-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                        class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-8 pe-8 ps-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                       >
                         <SelectItemIndicator
-                          class="absolute left-0 w-8 inline-flex items-center justify-center"
+                          class="absolute start-0 w-8 inline-flex items-center justify-center"
                         >
                           <Icon icon="mdi:check" class="w-4 h-4" />
                         </SelectItemIndicator>
-                        <SelectItemText
-                          >Public (files accessible by URL)</SelectItemText
-                        >
+                        <SelectItemText>{{ t('media.publicOption') }}</SelectItemText>
                       </SelectItem>
                       <SelectSeparator
                         class="h-px bg-gray-200 dark:bg-gray-700 my-1"
                       />
                       <SelectItem
                         value="private"
-                        class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-8 pr-8 pl-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
+                        class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-8 pe-8 ps-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                       >
                         <SelectItemIndicator
-                          class="absolute left-0 w-8 inline-flex items-center justify-center"
+                          class="absolute start-0 w-8 inline-flex items-center justify-center"
                         >
                           <Icon icon="mdi:check" class="w-4 h-4" />
                         </SelectItemIndicator>
-                        <SelectItemText>Private (requires RLS)</SelectItemText>
+                        <SelectItemText>{{ t('media.privateOption') }}</SelectItemText>
                       </SelectItem>
                     </SelectGroup>
                   </SelectViewport>
@@ -173,7 +171,7 @@
               </SelectPortal>
             </SelectRoot>
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              Public buckets expose files via unsigned public URLs.
+              {{ t('media.visibilityHint') }}
             </p>
           </div>
           <div class="space-y-2 md:col-span-2">
@@ -181,33 +179,33 @@
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
             >
               <Icon icon="mdi:file-code-outline" class="text-blue-500" />
-              Allowed MIME Types (optional)
+              {{ t('media.allowedMimeTypes') }}
             </label>
             <div class="relative group">
               <textarea
                 v-model.trim="newBucketMime"
                 rows="3"
-                placeholder="image/png, image/jpeg, application/pdf"
+                :placeholder="t('media.mimePlaceholder')"
                 class="w-full rounded-lg px-4 py-3 bg-white/90 dark:bg-gray-800/80 backdrop-blur border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400/60 focus:border-gray-400 dark:focus:border-gray-500 shadow-sm transition-colors leading-relaxed min-h-[96px] resize-none text-sm"
               ></textarea>
             </div>
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              Comma or newline separated. Leave blank for any type.
+              {{ t('media.mimeHint') }}
             </p>
           </div>
           <div class="space-y-2">
             <label
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
             >
-              <Icon icon="mdi:scale" class="text-blue-500" /> File Size Limit
+              <Icon icon="mdi:scale" class="text-blue-500" /> {{ t('media.fileSizeLimit') }}
             </label>
             <input
               v-model.trim="newBucketSizeLimit"
-              placeholder="e.g. 5MB or leave blank"
+              :placeholder="t('media.sizeLimitPlaceholder')"
               class="w-full h-11 rounded-md px-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p class="text-[11px] text-gray-500 dark:text-gray-400">
-              Accepts units like KB, MB, or raw bytes. Empty = no limit.
+              {{ t('media.sizeLimitHint') }}
             </p>
           </div>
         </div>
@@ -219,12 +217,12 @@
           >
             <span class="inline-flex items-center gap-1"
               ><Icon icon="mdi:shield-lock-outline" class="text-gray-400" />
-              Reserved: post-thumbnails, profile-avatar, branding</span
+              {{ t('media.reservedNames') }}</span
             >
             <span
               v-if="bucketNameReserved"
               class="text-red-600 dark:text-red-400 font-medium"
-              >Reserved name</span
+              >{{ t('media.reservedName') }}</span
             >
           </div>
           <div class="flex items-center gap-2">
@@ -233,7 +231,7 @@
               type="button"
               class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
-              <Icon icon="mdi:close" class="text-sm" /> Cancel
+              <Icon icon="mdi:close" class="text-sm" /> {{ t('common.cancel') }}
             </button>
             <button
               @click="createBucket"
@@ -244,7 +242,7 @@
                 :icon="creating ? 'mdi:loading' : 'mdi:check-circle'"
                 :class="creating ? 'animate-spin' : 'text-base'"
               />
-              <span>{{ creating ? "Creating..." : "Create Bucket" }}</span>
+              <span>{{ creating ? t('common.creating') : t('media.createBucket') }}</span>
             </button>
           </div>
         </div>
@@ -260,7 +258,7 @@
           @keydown.enter.prevent="openBucket(b)"
           @keydown.space.prevent="openBucket(b)"
           role="button"
-          :aria-label="'Open bucket ' + b"
+          :aria-label="t('media.openBucket', { name: b })"
         >
           <div class="flex items-start justify-between w-full">
             <div class="flex items-center gap-3">
@@ -272,7 +270,7 @@
                   class="text-blue-600 dark:text-blue-300 text-xl"
                 />
               </div>
-              <div class="text-left">
+              <div class="text-start">
                 <h3
                   class="text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2"
                 >
@@ -285,18 +283,20 @@
                   <span
                     v-if="systemBuckets.has(b)"
                     class="inline-flex items-center h-5 px-2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 text-[10px] font-semibold"
-                    >SYSTEM</span
+                    >{{ t('media.system') }}</span
                   >
                   <span
                     v-else-if="bucketVisibility[b] === false"
                     class="inline-flex items-center h-5 px-2 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:text-gray-200 text-[10px] font-semibold gap-1"
                   >
-                    <Icon icon="mdi:lock" class="text-xs" /> PRIVATE
+                    <Icon icon="mdi:lock" class="text-xs" /> {{ t('media.private') }}
                   </span>
                 </h3>
                 <p class="text-[11px] text-gray-500 dark:text-gray-400">
                   {{
-                    systemBuckets.has(b) ? "Managed internally" : "User bucket"
+                    systemBuckets.has(b)
+                      ? t('media.managedInternally')
+                      : t('media.userBucket')
                   }}
                 </p>
               </div>
@@ -305,7 +305,7 @@
               <button
                 data-bucket-action
                 @click.stop="attemptEmptyBucket(b)"
-                title="Empty bucket"
+                :title="t('media.emptyBucket')"
                 class="inline-flex items-center justify-center w-7 h-7 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60"
               >
                 <Icon icon="mdi:delete-empty" class="text-sm" />
@@ -313,7 +313,7 @@
               <button
                 data-bucket-action
                 @click.stop="attemptDeleteBucket(b)"
-                title="Delete bucket"
+                :title="t('media.deleteBucket')"
                 class="inline-flex items-center justify-center w-7 h-7 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60"
               >
                 <Icon icon="mdi:trash-can" class="text-sm" />
@@ -325,16 +325,10 @@
             class="mt-1 text-[11px] text-gray-500 dark:text-gray-400"
           >
             <template v-if="b === 'profile-avatar'">
-              {{ bucketMeta[b].files }} avatar<span
-                v-if="bucketMeta[b].files !== 1"
-                >s</span
-              >
+              {{ t('media.avatarCount', { count: bucketMeta[b].files }) }}
             </template>
             <template v-else>
-              {{ bucketMeta[b].files }} file<span
-                v-if="bucketMeta[b].files !== 1"
-                >s</span
-              >
+              {{ t('media.fileCount', { count: bucketMeta[b].files }) }}
             </template>
           </div>
         </div>
@@ -350,7 +344,7 @@
             @click="closeBucket"
             class="inline-flex items-center gap-1 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Icon icon="mdi:arrow-left" class="text-base" /> Buckets
+            <Icon icon="mdi:arrow-left" class="text-base" /> {{ t('media.buckets') }}
           </button>
           <span class="mx-1 opacity-40">/</span>
           <button
@@ -362,13 +356,13 @@
           <span
             v-if="systemBuckets.has(activeBucket)"
             class="inline-flex items-center h-5 px-2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 text-[10px] font-semibold"
-            >SYSTEM</span
+            >{{ t('media.system') }}</span
           >
           <span
             v-else-if="bucketVisibility[activeBucket] === false"
             class="inline-flex items-center h-5 px-2 rounded-full bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:text-gray-200 text-[10px] font-semibold gap-1"
           >
-            <Icon icon="mdi:lock" class="text-xs" /> PRIVATE
+            <Icon icon="mdi:lock" class="text-xs" /> {{ t('media.private') }}
           </span>
           <template v-if="pathSegments.length">
             <span class="opacity-40">/</span>
@@ -389,7 +383,7 @@
             @click="upOne"
             class="inline-flex items-center gap-1 h-7 px-2 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Icon icon="mdi:arrow-up" class="text-sm" /> Up
+            <Icon icon="mdi:arrow-up" class="text-sm" /> {{ t('media.up') }}
           </button>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
@@ -403,49 +397,49 @@
               :icon="uploading ? 'mdi:loading' : 'mdi:upload'"
               :class="uploading ? 'animate-spin' : 'text-sm'"
             />
-            <span>{{ uploading ? "Uploading" : "Upload" }}</span>
+            <span>{{ uploading ? t('common.uploading') : t('media.upload') }}</span>
           </button>
           <button
             v-if="!systemBuckets.has(activeBucket)"
             @click="attemptEmptyBucket(activeBucket)"
             class="inline-flex items-center gap-1 h-8 px-3 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-medium hover:bg-amber-200 dark:hover:bg-amber-900/60"
           >
-            <Icon icon="mdi:delete-empty" class="text-sm" /> Empty
+            <Icon icon="mdi:delete-empty" class="text-sm" /> {{ t('media.empty') }}
           </button>
           <button
             v-if="!systemBuckets.has(activeBucket)"
             @click="attemptDeleteBucket(activeBucket)"
             class="inline-flex items-center gap-1 h-8 px-3 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-xs font-medium hover:bg-red-200 dark:hover:bg-red-900/60"
           >
-            <Icon icon="mdi:trash-can" class="text-sm" /> Delete Bucket
+            <Icon icon="mdi:trash-can" class="text-sm" /> {{ t('media.deleteBucket') }}
           </button>
           <div class="flex items-center h-8 w-48 sm:w-50 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus-within:ring-2 focus-within:ring-blue-500 transition">
-            <Icon icon="mdi:magnify" class="ml-2 text-gray-400 dark:text-gray-400 text-sm shrink-0" />
+            <Icon icon="mdi:magnify" class="ms-2 text-gray-400 dark:text-gray-400 text-sm shrink-0" />
             <input
               v-model="searchTerm"
               type="text"
-              placeholder="Search..."
+              :placeholder="t('media.searchPlaceholder')"
               class="flex-1 h-full bg-transparent px-2 text-xs leading-none text-gray-700 dark:text-gray-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
             />
           </div>
-          <span class="text-xs text-gray-500 dark:text-gray-400"
-            >{{ filteredEntries.length }} / {{ entries.length }} item<span
-              v-if="entries.length !== 1"
-              >s</span
-            ></span
-          >
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{
+            t('media.itemsShown', {
+              filtered: filteredEntries.length,
+              total: entries.length,
+            })
+          }}</span>
           <button
             @click="refresh"
             class="inline-flex items-center gap-1 h-8 px-3 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Icon icon="mdi:refresh" class="text-sm" /> Refresh
+            <Icon icon="mdi:refresh" class="text-sm" /> {{ t('common.refresh') }}
           </button>
           <button
             v-if="searchTerm"
             @click="searchTerm = ''"
             class="inline-flex items-center gap-1 h-8 px-2 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-[11px] font-medium hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none"
           >
-            <Icon icon="mdi:close" class="text-sm" /> Clear
+            <Icon icon="mdi:close" class="text-sm" /> {{ t('common.clear') }}
           </button>
         </div>
       </div>
@@ -466,18 +460,18 @@
             class="text-xs uppercase text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/40"
           >
             <tr>
-              <th class="text-left font-semibold px-3 py-2 w-20">Preview</th>
-              <th class="text-left font-semibold px-3 py-2">Name</th>
-              <th class="text-left font-semibold px-3 py-2">Type</th>
-              <th class="text-left font-semibold px-3 py-2">Size</th>
-              <th class="text-left font-semibold px-3 py-2">Modified</th>
+              <th class="text-start font-semibold px-3 py-2 w-20">{{ t('media.preview') }}</th>
+              <th class="text-start font-semibold px-3 py-2">{{ t('media.name') }}</th>
+              <th class="text-start font-semibold px-3 py-2">{{ t('media.type') }}</th>
+              <th class="text-start font-semibold px-3 py-2">{{ t('media.size') }}</th>
+              <th class="text-start font-semibold px-3 py-2">{{ t('media.modified') }}</th>
               <th
                 v-if="!isPrivateActiveBucket"
-                class="text-left font-semibold px-3 py-2"
+                class="text-start font-semibold px-3 py-2"
               >
-                Usage
+                {{ t('media.usage') }}
               </th>
-              <th class="text-left font-semibold px-3 py-2 w-48">Actions</th>
+              <th class="text-start font-semibold px-3 py-2 w-48">{{ t('media.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -485,9 +479,9 @@
               <td :colspan="fileTableColspan" class="px-3 py-6 text-center">
                 <Icon
                   icon="mdi:loading"
-                  class="animate-spin inline-block mr-2"
+                  class="animate-spin inline-block me-2"
                 />
-                Loading...
+                {{ t('common.loading') }}
               </td>
             </tr>
             <tr
@@ -503,7 +497,7 @@
                   <img
                     v-if="e.isImage"
                     :src="e.publicUrl"
-                    alt="preview"
+                    :alt="t('media.preview')"
                     class="object-cover w-full h-full"
                     loading="lazy"
                   />
@@ -549,7 +543,7 @@
                   <span
                     v-if="e.isCurrent"
                     class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] font-semibold w-fit"
-                    >Current</span
+                    >{{ t('media.current') }}</span
                   >
                 </div>
               </td>
@@ -584,7 +578,9 @@
                       class="text-xs"
                     />
                     {{
-                      e.usage.total > 0 ? e.usage.total + " in use" : "Unused"
+                      e.usage.total > 0
+                        ? t('media.inUse', { count: e.usage.total })
+                        : t('media.unused')
                     }}
                   </span>
                 </div>
@@ -597,7 +593,7 @@
                     target="_blank"
                     class="inline-flex items-center gap-1 h-7 px-2 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-[12px] font-medium hover:bg-blue-200 dark:hover:bg-blue-900/60"
                   >
-                    <Icon icon="mdi:open-in-new" class="text-sm" /> Open
+                    <Icon icon="mdi:open-in-new" class="text-sm" /> {{ t('common.open') }}
                   </a>
                   <button
                     v-if="
@@ -606,16 +602,16 @@
                     "
                     @click="handleGenerateSignedLink(e)"
                     class="inline-flex items-center gap-1 h-7 px-2 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-[12px] font-medium hover:bg-purple-200 dark:hover:bg-purple-900/60"
-                    title="Generate temporary signed link"
+                    :title="t('media.generateSignedLink')"
                   >
-                    <Icon icon="mdi:link-variant" class="text-sm" /> Link
+                    <Icon icon="mdi:link-variant" class="text-sm" /> {{ t('media.link') }}
                   </button>
                   <button
                     v-if="e.type === 'file' || e.type === 'avatar-profile'"
                     @click="prepareDelete(e)"
                     class="inline-flex items-center gap-1 h-7 px-2 rounded bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 text-[12px] font-medium hover:bg-red-200 dark:hover:bg-red-900/60"
                   >
-                    <Icon icon="mdi:delete" class="text-sm" /> Delete
+                    <Icon icon="mdi:delete" class="text-sm" /> {{ t('common.delete') }}
                   </button>
                 </div>
               </td>
@@ -625,7 +621,7 @@
                 :colspan="fileTableColspan"
                 class="px-3 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
               >
-                No matching items.
+                {{ t('media.noMatchingItems') }}
               </td>
             </tr>
           </tbody>
@@ -653,12 +649,13 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { ref, reactive, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { useToast } from "vue-toastification";
-import SignedLinkDialog from "@/components/dashboard/SignedLinkDialog.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";import SignedLinkDialog from "@/components/dashboard/SignedLinkDialog.vue";
 import {
   SelectRoot,
   SelectTrigger,
@@ -732,8 +729,8 @@ const bucketNameReserved = computed(
 );
 const bucketNameError = computed(() => {
   if (!newBucketName.value) return "";
-  if (bucketNameReserved.value) return "Reserved system name";
-  if (!/^[a-z0-9-]{3,50}$/.test(newBucketName.value)) return "Invalid format";
+  if (bucketNameReserved.value) return t("media.reservedSystemName");
+  if (!/^[a-z0-9-]{3,50}$/.test(newBucketName.value)) return t("media.invalidFormat");
   return "";
 });
 
@@ -823,7 +820,10 @@ async function listObjects() {
         } catch {
         }
         mapped.push({
-          name: p.display_name || p.username || "User " + p.id.substring(0, 6),
+          name:
+            p.display_name ||
+            p.username ||
+            t("media.userFallback", { id: p.id.substring(0, 6) }),
           profileMeta: {
             id: p.id,
             username: p.username,
@@ -901,21 +901,27 @@ async function listObjects() {
         });
       entries.value = mapped;
     } else {
+      const prefix = currentPath.value || "";
       const { data, error } = await supabase.storage
         .from(activeBucket.value)
-        .list(currentPath.value || undefined, {
+        .list(prefix, {
           limit: 100,
           offset: 0,
           sortBy: { column: "name", order: "asc" },
         });
       if (error) throw error;
       const mapped = (data || []).map((obj) => {
-        const objectPath =
-          (currentPath.value ? currentPath.value + "/" : "") + obj.name;
-        const isFile = !!obj.id;
-        const publicUrl = supabase.storage
-          .from(activeBucket.value)
-          .getPublicUrl(objectPath).data.publicUrl;
+        const objectPath = prefix ? `${prefix}/${obj.name}` : obj.name;
+        // Folders typically have null id + null metadata; files usually have an id
+        // and/or metadata. Some Storage backends omit id — treat metadata as file.
+        const isFile =
+          obj.id != null ||
+          (obj.metadata != null && typeof obj.metadata === "object");
+        const publicUrl = isFile
+          ? publicUrlForObject(activeBucket.value, objectPath) ||
+            supabase.storage.from(activeBucket.value).getPublicUrl(objectPath)
+              .data.publicUrl
+          : null;
         const lower = obj.name.toLowerCase();
         const isImage =
           isFile &&
@@ -969,8 +975,8 @@ async function listObjects() {
       }
     }
   } catch (e) {
-    console.error(e);
-    toast.error("Failed to list objects");
+    console.error("[media-list]", e);
+    toast.error(e?.message || t("media.listFailed"));
   } finally {
     loading.value = false;
   }
@@ -1023,15 +1029,15 @@ function prepareDelete(entry) {
   }
   const inUse = entry.usage.total > 0;
   confirm.target = entry;
-  confirm.title = inUse ? "Delete & Detach Media" : "Delete Media";
+  confirm.title = inUse
+    ? t("media.deleteAndDetachTitle")
+    : t("media.deleteMediaTitle");
   confirm.description = inUse
-    ? "File is currently referenced."
-    : "Remove this file from storage";
+    ? t("media.fileReferenced")
+    : t("media.removeFileDesc");
   confirm.body = inUse
-    ? "This file is used by " +
-      usageSummary(entry) +
-      ". Deleting will clear those references. Proceed?"
-    : "This action will permanently delete the file. Continue?";
+    ? t("media.deleteInUseBody", { usage: usageSummary(entry) })
+    : t("media.deleteFileBody");
   confirm.action = "deleteFile";
   confirm.open = true;
 }
@@ -1039,10 +1045,10 @@ function prepareDelete(entry) {
 function usageSummary(entry) {
   const bits = [];
   if (entry.usage.posts.length)
-    bits.push(entry.usage.posts.length + " post(s)");
+    bits.push(t("media.postsCount", { count: entry.usage.posts.length }));
   if (entry.usage.profiles.length)
-    bits.push(entry.usage.profiles.length + " profile(s)");
-  if (entry.usage.branding.length) bits.push("branding");
+    bits.push(t("media.profilesCount", { count: entry.usage.profiles.length }));
+  if (entry.usage.branding.length) bits.push(t("media.branding"));
   return bits.join(", ");
 }
 
@@ -1097,7 +1103,10 @@ async function deleteFileConfirm() {
               delete v[urlKey];
             }
           });
-          await supabase.from("settings").upsert({ key: "branding", value: v });
+          await supabase
+            .from("settings")
+            .update({ value: v })
+            .eq("key", "branding");
         }
       }
     }
@@ -1105,53 +1114,48 @@ async function deleteFileConfirm() {
       .from(activeBucket.value)
       .remove([entry.path]);
     if (error) throw error;
-    toast.success("File deleted");
+    toast.success(t("media.fileDeleted"));
     confirm.open = false;
     confirm.target = null;
     confirm.action = null;
     await listObjects();
   } catch (e) {
     console.error("[media-delete]", e);
-    toast.error("Delete failed");
+    toast.error(t("media.deleteFailed"));
   }
 }
 
 function attemptEmptyBucket(bucket) {
   if (systemBuckets.has(bucket)) {
-    toast.error("System bucket cannot be emptied");
+    toast.error(t("media.systemCannotEmpty"));
     return;
   }
   confirm.open = true;
   confirm.target = bucket;
   confirm.action = "emptyBucket";
-  confirm.title = "Empty Bucket";
-  confirm.description = "Remove all objects";
-  confirm.body =
-    'This will permanently delete ALL objects in the bucket "' +
-    bucket +
-    '". Proceed?';
+  confirm.title = t("media.emptyBucketTitle");
+  confirm.description = t("media.emptyBucketDesc");
+  confirm.body = t("media.emptyBucketBody", { bucket });
 }
 
 function attemptDeleteBucket(bucket) {
   if (systemBuckets.has(bucket)) {
-    toast.error("System bucket cannot be deleted");
+    toast.error(t("media.systemCannotDelete"));
     return;
   }
   const meta = bucketMeta[bucket];
   if (meta && meta.files > 0) {
     confirm.action = "emptyThenDelete";
-    confirm.title = "Bucket Not Empty";
-    confirm.description = "Bucket contains " + meta.files + " file(s)";
-    confirm.body =
-      "Do you want to empty and then delete this bucket? This cannot be undone.";
+    confirm.title = t("media.bucketNotEmptyTitle");
+    confirm.description = t("media.bucketContainsFiles", {
+      count: meta.files,
+    });
+    confirm.body = t("media.emptyThenDeleteBody");
   } else {
     confirm.action = "deleteBucket";
-    confirm.title = "Delete Bucket";
-    confirm.description = "Remove empty bucket";
-    confirm.body =
-      'This will permanently remove the empty bucket "' +
-      bucket +
-      '". Continue?';
+    confirm.title = t("media.deleteBucketTitle");
+    confirm.description = t("media.deleteBucketDesc");
+    confirm.body = t("media.deleteBucketBody", { bucket });
   }
   confirm.open = true;
   confirm.target = bucket;
@@ -1166,7 +1170,7 @@ async function emptyBucketConfirm(silent = false) {
   try {
     const { error } = await supabase.storage.emptyBucket(bucket);
     if (error) throw error;
-    if (!silent) toast.success("Bucket emptied");
+    if (!silent) toast.success(t("media.bucketEmptied"));
     if (bucketMeta[bucket]) bucketMeta[bucket].files = 0;
     if (activeBucket.value === bucket) {
       currentPath.value = "";
@@ -1179,7 +1183,7 @@ async function emptyBucketConfirm(silent = false) {
     return true;
   } catch (e) {
     console.error("[media-empty]", e);
-    toast.error("Empty failed");
+    toast.error(t("media.emptyFailed"));
     if (confirm.action === "emptyBucket") confirm.open = false;
     return false;
   }
@@ -1194,14 +1198,14 @@ async function deleteBucketConfirm() {
   try {
     const { error } = await supabase.storage.deleteBucket(bucket);
     if (error) throw error;
-    toast.success("Bucket deleted");
+    toast.success(t("media.bucketDeleted"));
     const idx = buckets.value.indexOf(bucket);
     if (idx > -1) buckets.value.splice(idx, 1);
     delete bucketMeta[bucket];
     if (activeBucket.value === bucket) closeBucket();
   } catch (e) {
     console.error("[media-delete-bucket]", e);
-    toast.error("Delete bucket failed");
+    toast.error(t("media.deleteBucketFailed"));
   } finally {
     confirm.open = false;
     confirm.action = null;
@@ -1215,6 +1219,25 @@ function triggerUpload() {
 
 function sanitizeFileName(name) {
   return name.replace(/[^a-zA-Z0-9_.-]/g, "-");
+}
+
+function parseFileSizeLimit(raw) {
+  const value = String(raw || "").trim();
+  if (!value) return undefined;
+  if (/^\d+$/.test(value)) return Number(value);
+  const match = value.match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i);
+  if (!match) return undefined;
+  const amount = Number(match[1]);
+  const unit = (match[2] || "b").toLowerCase();
+  const multipliers = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3 };
+  return Math.round(amount * (multipliers[unit] || 1));
+}
+
+function publicUrlForObject(bucket, objectPath) {
+  if (bucketVisibility[bucket] === false) {
+    return null;
+  }
+  return supabase.storage.from(bucket).getPublicUrl(objectPath).data.publicUrl;
 }
 
 async function handleUpload(ev) {
@@ -1231,16 +1254,24 @@ async function handleUpload(ev) {
         Date.now() +
         "-" +
         cleaned;
-      const { error } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(activeBucket.value)
-        .upload(path, f, { upsert: false });
+        .upload(path, f, {
+          upsert: false,
+          contentType: f.type || "application/octet-stream",
+        });
       if (error) {
         console.warn("upload fail", cleaned, error);
         fail++;
-      } else success++;
+      } else if (!data?.path) {
+        console.warn("upload missing path", cleaned, data);
+        fail++;
+      } else {
+        success++;
+      }
     }
-    if (success) toast.success(success + " file(s) uploaded");
-    if (fail) toast.error(fail + " failed");
+    if (success) toast.success(t("media.filesUploaded", { count: success }));
+    if (fail) toast.error(t("media.uploadFailedCount", { count: fail }));
     await listObjects();
   } finally {
     uploading.value = false;
@@ -1258,11 +1289,11 @@ function validateBucketName(name) {
 
 async function createBucket() {
   if (!validateBucketName(newBucketName.value)) {
-    toast.error("Invalid bucket name");
+    toast.error(t("media.invalidBucketName"));
     return;
   }
   if (systemBuckets.has(newBucketName.value)) {
-    toast.error("Reserved system bucket name");
+    toast.error(t("media.reservedBucketName"));
     return;
   }
   creating.value = true;
@@ -1273,14 +1304,21 @@ async function createBucket() {
         .split(/[\n,]/)
         .map((s) => s.trim())
         .filter(Boolean);
-    if (newBucketSizeLimit.value.trim())
-      opts.fileSizeLimit = newBucketSizeLimit.value.trim();
+    if (newBucketSizeLimit.value.trim()) {
+      const parsedLimit = parseFileSizeLimit(newBucketSizeLimit.value);
+      if (!parsedLimit) {
+        toast.error(t("media.invalidSizeLimit"));
+        creating.value = false;
+        return;
+      }
+      opts.fileSizeLimit = parsedLimit;
+    }
     const { error } = await supabase.storage.createBucket(
       newBucketName.value,
       opts
     );
     if (error) throw error;
-    toast.success("Bucket created");
+    toast.success(t("media.bucketCreated"));
     bucketVisibility[newBucketName.value] = newBucketPublic.value;
     newBucketName.value = "";
     newBucketMime.value = "";
@@ -1289,7 +1327,7 @@ async function createBucket() {
     await init(true);
   } catch (e) {
     console.error("[media-create-bucket]", e);
-    toast.error("Create failed");
+    toast.error(t("media.createFailed"));
   } finally {
     creating.value = false;
   }
@@ -1317,7 +1355,7 @@ async function loadBuckets(force = false) {
       .sort();
   } catch (e) {
     console.error("[media] loadBuckets failed", e);
-    toast.error("Failed to load buckets");
+    toast.error(t("media.loadBucketsFailed"));
   } finally {
     loadingBuckets.value = false;
   }
@@ -1345,8 +1383,14 @@ async function init(force = false) {
       try {
         const { data } = await supabase.storage
           .from(b)
-          .list(undefined, { limit: 100 });
-        bucketMeta[b] = { files: (data || []).filter((d) => d.id).length };
+          .list("", { limit: 100 });
+        bucketMeta[b] = {
+          files: (data || []).filter(
+            (d) =>
+              d.id != null ||
+              (d.metadata != null && typeof d.metadata === "object")
+          ).length,
+        };
       } catch {
         bucketMeta[b] = { files: 0 };
       }
@@ -1380,17 +1424,17 @@ async function generateSignedUrl(entry, seconds = 60, copy = true) {
       if (copy && navigator?.clipboard) {
         try {
           await navigator.clipboard.writeText(data.signedUrl);
-          toast.success("Signed URL copied");
+          toast.success(t("media.signedUrlCopied"));
         } catch {
-          toast.success("Signed URL generated");
+          toast.success(t("media.signedUrlGenerated"));
         }
       } else {
-        toast.success("Signed URL generated");
+        toast.success(t("media.signedUrlGenerated"));
       }
-    } else toast.error("Failed to generate signed URL");
+    } else toast.error(t("media.signedUrlFailed"));
   } catch (e) {
     console.error("signed-url-single", e);
-    toast.error("Signed URL error");
+    toast.error(t("media.signedUrlError"));
   }
 }
 
@@ -1427,9 +1471,9 @@ table {
   border-spacing: 0;
 }
 tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 0.5rem;
+  border-end-start-radius: 0.5rem;
 }
 tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
 }
 </style>

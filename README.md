@@ -2,7 +2,7 @@
 
 ![Pluma Logo](https://ik.imagekit.io/daryandev/Pluma%20-%20Light%2016:9_EsbqpDdyIv?updatedAt=1756539494268)
 
-A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) and [Supabase](https://supabase.com/).
+A modern, open-source blogging platform built with [Nuxt 3](https://nuxt.com/) (Vue 3 SSR) and [Supabase](https://supabase.com/).
 
 ## Features
 
@@ -10,7 +10,10 @@ A modern, open-source blogging platform built with [Vue 3](https://vuejs.org/) a
 - Post creation, editing, and deletion with rich text support
 - Commenting system with moderation capabilities
 - Responsive design for mobile and desktop
-- SEO-friendly with sitemap and RSS feed generation
+- **SSR** with live sitemap, RSS, robots, and SEO (OG/Twitter, JSON-LD, hreflang)
+- **Multi-language** UI (`en`, `ku`, `ar`, `es`, `fr`, `de`) + per-locale posts/categories/series
+- Scheduled publishing, draft preview links, and post series
+- Deploy with Docker **or** Vercel / Netlify (see [docs/DEPLOY.md](docs/DEPLOY.md))
 
 ## Demo
 
@@ -21,99 +24,110 @@ A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma
 1. Clone the repository:
 
     ```bash
-    git clone
-    cd pluma-frontend
-     ```
+    git clone https://github.com/Daryan97/pluma.git
+    cd pluma
+    ```
 
 2. Install dependencies:
 
-     ```bash
-     npm install
-     ```
+    ```bash
+    npm install
+    ```
 
-3. Copy `example.env` to `.env` and update the Supabase URL, Anon Key and public Site URL (used for sitemap/RSS metadata):
+3. Copy `example.env` to `.env` and set Supabase + public site URL (used for sitemap/RSS/canonical URLs):
 
-     ```bash
-     cp example.env .env
-     ```
+    ```bash
+    cp example.env .env
+    ```
 
-4. Setup Supabase:
+4. Set up Supabase:
 
-    - This section will be updated very soon.
+    - **New installs:** open `/install` in the app (English only), or run `src/install/pluma_initial.sql` in the SQL editor.
+      - Includes series, scheduling, preview tokens, locales, and RLS helpers in one script.
+    - **Existing Pluma DBs** (upgrade in order as needed):
+      - `src/install/pluma_features_v2.sql` — scheduling, preview tokens, series
+      - `src/install/pluma_i18n_v3.sql` — multi-language content (`locale` + translation groups)
+      - `src/install/pluma_rls_fix.sql` — only if storage/settings RLS is broken after a restore
 
 5. Start the development server:
 
-     ```bash
-     npm run dev
-     ```
+    ```bash
+    npm run dev
+    ```
 
-6. Open your browser and navigate to the local server (e.g., `http://localhost:5173`).
+6. Open `http://localhost:3000` (Nuxt default). In development, `/test` is available for diagnostics (storage, auth, i18n, feeds, RLS).
 
 ### Quick Deployment
 
-For a quick deployment using the published image:
+See **[docs/DEPLOY.md](docs/DEPLOY.md)** for Docker, Vercel, Netlify, health checks, and backups.
+
+For a quick Docker deployment using the published image:
 
 ```yaml
 services:
-     app:
-          image: daryan997/pluma:latest
-          restart: unless-stopped
-          ports:
-                - "80:80"
-          environment:
-                VITE_SITE_URL: "https://pluma.daryandev.com"
-                VITE_SUPABASE_URL: "https://supa.daryandev.com"
-                VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzUzMzkwODAwLCJleHAiOjE5MTExNTcyMDB9.NkSvG02XqGkV9of_aPEgS-EJGCqPCzzyPWx7ru97Su8"
-                VITE_ENV: "production"
+  app:
+    image: daryan997/pluma:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      VITE_SITE_URL: "https://blog.example.com"
+      VITE_SUPABASE_URL: "https://supabase.example.com"
+      VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
+      VITE_ENV: "production"
 ```
+
+The container runs **Nuxt Nitro** (Node) that:
+
+- Serves the SSR Vue app
+- Exposes `/env` runtime config for clients
+- Generates **live** `/sitemap.xml`, `/rss.xml`, and `/robots.txt` from Supabase (including filters and `?locale=`)
+- Renders SEO meta on the server for public routes
+- Health endpoints: `/healthz`, `/readyz`
+
+New posts appear in sitemap/RSS after the in-memory cache TTL (default 5 minutes) — no image rebuild required.
 
 ### Build and Deployment
 
-#### Static hosts
-
-For production deployments on static hosts, build the project and serve the contents of `dist`:
+#### Local production (SSR)
 
 ```bash
 npm run build
-npm run preview
+npm start
 ```
+
+Then open `http://localhost:3000`. The Nitro server reads env from the process / `.env`. Docker uses port `80` via `PORT` / `NITRO_PORT`.
+
+Platform-specific notes (Vercel / Netlify) are in [docs/DEPLOY.md](docs/DEPLOY.md).
 
 #### Docker / Compose
 
-The provided `Dockerfile` builds a multi-architecture image that serves the app with Nginx. At container start-up, the image writes `/usr/share/nginx/html/env`, which allows the frontend to read Supabase credentials and the current environment at runtime (no rebuild required when these values change).
+The `Dockerfile` builds a Node image that runs `.output/server/index.mjs`. **No build-args are required** — credentials and site URL come from container environment variables at runtime.
 
-Build and push (adapt the Supabase values to your project):
+Build and push:
 
 ```bash
 docker buildx build \
-     --platform linux/amd64,linux/arm64 \
-     --build-arg VITE_SUPABASE_URL="https://supabase.example.com" \
-     --build-arg VITE_SUPABASE_ANON_KEY="your_supabase_anon_key" \
-     --build-arg VITE_ENV="production" \
-     --build-arg VITE_SITE_URL="https://blog.example.com" \
-     -t your-dockerhub-user/pluma:latest \
-     --push .
+  --platform linux/amd64,linux/arm64 \
+  -t your-dockerhub-user/pluma:latest \
+  --push .
 ```
 
-Run it with the Supabase credentials as environment variables (Compose example):
+Run with Compose (see also `docker-compose.example.yml`):
 
 ```yaml
-version: '3.3'
-
 services:
-     app:
-          image: your-dockerhub-user/pluma:latest
-          restart: unless-stopped
-          ports:
-                - "80:80"
-          environment:
-                VITE_SUPABASE_URL: "https://supabase.example.com"
-                VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
-                VITE_ENV: "production"
-                VITE_SITE_URL: "https://blog.example.com"
+  app:
+    image: your-dockerhub-user/pluma:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      VITE_SUPABASE_URL: "https://supabase.example.com"
+      VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
+      VITE_ENV: "production"
+      VITE_SITE_URL: "https://blog.example.com"
 ```
-
-The container automatically exposes `/env`, so the frontend can read the runtime values without recompiling.
 
 ## Contributing
 

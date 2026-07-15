@@ -2,10 +2,10 @@
   <DropdownMenuRoot v-model:open="open">
     <DropdownMenuTrigger
       class="nav-pill data-[state=open]:bg-gray-200 dark:data-[state=open]:bg-gray-700/60"
-      aria-label="Categories menu"
+      :aria-label="t('nav.categories')"
     >
       <Icon icon="mdi:tag-multiple-outline" class="text-base" />
-      <span class="hidden md:inline">Categories</span>
+      <span class="hidden md:inline">{{ t("nav.categories") }}</span>
       <Icon icon="mdi:chevron-down" class="text-base opacity-70" />
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
@@ -15,7 +15,7 @@
         align="end"
       >
         <div class="px-2 pb-1 pt-1.5 sticky top-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-md mb-1 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-          <Icon icon="mdi:tag-multiple" class="text-sm" /> Browse Categories
+          <Icon icon="mdi:tag-multiple" class="text-sm" /> {{ t("nav.browseCategories") }}
         </div>
         <DropdownMenuItem
           v-for="cat in categoriesList"
@@ -39,6 +39,9 @@ import { DropdownMenuArrow, DropdownMenuContent, DropdownMenuItem, DropdownMenuP
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 const props = defineProps({
   categories: { type: Array, default: () => [] }
 })
@@ -47,7 +50,7 @@ const open = ref(false)
 const router = useRouter()
 
 function addUncategorized(list){
-  return [{ id: null, name: 'Uncategorized', slug: 'uncategorized' }, ...list]
+  return [{ id: null, name: t('common.uncategorized'), slug: 'uncategorized' }, ...list]
 }
 function sortList(list){
   return [...list].sort((a,b)=> a.name.localeCompare(b.name))
@@ -56,6 +59,6 @@ const categoriesList = computed(()=> addUncategorized(sortList(props.categories 
 
 function go(slug){
   open.value = false
-  router.push(`/category/${slug}`)
+  router.push(localePath(`/category/${slug}`))
 }
 </script>

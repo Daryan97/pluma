@@ -1,7 +1,9 @@
 #!/bin/sh
 set -eu
 
-RUNTIME_ENV_FILE="/usr/share/nginx/html/env"
+# Legacy path used when the image still ran nginx.
+# Prefer /docker-entrypoint.sh at the image root for the Node server.
+RUNTIME_ENV_FILE="${RUNTIME_ENV_FILE:-/app/dist/env}"
 
 cat <<EOF > "$RUNTIME_ENV_FILE"
 {

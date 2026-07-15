@@ -22,16 +22,16 @@
             ref="searchInput"
             type="text"
             v-model="query"
-            placeholder="Search posts, categories, authors, pages..."
+            :placeholder="t('search.placeholder')"
             @keydown="handleKeydown"
             class="w-full bg-transparent text-sm sm:text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100 outline-none py-1.5"
-            aria-label="Global search"
+            :aria-label="t('search.title')"
           />
           <button
             v-if="query"
             @click="clearQuery"
             class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition rounded-full p-1"
-            aria-label="Clear search"
+            :aria-label="t('search.clear')"
           >
             <Icon icon="mdi:close-circle" :width="20" />
           </button>
@@ -51,7 +51,7 @@
             <div
               class="sticky top-0 z-10 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
             >
-              Quick Links
+              {{ t("search.quickLinks") }}
             </div>
             <ul class="mt-1 space-y-0.5">
               <li
@@ -78,7 +78,7 @@
             v-if="loading"
             class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 px-4 py-6"
           >
-            <Icon icon="mdi:progress-clock" class="animate-spin" /> Searching...
+            <Icon icon="mdi:progress-clock" class="animate-spin" /> {{ t("search.searching") }}
           </div>
           <template v-else>
             <div
@@ -116,7 +116,7 @@
               v-if="query && !results.length && !loading"
               class="px-4 py-8 text-center text-sm text-gray-500"
             >
-              No results found
+              {{ t("search.noResults") }}
             </p>
           </template>
         </div>
@@ -126,19 +126,19 @@
           <div class="hidden sm:flex items-center gap-3">
             <span class="flex items-center gap-1"
               ><kbd class="shortcut">↑</kbd><kbd class="shortcut">↓</kbd
-              ><span class="hidden md:inline">Navigate</span></span
+              ><span class="hidden md:inline">{{ t("search.navigate") }}</span></span
             >
             <span class="flex items-center gap-1"
               ><kbd class="shortcut">Enter</kbd
-              ><span class="hidden md:inline">Open</span></span
+              ><span class="hidden md:inline">{{ t("common.open") }}</span></span
             >
             <span class="flex items-center gap-1"
               ><kbd class="shortcut">Esc</kbd
-              ><span class="hidden md:inline">Close</span></span
+              ><span class="hidden md:inline">{{ t("search.close") }}</span></span
             >
           </div>
           <span class="ml-auto text-[10px] font-medium tracking-wide"
-            >Global Search</span
+            >{{ t("search.title") }}</span
           >
         </div>
       </div>
@@ -152,6 +152,9 @@ import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 
+const { t } = useI18n();
+const localePath = useLocalePath();
+const { contentLocale } = useContentLocale();
 const props = defineProps({
   modelValue: Boolean,
   initialQuery: { type: String, default: "" },
@@ -169,6 +172,59 @@ const debounceMs = 260;
 let debounceTimer = null;
 let lastIssued = 0;
 
+/** Curated in-app pages — never scrape i18n-generated route names (dashboard___ar). */
+const searchablePages = computed(() => [
+  { id: "home", label: t("nav.home"), route: "/", icon: "mdi:home" },
+  { id: "archive", label: t("nav.archive"), route: "/archive", icon: "mdi:archive-outline" },
+  {
+    id: "dashboard",
+    label: t("nav.dashboard"),
+    route: "/dashboard",
+    icon: "mdi:view-dashboard",
+    requiresAuthorOrAdmin: true,
+  },
+  {
+    id: "new-post",
+    label: t("posts.newPost"),
+    route: "/dashboard/new-post",
+    icon: "mdi:plus-box",
+    requiresAuthorOrAdmin: true,
+  },
+  {
+    id: "profile",
+    label: t("nav.profile"),
+    route: "/profile",
+    icon: "mdi:account",
+    requiresAuth: true,
+  },
+  {
+    id: "login",
+    label: t("nav.login"),
+    route: "/login",
+    icon: "mdi:login",
+    requireAnonymous: true,
+  },
+  {
+    id: "signup",
+    label: t("nav.signup"),
+    route: "/signup",
+    icon: "mdi:account-plus",
+    requireAnonymous: true,
+  },
+]);
+
+function pageVisible(p) {
+  if (p.requireAnonymous) return !currentUser.value;
+  if (p.requiresAuthorOrAdmin) {
+    return (
+      !!currentUser.value &&
+      ["admin", "author"].includes(currentProfileRole.value)
+    );
+  }
+  if (p.requiresAuth) return !!currentUser.value;
+  return true;
+}
+
 onMounted(async () => {
   const {
     data: { session },
@@ -184,12 +240,12 @@ onMounted(async () => {
   }
 });
 
-const typeLabels = {
-  post: "Posts",
-  category: "Categories",
-  profile: "Authors",
-  page: "Pages",
-};
+const typeLabels = computed(() => ({
+  post: t("posts.title"),
+  category: t("nav.categories"),
+  profile: t("authors.title"),
+  page: t("pages.title"),
+}));
 
 watch(
   () => props.modelValue,
@@ -263,7 +319,10 @@ const activeId = computed(() => {
 
 function navigate(item) {
   close();
-  router.push(item.route);
+  const route = item.route?.startsWith("/")
+    ? localePath(item.route)
+    : localePath(`/${item.route}`);
+  router.push(route);
 }
 function handleKeydown(e) {
   const list = query.value ? results.value : quickLinks.value;
@@ -304,12 +363,15 @@ async function runSearch(term) {
     supabase
       .from("posts")
       .select("id, title, slug")
+      .eq("locale", contentLocale.value)
+      .eq("status", "published")
       .or(`title.ilike.${search}`)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
       .from("categories")
       .select("id, name, slug")
+      .eq("locale", contentLocale.value)
       .ilike("name", search)
       .limit(5),
     supabase
@@ -354,34 +416,17 @@ async function runSearch(term) {
         highlightedLabel: highlight(u.display_name || u.username, term),
       }))
     );
-  const pagesList = router.options.routes
-    .filter((r) => r.name && !r.path.includes(":"))
-    .filter((r) => r.path !== "/install" && !r.path.startsWith("/install/"))
-    .map((r) => ({
-      id: r.name.toLowerCase(),
-      label: r.meta?.title ? r.meta.title.split("|")[0].trim() : r.name,
-      route: r.path,
-      meta: r.meta || {},
-    }));
-  const pageMatches = pagesList
-    .filter((p) => p.label.toLowerCase().includes(term.trim().toLowerCase()))
-    .filter((p) => {
-      if (p.meta.requireAnonymous) return !currentUser.value;
-      if (p.meta.requiresAuthorOrAdmin)
-        return (
-          currentUser.value &&
-          ["admin", "author"].includes(currentProfileRole.value)
-        );
-      if (p.meta.requiresAuth) return !!currentUser.value;
-      return true;
-    })
+  const needle = term.trim().toLowerCase();
+  const pageMatches = searchablePages.value
+    .filter(pageVisible)
+    .filter((p) => p.label.toLowerCase().includes(needle))
     .slice(0, 5);
   merged.push(
     ...pageMatches.map((p) => ({
       id: p.id,
       type: "page",
       label: p.label,
-      icon: "mdi:file-document-outline",
+      icon: p.icon || "mdi:file-document-outline",
       route: p.route,
       highlightedLabel: highlight(p.label, term),
     }))
@@ -405,13 +450,13 @@ watch(query, (val) => {
 const quickLinks = computed(() => {
   if (query.value) return [];
   const base = [
-    { id: "home", type: "page", label: "Home", icon: "mdi:home", route: "/" },
+    { id: "home", type: "page", label: t("nav.home"), icon: "mdi:home", route: "/" },
   ];
   if (currentUser.value)
     base.push({
       id: "dashboard",
       type: "page",
-      label: "Dashboard",
+      label: t("nav.dashboard"),
       icon: "mdi:view-dashboard",
       route: "/dashboard",
     });
@@ -422,9 +467,9 @@ const quickLinks = computed(() => {
     base.push({
       id: "new-post",
       type: "page",
-      label: "New Post",
+      label: t("posts.newPost"),
       icon: "mdi:plus-box",
-      route: "dashboard/new-post",
+      route: "/dashboard/new-post",
     });
   base.forEach((b, i) => {
     b.flatIndex = i;

@@ -19,6 +19,9 @@
   </div>
 </template>
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 
@@ -37,12 +40,12 @@ function formatNumber(val){
 }
 
 const metrics = computed(()=>[
-  { key:'totalPosts', label:'Total Posts', value: props.stats.totalPosts || 0, icon:'mdi:note-multiple-outline', iconClass:'text-blue-500 dark:text-blue-400', valueClass:'text-blue-600 dark:text-blue-400' },
-  { key:'publishedPosts', label:'Published', value: props.stats.publishedPosts || 0, icon:'mdi:check-circle-outline', iconClass:'text-green-500 dark:text-green-400', valueClass:'text-green-600 dark:text-green-400' },
-  { key:'draftPosts', label:'Drafts', value: props.stats.draftPosts || 0, icon:'mdi:file-document-edit-outline', iconClass:'text-purple-500 dark:text-purple-400', valueClass:'text-purple-600 dark:text-purple-400' },
-  { key:'pendingComments', label:'Pending Comments', value: props.stats.pendingComments || 0, icon:'mdi:comment-alert-outline', iconClass:'text-yellow-500 dark:text-yellow-400', valueClass:'text-yellow-500 dark:text-yellow-400' },
-  { key:'categories', label:'Categories', value: props.stats.categories || 0, icon:'mdi:folder-outline', iconClass:'text-indigo-500 dark:text-indigo-400', valueClass:'text-indigo-600 dark:text-indigo-400' },
-  { key:'authors', label:'Authors', value: props.stats.authors || 0, icon:'mdi:account-edit-outline', iconClass:'text-cyan-500 dark:text-cyan-400', valueClass:'text-cyan-600 dark:text-cyan-400' },
-  { key:'members', label:'Members', value: props.stats.members || 0, icon:'mdi:account-multiple-outline', iconClass:'text-teal-500 dark:text-teal-400', valueClass:'text-teal-600 dark:text-teal-400' },
+  { key:'totalPosts', label:t('dashboard.stats.totalPosts'), value: props.stats.totalPosts || 0, icon:'mdi:note-multiple-outline', iconClass:'text-blue-500 dark:text-blue-400', valueClass:'text-blue-600 dark:text-blue-400' },
+  { key:'publishedPosts', label:t('dashboard.stats.published'), value: props.stats.publishedPosts || 0, icon:'mdi:check-circle-outline', iconClass:'text-green-500 dark:text-green-400', valueClass:'text-green-600 dark:text-green-400' },
+  { key:'draftPosts', label:t('dashboard.stats.drafts'), value: props.stats.draftPosts || 0, icon:'mdi:file-document-edit-outline', iconClass:'text-purple-500 dark:text-purple-400', valueClass:'text-purple-600 dark:text-purple-400' },
+  { key:'pendingComments', label:t('dashboard.stats.pendingComments'), value: props.stats.pendingComments || 0, icon:'mdi:comment-alert-outline', iconClass:'text-yellow-500 dark:text-yellow-400', valueClass:'text-yellow-500 dark:text-yellow-400' },
+  { key:'categories', label:t('dashboard.stats.categories'), value: props.stats.categories || 0, icon:'mdi:folder-outline', iconClass:'text-indigo-500 dark:text-indigo-400', valueClass:'text-indigo-600 dark:text-indigo-400' },
+  { key:'authors', label:t('dashboard.stats.authors'), value: props.stats.authors || 0, icon:'mdi:account-edit-outline', iconClass:'text-cyan-500 dark:text-cyan-400', valueClass:'text-cyan-600 dark:text-cyan-400' },
+  { key:'members', label:t('dashboard.stats.members'), value: props.stats.members || 0, icon:'mdi:account-multiple-outline', iconClass:'text-teal-500 dark:text-teal-400', valueClass:'text-teal-600 dark:text-teal-400' },
 ])
 </script>

@@ -6,13 +6,16 @@
     >
       <div class="flex flex-col items-center gap-3 text-gray-700 dark:text-gray-200">
         <span class="loader" aria-hidden="true"></span>
-        <p class="text-sm font-medium tracking-wide">Loading…</p>
+        <p class="text-sm font-medium tracking-wide">{{ t('common.loading') }}</p>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { storeToRefs } from 'pinia'
 import { useRouteLoadingStore } from '@/stores/routeLoadingStore'
 

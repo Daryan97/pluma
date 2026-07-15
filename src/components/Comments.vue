@@ -4,15 +4,15 @@
       class="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100"
     >
       <Icon icon="mdi:comment-text-outline" class="text-blue-500" />
-      Comments
+      {{ t("comments.title") }}
       <span
         class="text-sm font-normal text-gray-500 dark:text-gray-400 flex items-center gap-1"
       >
-        ({{ totalCount }})
+        {{ t("comments.total", { count: totalCount }) }}
         <span
           v-if="canModerate && pendingCount > 0"
-          class="text-xs ml-1 px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100"
-          >{{ pendingCount }} pending</span
+          class="text-xs ms-1 px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100"
+          >{{ t("comments.pendingCount", { count: pendingCount }) }}</span
         >
       </span>
     </h3>
@@ -21,14 +21,14 @@
       <div v-if="canModerate" class="flex flex-col gap-1">
         <span
           class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
-          >Filter</span
+          >{{ t("comments.filter") }}</span
         >
         <SelectRoot v-model="modFilter">
           <SelectTrigger
-            class="w-44 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
-            aria-label="Filter comments"
+            class="min-w-[11rem] w-auto inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
+            :aria-label="t('comments.filterAria')"
           >
-            <SelectValue placeholder="All" />
+            <SelectValue :placeholder="t('comments.all')" />
             <Icon icon="radix-icons:chevron-down" class="w-4 h-4 opacity-70" />
           </SelectTrigger>
           <SelectPortal>
@@ -48,11 +48,11 @@
                     class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[disabled]:text-gray-400 data-[disabled]:pointer-events-none data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                   >
                     <SelectItemIndicator
-                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                      class="absolute start-0 w-8 inline-flex items-center justify-center"
                     >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
-                    <SelectItemText>All</SelectItemText>
+                    <SelectItemText>{{ t("comments.all") }}</SelectItemText>
                   </SelectItem>
                   <SelectSeparator
                     class="h-px bg-gray-200 dark:bg-gray-700 my-1"
@@ -62,22 +62,22 @@
                     class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                   >
                     <SelectItemIndicator
-                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                      class="absolute start-0 w-8 inline-flex items-center justify-center"
                     >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
-                    <SelectItemText>Approved</SelectItemText>
+                    <SelectItemText>{{ t("comments.approved") }}</SelectItemText>
                   </SelectItem>
                   <SelectItem
                     value="pending"
                     class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                   >
                     <SelectItemIndicator
-                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                      class="absolute start-0 w-8 inline-flex items-center justify-center"
                     >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
-                    <SelectItemText>Pending</SelectItemText>
+                    <SelectItemText>{{ t("comments.pendingLabel") }}</SelectItemText>
                   </SelectItem>
                 </SelectGroup>
               </SelectViewport>
@@ -94,14 +94,14 @@
       <div class="flex flex-col gap-1">
         <span
           class="text-xs font-medium uppercase tracking-wide text-gray-600 dark:text-gray-400"
-          >Sort</span
+          >{{ t("comments.sort") }}</span
         >
         <SelectRoot v-model="sortOrder">
           <SelectTrigger
-            class="w-56 inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
-            aria-label="Sort comments"
+            class="min-w-[14rem] w-auto inline-flex h-9 items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500 data-[placeholder]:text-gray-400"
+            :aria-label="t('comments.sortAria')"
           >
-            <SelectValue placeholder="Sort Order" />
+            <SelectValue :placeholder="t('comments.sort')" />
             <Icon icon="radix-icons:chevron-down" class="w-4 h-4 opacity-70" />
           </SelectTrigger>
           <SelectPortal>
@@ -121,11 +121,11 @@
                     class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                   >
                     <SelectItemIndicator
-                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                      class="absolute start-0 w-8 inline-flex items-center justify-center"
                     >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
-                    <SelectItemText>Newest → Oldest</SelectItemText>
+                    <SelectItemText>{{ t("comments.newestFirst") }}</SelectItemText>
                   </SelectItem>
                   <SelectSeparator
                     class="h-px bg-gray-200 dark:bg-gray-700 my-1"
@@ -135,11 +135,11 @@
                     class="text-sm leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-8 pl-8 relative select-none cursor-pointer data-[highlighted]:outline-none data-[highlighted]:bg-blue-600 data-[highlighted]:text-white"
                   >
                     <SelectItemIndicator
-                      class="absolute left-0 w-8 inline-flex items-center justify-center"
+                      class="absolute start-0 w-8 inline-flex items-center justify-center"
                     >
                       <Icon icon="radix-icons:check" />
                     </SelectItemIndicator>
-                    <SelectItemText>Oldest → Newest</SelectItemText>
+                    <SelectItemText>{{ t("comments.oldestFirst") }}</SelectItemText>
                   </SelectItem>
                 </SelectGroup>
               </SelectViewport>
@@ -161,7 +161,7 @@
             ref="commentTextarea"
             v-model="newComment"
             rows="3"
-            placeholder="Write a thoughtful comment..."
+            :placeholder="t('comments.placeholder')"
             class="peer w-full rounded-lg px-4 py-3 bg-white/90 dark:bg-gray-800/80 backdrop-blur border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400/60 focus:border-gray-400 dark:focus:border-gray-500 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden leading-relaxed min-h-[96px] resize-none"
             :disabled="submitting"
             @keydown="onTextareaKeydown"
@@ -170,9 +170,9 @@
             required
           ></textarea>
           <div
-            class="pointer-events-none absolute left-3 -top-2 z-10 px-1 rounded bg-white dark:bg-gray-800 text-[10px] font-medium text-gray-500 dark:text-gray-400 shadow-sm"
+            class="pointer-events-none absolute start-3 -top-2 z-10 px-1 rounded bg-white dark:bg-gray-800 text-[10px] font-medium text-gray-500 dark:text-gray-400 shadow-sm"
           >
-            Comment
+            {{ t('comments.commentLabel') }}
           </div>
           <div
             class="mt-1 flex justify-between text-[11px] text-gray-400 dark:text-gray-500 select-none"
@@ -190,17 +190,15 @@
               @click="clearComment"
               class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Clear
+              {{ t('common.clear') }}
             </button>
           </div>
         </div>
         <div
           class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
         >
-          <span v-if="role === 'admin'">Comment will be auto-approved.</span>
-          <span v-else
-            >Comment may need approval before others can see it.</span
-          >
+          <span v-if="role === 'admin'">{{ t('comments.autoApprovedTip') }}</span>
+          <span v-else>{{ t('comments.needsApprovalTip') }}</span>
         </div>
         <div
           class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-1"
@@ -208,8 +206,8 @@
           <div
             class="order-2 sm:order-1 text-[11px] text-gray-400 dark:text-gray-500 flex flex-wrap items-center gap-1"
           >
-            <span>Tip:</span>
-            <span>Press</span>
+            <span>{{ t('comments.tip') }}</span>
+            <span>{{ t('comments.pressKeys') }}</span>
             <kbd
               class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium"
               >Ctrl</kbd
@@ -219,10 +217,10 @@
               class="px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] font-medium"
               >Enter</kbd
             >
-            <span class="hidden sm:inline">(or</span>
-            <span class="sm:inline hidden">⌘ + Enter on Mac)</span>
-            <span class="sm:hidden">/ ⌘+Enter</span>
-            <span>to submit</span>
+            <span class="hidden sm:inline">{{ t('comments.orOnMac') }}</span>
+            <span class="sm:inline hidden">{{ t('comments.cmdEnterMac') }}</span>
+            <span class="sm:hidden">{{ t('comments.cmdEnterShort') }}</span>
+            <span>{{ t('comments.toSubmit') }}</span>
           </div>
           <div class="order-1 sm:order-2 flex justify-end">
             <button
@@ -232,7 +230,7 @@
             >
               <Icon v-if="submitting" icon="mdi:loading" class="animate-spin" />
               <Icon v-else icon="mdi:send" />
-              <span>{{ submitting ? "Posting..." : "Post Comment" }}</span>
+              <span>{{ submitting ? t('common.posting') : t('comments.postComment') }}</span>
             </button>
           </div>
         </div>
@@ -240,11 +238,11 @@
       <hr class="my-8 border-gray-300 dark:border-gray-700" />
     </div>
     <div v-else class="mb-8 text-sm text-gray-600 dark:text-gray-300">
-      Please
-      <router-link to="/login" class="text-blue-600 hover:underline"
-        >sign in</router-link
+      {{ t('comments.pleaseSignIn') }}
+      <router-link :to="localePath('/login')" class="text-blue-600 hover:underline"
+        >{{ t('comments.signInToComment') }}</router-link
       >
-      to comment.
+      {{ t('comments.toComment') }}
     </div>
 
     <div v-if="loading" class="flex justify-center py-10">
@@ -255,19 +253,19 @@
         v-if="comments.length === 0 && modFilter === 'all'"
         class="text-gray-500 dark:text-gray-400 text-sm italic"
       >
-        Be the first to comment!
+        {{ t('comments.beFirst') }}
       </div>
       <div
         v-else-if="comments.length === 0 && modFilter === 'approved'"
         class="text-gray-500 dark:text-gray-400 text-sm italic"
       >
-        No approved comments yet.
+        {{ t('comments.noApproved') }}
       </div>
       <div
         v-else-if="comments.length === 0 && modFilter === 'pending'"
         class="text-gray-500 dark:text-gray-400 text-sm italic"
       >
-        No pending comments.
+        {{ t('comments.noPending') }}
       </div>
       <ul class="space-y-6" id="comments" v-else>
         <li
@@ -283,7 +281,7 @@
                 <img
                   v-if="c.author_avatar_url"
                   :src="c.author_avatar_url"
-                  :alt="c.author_display_name || c.author_username || 'Avatar'"
+                  :alt="c.author_display_name || c.author_username || t('common.avatar')"
                   class="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -295,13 +293,13 @@
                     class="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-1"
                   >
                     {{
-                      c.author_display_name || c.author_username || "Unknown"
+                      c.author_display_name || c.author_username || t('common.unknown')
                     }}
                     <span
                       v-if="c.author_id === postAuthorId"
-                      class="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-[10px] font-semibold tracking-wide uppercase text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
+                      class="ms-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-blue-200 bg-blue-50 text-[10px] font-semibold tracking-wide uppercase text-blue-700 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
                     >
-                      <Icon icon="mdi:pen" class="text-[11px]" /> Author
+                      <Icon icon="mdi:pen" class="text-[11px]" /> {{ t('comments.authorBadge') }}
                     </span>
                     <span
                       v-if="
@@ -309,10 +307,10 @@
                         (canModerate ||
                           (sessionUser && sessionUser.id === c.author_id))
                       "
-                      class="ml-1 hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-[10px] font-semibold tracking-wide uppercase text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
+                      class="ms-1 hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-[10px] font-semibold tracking-wide uppercase text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200"
                     >
                       <Icon icon="mdi:clock-outline" class="text-[11px]" />
-                      Pending
+                      {{ t('comments.pendingLabel') }}
                     </span>
                   </span>
                   <span class="text-gray-500 dark:text-gray-400 text-xs"
@@ -331,18 +329,18 @@
                 v-if="!c.approved"
                 @click="approveComment(c.id)"
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[13px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 focus:outline-none focus:ring-2 focus:ring-green-500"
-                title="Approve comment"
+                :title="t('comments.approve')"
               >
                 <Icon icon="mdi:check-circle" class="text-base" />
-                <span class="hidden sm:inline">Approve</span>
+                <span class="hidden sm:inline">{{ t('comments.approve') }}</span>
               </button>
               <button
                 @click="requestDelete(c.id)"
                 class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[13px] font-medium bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-red-500"
-                title="Delete comment"
+                :title="t('common.delete')"
               >
                 <Icon icon="mdi:delete" class="text-base" />
-                <span class="hidden sm:inline">Delete</span>
+                <span class="hidden sm:inline">{{ t('common.delete') }}</span>
               </button>
             </div>
           </div>
@@ -354,20 +352,20 @@
         class="h-10 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400"
       >
         <Icon v-if="loadingMore" icon="mdi:loading" class="animate-spin" />
-        <span v-else>Loading more…</span>
+        <span v-else>{{ t('comments.loadingMore') }}</span>
       </div>
       <div
         v-if="endReached && comments.length > pageSize"
         class="mt-4 text-center text-[11px] text-gray-400"
       >
-        All comments loaded
+        {{ t('comments.allLoaded') }}
       </div>
     </div>
     <ConfirmDialog
       :open="confirmOpen"
-      title="Delete Comment"
-      description="This action cannot be undone."
-      body="Are you sure you want to permanently delete this comment?"
+      :title="t('comments.deleteTitle')"
+      :description="t('common.actionCannotBeUndone')"
+      :body="t('comments.deleteConfirm')"
       @confirm="performDelete"
       @cancel="
         () => {
@@ -380,6 +378,9 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import {
   ref,
   onMounted,
@@ -389,9 +390,7 @@ import {
   nextTick,
 } from "vue";
 import { supabase } from "@/services/supabase";
-import { Icon } from "@iconify/vue";
-import { useToast } from "vue-toastification";
-import ConfirmDialog from "@/components/ConfirmDialog.vue";
+import { Icon } from "@iconify/vue";import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import {
   SelectRoot,
   SelectTrigger,
@@ -521,7 +520,7 @@ async function fetchComments({ reset = false } = {}) {
   const { data, error } = await baseQuery().range(from, to);
   if (error) {
     console.error(error);
-    toast.error("Failed to load comments");
+    toast.error(t('comments.loadFailed'));
   } else {
     const mapped = (data || []).map((c) => ({
       id: c.id,
@@ -565,14 +564,14 @@ async function submitComment() {
     newComment.value = "";
     toast.success(
       insertPayload.approved
-        ? "Comment posted"
-        : "Comment submitted for approval"
+        ? t('comments.posted')
+        : t('comments.submitted')
     );
     await fetchComments({ reset: true });
     await updateCounts();
   } catch (e) {
     console.error(e);
-    toast.error("Failed to post comment");
+    toast.error(t('comments.postFailed'));
   } finally {
     submitting.value = false;
     autoResize();
@@ -584,8 +583,8 @@ async function approveComment(id) {
     .from("comments")
     .update({ approved: true })
     .eq("id", id);
-  if (error) return toast.error("Approve failed");
-  toast.success("Comment approved");
+  if (error) return toast.error(t('comments.approveFailed'));
+  toast.success(t('comments.approveSuccess'));
   await fetchComments({ reset: true });
   await updateCounts();
 }
@@ -602,9 +601,9 @@ async function performDelete() {
     .delete()
     .eq("id", deleteTargetId.value);
   if (error) {
-    toast.error("Delete failed");
+    toast.error(t('comments.deleteFailed'));
   } else {
-    toast.success("Comment deleted");
+    toast.success(t('comments.deleted'));
     comments.value = comments.value.filter(
       (c) => c.id !== deleteTargetId.value
     );

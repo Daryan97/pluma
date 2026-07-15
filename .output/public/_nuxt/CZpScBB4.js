@@ -1,0 +1,1 @@
+import{_ as s}from"./Cy7X5NxC.js";import{bb as e,o as r,p as a,k as p,y as c}from"./CVl9Nd-T.js";import"./DtO4Aoao.js";import"./B2PBQ2Bn.js";const l={__name:"[id]",setup(m){const o=e(),t=c(()=>o.params.id);return(n,i)=>(r(),a(s,{mode:"edit",postId:String(p(t))},null,8,["postId"]))}};export{l as default};

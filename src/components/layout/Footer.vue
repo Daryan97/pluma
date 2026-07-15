@@ -34,7 +34,7 @@
           "
         >
           <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500"
-            >Follow</span
+            >{{ t("footer.follow") }}</span
           >
           <div class="mt-3 flex flex-wrap md:justify-end gap-3">
             <template v-if="(branding.socialLinks.value || []).length">
@@ -69,60 +69,73 @@
       <div
         class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-[12px] text-gray-500 dark:text-gray-500"
       >
-        &copy; {{ new Date().getFullYear() }} {{ siteTitle }}. All rights reserved.
+        &copy; {{ new Date().getFullYear() }} {{ siteTitle }}. {{ t("footer.rights") }}
       </div>
       <div
+        v-if="showCreditsRow"
         class="mt-3 flex flex-wrap items-center justify-between gap-3 text-[11px] font-medium"
       >
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-gray-500 dark:text-gray-400"> Powered by: </span>
+        <div v-if="showPoweredBy" class="flex flex-wrap items-center gap-2">
+          <span class="text-gray-500 dark:text-gray-400"> {{ t("footer.poweredBy") }} </span>
           <a
+            v-if="credits.plumaWatermark"
             href="https://github.com/Daryan97/pluma"
             target="_blank"
             rel="noopener"
             class="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
             >Pluma</a
           >
-          <a
-            href="https://vuejs.org"
-            target="_blank"
-            rel="noopener"
-            class="px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
-            >Vue</a
-          >
-          <a
-            href="https://supabase.com"
-            target="_blank"
-            rel="noopener"
-            class="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
-            >Supabase</a
-          >
-          <a
-            href="https://tailwindcss.com"
-            target="_blank"
-            rel="noopener"
-            class="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/50"
-            >Tailwind</a
-          >
+          <template v-if="credits.poweredByStack">
+            <a
+              href="https://nuxt.com"
+              target="_blank"
+              rel="noopener"
+              class="px-2 py-1 rounded-md bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-lime-900/50"
+              >Nuxt</a
+            >
+            <a
+              href="https://vuejs.org"
+              target="_blank"
+              rel="noopener"
+              class="px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+              >Vue</a
+            >
+            <a
+              href="https://supabase.com"
+              target="_blank"
+              rel="noopener"
+              class="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
+              >Supabase</a
+            >
+            <a
+              href="https://tailwindcss.com"
+              target="_blank"
+              rel="noopener"
+              class="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/50"
+              >Tailwind</a
+            >
+          </template>
         </div>
-        <div class="flex items-center gap-2">
+        <div v-if="credits.rss || credits.sitemap" class="flex items-center gap-2 ml-auto">
           <a
+            v-if="credits.rss"
             href="/rss.xml"
             target="_blank"
             rel="noopener"
             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[11px] font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/50 transition"
           >
             <Icon icon="mdi:rss" class="text-sm" />
-            RSS
+            {{ t("footer.rss") }}
           </a>
           <a
+            v-if="credits.sitemap"
             href="/sitemap.xml"
             target="_blank"
             rel="noopener"
             class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
           >
             <Icon icon="mdi:map-outline" class="text-sm" />
-            Sitemap
+            {{ t("footer.sitemap") }}
           </a>
         </div>
       </div>
@@ -133,10 +146,23 @@
 <script setup>
 import { Icon } from "@iconify/vue";
 import { projectInfo } from "@/config/projectInfo";
-import { useBranding, fetchBranding } from "@/stores/brandingStore";
+import { useBranding, fetchBranding, DEFAULT_FOOTER_CREDITS } from "@/stores/brandingStore";
 import { computed, onMounted } from "vue";
+
+const { t } = useI18n();
 const branding = useBranding();
 const siteTitle = computed(() => branding.siteName.value || projectInfo.name);
+const credits = computed(() => ({
+  ...DEFAULT_FOOTER_CREDITS,
+  ...(branding.footerCredits?.value || {}),
+}));
+const showPoweredBy = computed(
+  () => credits.value.plumaWatermark || credits.value.poweredByStack
+);
+const showCreditsRow = computed(
+  () => showPoweredBy.value || credits.value.rss || credits.value.sitemap
+);
+
 onMounted(() => {
   if (!branding.brandingLoaded.value) fetchBranding();
 });

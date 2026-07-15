@@ -8,16 +8,16 @@
       </div>
       <div class="flex-1 min-w-0">
         <h2 class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase break-words">
-          Homepage Features & Stats
+          {{ t('settings.homepage.title') }}
         </h2>
         <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-1 break-words">
-          Enable or disable homepage sections and stats below.
+          {{ t('settings.homepage.description') }}
         </p>
       </div>
     </div>
     <form @submit.prevent="save" class="space-y-8">
       <div>
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">Homepage Features</h3>
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">{{ t('settings.homepage.featuresTitle') }}</h3>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div
             v-for="feature in featureOptions"
@@ -41,7 +41,7 @@
               :aria-label="feature.label"
               @click="localFeatures[feature.key] = !localFeatures[feature.key]"
               :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-auto',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ms-auto',
                 localFeatures[feature.key]
                   ? 'bg-blue-500'
                   : 'bg-gray-300 dark:bg-gray-700',
@@ -59,7 +59,7 @@
         </div>
       </div>
       <div class="pt-4">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">Homepage Stats</h3>
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">{{ t('settings.homepage.statsTitle') }}</h3>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div
             v-for="stat in statOptions"
@@ -83,7 +83,7 @@
               :aria-label="stat.label"
               @click="localEnabled[stat.key] = !localEnabled[stat.key]"
               :class="[
-                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ml-auto',
+                'relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none duration-200 ms-auto',
                 localEnabled[stat.key]
                   ? 'bg-blue-500'
                   : 'bg-gray-300 dark:bg-gray-700',
@@ -106,7 +106,7 @@
           class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-50 border border-blue-200/70 dark:border-blue-800/40 focus:outline-none focus:ring-2 focus:ring-blue-400"
         >
           <Icon icon="mdi:content-save" class="text-base" />
-          <span>Save Changes</span>
+          <span>{{ t('common.save') }}</span>
         </button>
         <span v-if="error" class="text-red-600 text-sm">{{ error }}</span>
       </div>
@@ -115,66 +115,66 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+const { t } = useI18n()
+const localePath = useLocalePath()
+
+import { ref, watch, onMounted, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import {
   useStatsSettings,
   fetchStatsSettings,
 } from "@/stores/statsSettingsStore";
 import { useSettings, fetchSettings } from "@/stores/settingsStore";
-import { Icon } from "@iconify/vue";
-import { useToast } from "vue-toastification";
-
-const { statsEnabled } = useStatsSettings();
+import { Icon } from "@iconify/vue";const { statsEnabled } = useStatsSettings();
 const { featuresEnabled } = useSettings();
 const toast = useToast();
 
-const featureOptions = [
+const featureOptions = computed(() => [
   {
     key: "welcome",
-    label: "Welcome/Latest Post",
+    label: t('settings.homepage.features.welcome.label'),
     icon: "mdi:star-four-points",
-    desc: "Show the welcome banner or latest post at the top.",
+    desc: t('settings.homepage.features.welcome.desc'),
   },
   {
     key: "siteName",
-    label: "Site Name",
+    label: t('settings.homepage.features.siteName.label'),
     icon: "mdi:format-title",
-    desc: "Display your site name prominently.",
+    desc: t('settings.homepage.features.siteName.desc'),
   },
   {
     key: "siteDescription",
-    label: "Site Description",
+    label: t('settings.homepage.features.siteDescription.label'),
     icon: "mdi:card-text-outline",
-    desc: "Show your site tagline or description.",
+    desc: t('settings.homepage.features.siteDescription.desc'),
   },
   {
     key: "search",
-    label: "Search Bar",
+    label: t('settings.homepage.features.search.label'),
     icon: "mdi:magnify",
-    desc: "Enable the homepage search bar.",
+    desc: t('settings.homepage.features.search.desc'),
   },
-];
-const statOptions = [
+]);
+const statOptions = computed(() => [
   {
     key: "posts",
-    label: "Posts",
+    label: t('settings.homepage.stats.posts.label'),
     icon: "mdi:post-outline",
-    desc: "Show the total number of published posts.",
+    desc: t('settings.homepage.stats.posts.desc'),
   },
   {
     key: "categories",
-    label: "Categories",
+    label: t('settings.homepage.stats.categories.label'),
     icon: "mdi:folder-outline",
-    desc: "Show the total number of categories.",
+    desc: t('settings.homepage.stats.categories.desc'),
   },
   {
     key: "authors",
-    label: "Authors",
+    label: t('settings.homepage.stats.authors.label'),
     icon: "mdi:account-multiple-outline",
-    desc: "Show the total number of authors/admins.",
+    desc: t('settings.homepage.stats.authors.desc'),
   },
-];
+]);
 const localEnabled = ref({ posts: true, categories: true, authors: true });
 const localFeatures = ref({
   welcome: true,
@@ -208,12 +208,12 @@ async function save() {
     .upsert({ key: "features_home_enabled", value: localFeatures.value });
   if (statsErr || featuresErr) {
     error.value =
-      statsErr?.message || featuresErr?.message || "Failed to save.";
+      statsErr?.message || featuresErr?.message || t('settings.homepage.saveFailed');
     toast.error(error.value);
     return;
   }
   await fetchStatsSettings();
   await fetchSettings();
-  toast.success("Homepage settings updated");
+  toast.success(t('settings.homepage.updated'));
 }
 </script>

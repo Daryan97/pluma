@@ -1,0 +1,23 @@
+services:
+  app:
+    image: daryan997/pluma:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      VITE_SITE_URL: "https://blog.example.com"
+      VITE_SUPABASE_URL: "https://supabase.example.com"
+      VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
+      VITE_ENV: "production"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

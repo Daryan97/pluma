@@ -1,5 +1,9 @@
 /* ===========================================
- INSTALL / SETUP
+ INSTALL / SETUP — fresh Pluma schema
+ - Includes: core tables, series, scheduling, preview tokens,
+   locales / translation groups, RLS helpers, storage buckets
+ - Existing DBs: use pluma_features_v2.sql then pluma_i18n_v3.sql
+   (and pluma_rls_fix.sql only if RLS/storage is broken)
  - A) App schema (RUN AS NORMAL)
  - B) Storage & auth trigger (RUN AS OWNER)
  =========================================== */
@@ -39,10 +43,11 @@ create table if not exists public.categories (
     id uuid primary key default gen_random_uuid(),
     name text not null,
     slug text not null,
+    locale text not null default 'en',
+    translation_group_id uuid,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint categories_name_key unique (name),
-    constraint categories_slug_key unique (slug)
+    constraint categories_locale_slug_key unique (locale, slug)
 );
 
 create table if not exists public.profiles (
@@ -56,22 +61,43 @@ create table if not exists public.profiles (
     constraint profiles_id_fkey foreign key (id) references auth.users (id) on delete cascade
 );
 
+create table if not exists public.series (
+    id uuid primary key default gen_random_uuid(),
+    name text not null,
+    slug text not null,
+    description text,
+    locale text not null default 'en',
+    translation_group_id uuid,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint series_locale_slug_key unique (locale, slug)
+);
+
 create table if not exists public.posts (
     id uuid primary key default gen_random_uuid(),
     title text not null,
     content text not null,
     tags text [] not null default '{}' :: text [],
     slug text not null,
+    locale text not null default 'en',
+    translation_group_id uuid,
     cover_image_url text,
     author_id uuid not null,
     category_id uuid,
+    series_id uuid,
+    series_order integer,
     status public.post_status not null default 'draft',
     comments_disabled boolean not null default false,
+    scheduled_at timestamptz,
+    preview_token uuid,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint posts_slug_key unique (slug),
+    constraint posts_locale_slug_key unique (locale, slug),
     constraint posts_author_id_fkey foreign key (author_id) references public.profiles (id) on delete cascade,
     constraint posts_category_id_fkey foreign key (category_id) references public.categories (id) on update cascade on delete
+    set
+        null,
+    constraint posts_series_id_fkey foreign key (series_id) references public.series (id) on delete
     set
         null
 );
@@ -108,7 +134,7 @@ end;
 $$;
 
 create
-or replace function public.is_self(row_id uuid) returns boolean language sql stable
+or replace function public.is_self(row_id uuid) returns boolean language sql stable security definer
 set
     search_path = '' as $$
 select
@@ -117,7 +143,7 @@ select
 $$;
 
 create
-or replace function public.is_author(uid uuid) returns boolean language sql stable
+or replace function public.is_author(uid uuid) returns boolean language sql stable security definer
 set
     search_path = '' as $$
 select
@@ -134,7 +160,7 @@ select
 $$;
 
 create
-or replace function public.is_author() returns boolean language sql stable
+or replace function public.is_author() returns boolean language sql stable security definer
 set
     search_path = '' as $$
 select
@@ -151,7 +177,7 @@ select
 $$;
 
 create
-or replace function public.is_admin() returns boolean language sql stable
+or replace function public.is_admin() returns boolean language sql stable security definer
 set
     search_path = '' as $$
 select
@@ -168,7 +194,7 @@ select
 $$;
 
 create
-or replace function public.can_manage_own_post(author uuid) returns boolean language sql stable
+or replace function public.can_manage_own_post(author uuid) returns boolean language sql stable security definer
 set
     search_path = '' as $$
 select
@@ -176,6 +202,12 @@ select
     and public.is_author(author);
 
 $$;
+
+grant execute on function public.is_self(uuid) to anon, authenticated;
+grant execute on function public.is_author(uuid) to anon, authenticated;
+grant execute on function public.is_author() to anon, authenticated;
+grant execute on function public.is_admin() to anon, authenticated;
+grant execute on function public.can_manage_own_post(uuid) to anon, authenticated;
 
 -- First user -> admin, others -> reader (no mutable search_path)
 create
@@ -290,6 +322,12 @@ create trigger settings_set_updated_at before
 update
     on public.settings for each row execute function public.touch_updated_at();
 
+drop trigger if exists series_set_updated_at on public.series;
+
+create trigger series_set_updated_at before
+update
+    on public.series for each row execute function public.touch_updated_at();
+
 drop trigger if exists profiles_admin_only_role_change on public.profiles;
 
 create trigger profiles_admin_only_role_change before
@@ -389,8 +427,6 @@ create policy "posts_delete_admin_or_owner_author" on public.posts for delete to
 -- comments
 drop policy if exists "comments_read_all" on public.comments;
 
-drop policy if exists "comments_insert_authenticated" on public.comments;
-
 drop policy if exists "comments_delete_self_or_author" on public.comments;
 
 drop policy if exists "comments_insert_authenticated" on public.comments;
@@ -401,21 +437,6 @@ create policy "comments_read_all" on public.comments for
 select
     to public using (true);
 
-create policy "comments_insert_authenticated" on public.comments for
-insert
-    to authenticated with check (
-        author_id = auth.uid()
-        and exists (
-            select
-                1
-            from
-                public.posts p
-            where
-                p.id = post_id
-                and p.status IN ('published', 'archived')
-                and p.comments_disabled = false
-        )
-    );
 
 create policy "comments_delete_self_or_author" on public.comments for delete to authenticated using (
     public.is_self(author_id)
@@ -476,7 +497,11 @@ drop policy if exists "settings_insert_branding_initial" on public.settings;
 
 drop policy if exists "settings_insert_admin" on public.settings;
 
+drop policy if exists "settings_insert_branding_admin" on public.settings;
+
 drop policy if exists "settings_update_admin" on public.settings;
+
+drop policy if exists "settings_update_branding_admin" on public.settings;
 
 drop policy if exists "settings_delete_admin" on public.settings;
 
@@ -534,6 +559,172 @@ update
 
 create policy "settings_delete_admin" on public.settings for delete to authenticated using (public.is_admin());
 
+-- series
+alter table public.series enable row level security;
+
+drop policy if exists "series_read_all" on public.series;
+
+drop policy if exists "series_write_author_admin" on public.series;
+
+drop policy if exists "series_update_author_admin" on public.series;
+
+drop policy if exists "series_delete_admin" on public.series;
+
+create policy "series_read_all" on public.series for
+select
+    to public using (true);
+
+create policy "series_write_author_admin" on public.series for
+insert
+    to authenticated with check (
+        public.is_author()
+        or public.is_admin()
+    );
+
+create policy "series_update_author_admin" on public.series for
+update
+    to authenticated using (
+        public.is_author()
+        or public.is_admin()
+    ) with check (
+        public.is_author()
+        or public.is_admin()
+    );
+
+create policy "series_delete_admin" on public.series for delete to authenticated using (public.is_admin());
+
+-- publish due + preview helpers
+create or replace function public.publish_due_posts() returns integer language plpgsql security definer
+set
+    search_path = '' as $$
+declare
+    updated_count integer;
+
+begin
+update
+    public.posts
+set
+    status = 'published' :: public.post_status,
+    scheduled_at = null,
+    updated_at = now()
+where
+    status = 'draft' :: public.post_status
+    and scheduled_at is not null
+    and scheduled_at <= now();
+
+get diagnostics updated_count = row_count;
+
+return updated_count;
+
+end;
+
+$$;
+
+grant execute on function public.publish_due_posts() to anon,
+authenticated;
+
+create or replace function public.get_post_by_preview_token(p_token uuid) returns jsonb language plpgsql security definer
+set
+    search_path = '' as $$
+declare
+    result jsonb;
+
+begin if p_token is null then return null;
+
+end if;
+
+select
+    jsonb_build_object(
+        'id',
+        p.id,
+        'title',
+        p.title,
+        'content',
+        p.content,
+        'tags',
+        to_jsonb(p.tags),
+        'slug',
+        p.slug,
+        'locale',
+        p.locale,
+        'translation_group_id',
+        p.translation_group_id,
+        'comments_disabled',
+        p.comments_disabled,
+        'cover_image_url',
+        p.cover_image_url,
+        'created_at',
+        p.created_at,
+        'updated_at',
+        p.updated_at,
+        'status',
+        p.status,
+        'scheduled_at',
+        p.scheduled_at,
+        'series_id',
+        p.series_id,
+        'series_order',
+        p.series_order,
+        'category',
+        case
+            when c.id is null then null
+            else jsonb_build_object(
+                'id',
+                c.id,
+                'name',
+                c.name,
+                'slug',
+                c.slug,
+                'locale',
+                c.locale
+            )
+        end,
+        'author',
+        case
+            when pr.id is null then null
+            else jsonb_build_object(
+                'id',
+                pr.id,
+                'username',
+                pr.username,
+                'display_name',
+                pr.display_name
+            )
+        end,
+        'series',
+        case
+            when s.id is null then null
+            else jsonb_build_object(
+                'id',
+                s.id,
+                'name',
+                s.name,
+                'slug',
+                s.slug,
+                'locale',
+                s.locale
+            )
+        end
+    ) into result
+from
+    public.posts p
+    left join public.categories c on c.id = p.category_id
+    left join public.profiles pr on pr.id = p.author_id
+    left join public.series s on s.id = p.series_id
+where
+    p.preview_token = p_token
+limit
+    1;
+
+return result;
+
+end;
+
+$$;
+
+grant execute on function public.get_post_by_preview_token(uuid) to anon,
+authenticated;
+
 -- 8) Indexes
 create index if not exists posts_author_id_idx on public.posts (author_id);
 
@@ -543,9 +734,35 @@ create index if not exists posts_category_id_idx on public.posts (category_id);
 
 create index if not exists posts_tags_gin_idx on public.posts using gin (tags);
 
+create index if not exists posts_series_id_idx on public.posts (series_id);
+
+create index if not exists posts_scheduled_at_idx on public.posts (scheduled_at)
+where
+    scheduled_at is not null;
+
+create unique index if not exists posts_preview_token_uidx on public.posts (preview_token)
+where
+    preview_token is not null;
+
+create index if not exists posts_locale_idx on public.posts (locale);
+
+create index if not exists posts_translation_group_idx on public.posts (translation_group_id);
+
+create index if not exists categories_locale_idx on public.categories (locale);
+
+create index if not exists series_locale_idx on public.series (locale);
+
+create unique index if not exists categories_locale_name_uidx on public.categories (locale, name);
+
+create unique index if not exists series_locale_name_uidx on public.series (locale, name);
+
 create index if not exists comments_post_id_idx on public.comments (post_id);
 
 create index if not exists comments_author_id_idx on public.comments (author_id);
+
+comment on column public.posts.locale is 'BCP-47 language tag for this post version';
+
+comment on column public.posts.translation_group_id is 'Shared id linking translated versions of the same post';
 
 -- ========== B) STORAGE + AUTH TRIGGER (RUN AS OWNER) ==========
 -- 1) Buckets (create in UI OR via SQL if owner; your original snippet did this):
@@ -579,15 +796,22 @@ drop policy if exists "objects_read_all" on storage.objects;
 
 create policy "objects_read_all" on storage.objects for
 select
-    to public using (true);
+    to anon,
+    authenticated using (true);
 
 drop policy if exists "objects_insert_admin" on storage.objects;
+
+drop policy if exists "objects_update_admin" on storage.objects;
 
 drop policy if exists "objects_delete_admin" on storage.objects;
 
 create policy "objects_insert_admin" on storage.objects for
 insert
     to authenticated with check (public.is_admin());
+
+create policy "objects_update_admin" on storage.objects for
+update
+    to authenticated using (public.is_admin()) with check (public.is_admin());
 
 create policy "objects_delete_admin" on storage.objects for delete to authenticated using (public.is_admin());
 

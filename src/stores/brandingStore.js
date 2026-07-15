@@ -1,12 +1,52 @@
 import { ref } from 'vue';
 import { supabase } from '@/services/supabase';
-import router from '@/router';
+
+import { allConfiguredLocaleCodes } from '@/config/contentLocales';
+
+export const DEFAULT_FOOTER_CREDITS = {
+    plumaWatermark: true,
+    poweredByStack: true,
+    rss: true,
+    sitemap: true,
+};
+
+export function allConfiguredLocales() {
+    return allConfiguredLocaleCodes();
+}
+
+function normalizeFooterCredits(raw) {
+    const src = raw && typeof raw === 'object' ? raw : {};
+    return {
+        plumaWatermark: src.plumaWatermark !== false,
+        poweredByStack: src.poweredByStack !== false,
+        rss: src.rss !== false,
+        sitemap: src.sitemap !== false,
+    };
+}
+
+export function normalizeLocaleSettings(rawEnabled, rawPrimary) {
+    const known = allConfiguredLocales();
+    const knownSet = new Set(known);
+    let enabled = Array.isArray(rawEnabled)
+        ? rawEnabled.map(String).filter((c) => knownSet.has(c))
+        : [...known];
+    if (!enabled.length) {
+        enabled = known.includes('en') ? ['en'] : [known[0]].filter(Boolean);
+    }
+    let primary = typeof rawPrimary === 'string' ? rawPrimary : 'en';
+    if (!enabled.includes(primary)) {
+        primary = enabled.includes('en') ? 'en' : enabled[0];
+    }
+    return { enabledLocales: enabled, primaryLocale: primary };
+}
 
 const brandingLoaded = ref(false);
 const brandingLoading = ref(false);
 const brandingError = ref(null);
 const siteName = ref(null);
 const siteDescription = ref(null);
+const twitterHandle = ref(null);
+const footerCredits = ref({ ...DEFAULT_FOOTER_CREDITS });
 const socialLinks = ref([]);
 const lightLogoUrl = ref(null);
 const darkLogoUrl = ref(null);
@@ -15,6 +55,27 @@ const lightLogoPath = ref(null);
 const darkLogoPath = ref(null);
 const faviconPath = ref(null);
 const logoVersion = ref(Date.now());
+const enabledLocales = ref(allConfiguredLocales());
+const primaryLocale = ref('en');
+
+export function isLocaleEnabled(code) {
+    if (!code) return false;
+    return enabledLocales.value.includes(code);
+}
+
+async function saveBrandingSettings(value) {
+    const { data: existingRow, error: readErr } = await supabase
+        .from('settings')
+        .select('key')
+        .eq('key', 'branding')
+        .maybeSingle();
+    if (readErr) return { error: readErr };
+
+    if (existingRow?.key) {
+        return supabase.from('settings').update({ value }).eq('key', 'branding');
+    }
+    return supabase.from('settings').insert({ key: 'branding', value });
+}
 
 function storagePathFromPublicUrl(url) {
     if (!url) return null;
@@ -43,6 +104,8 @@ export async function fetchBranding(force = false) {
         const value = data?.value || {};
         siteName.value = value.siteName || null;
         siteDescription.value = value.siteDescription || null;
+        twitterHandle.value = value.twitterHandle || null;
+        footerCredits.value = normalizeFooterCredits(value.footerCredits);
         socialLinks.value = Array.isArray(value.socialLinks) ? value.socialLinks : [];
         lightLogoUrl.value = value.lightLogoUrl || null;
         darkLogoUrl.value = value.darkLogoUrl || null;
@@ -50,12 +113,24 @@ export async function fetchBranding(force = false) {
         lightLogoPath.value = value.lightLogoPath || null;
         darkLogoPath.value = value.darkLogoPath || null;
         faviconPath.value = value.faviconPath || null;
+        const localesNorm = normalizeLocaleSettings(
+            value.enabledLocales,
+            value.primaryLocale || value.locale
+        );
+        enabledLocales.value = localesNorm.enabledLocales;
+        primaryLocale.value = localesNorm.primaryLocale;
         brandingLoaded.value = true;
     } catch (e) {
         console.error('[branding] fetch error', e);
         if (e.message === 'JWSError JWSInvalidSignature') {
             await supabase.auth.signOut();
-            router.push('/');
+            if (import.meta.client) {
+                try {
+                    await navigateTo('/');
+                } catch {
+                    window.location.href = '/';
+                }
+            }
         }
 
         brandingError.value = e;
@@ -64,7 +139,18 @@ export async function fetchBranding(force = false) {
     }
 }
 
-export async function updateBranding({ lightFile, darkFile, faviconFile, siteName: newSiteName, siteDescription: newSiteDescription, socialLinks: newSocialLinks }) {
+export async function updateBranding({
+    lightFile,
+    darkFile,
+    faviconFile,
+    siteName: newSiteName,
+    siteDescription: newSiteDescription,
+    socialLinks: newSocialLinks,
+    twitterHandle: newTwitterHandle,
+    footerCredits: newFooterCredits,
+    enabledLocales: newEnabledLocales,
+    primaryLocale: newPrimaryLocale,
+}) {
     let existingValue = {};
     const { data: existingRow } = await supabase
         .from('settings')
@@ -76,7 +162,25 @@ export async function updateBranding({ lightFile, darkFile, faviconFile, siteNam
     const newValue = { ...existingValue };
     if (typeof newSiteName === 'string') newValue.siteName = newSiteName.trim() || null;
     if (typeof newSiteDescription === 'string') newValue.siteDescription = newSiteDescription.trim() || null;
+    if (typeof newTwitterHandle === 'string') {
+        const cleaned = newTwitterHandle.trim().replace(/^@/, '');
+        newValue.twitterHandle = cleaned || null;
+    }
+    if (newFooterCredits && typeof newFooterCredits === 'object') {
+        newValue.footerCredits = normalizeFooterCredits(newFooterCredits);
+    }
     if (Array.isArray(newSocialLinks)) newValue.socialLinks = newSocialLinks.filter(l => l && l.label && l.url);
+    if (Array.isArray(newEnabledLocales) || typeof newPrimaryLocale === 'string') {
+        const localesNorm = normalizeLocaleSettings(
+            Array.isArray(newEnabledLocales) ? newEnabledLocales : existingValue.enabledLocales,
+            typeof newPrimaryLocale === 'string'
+                ? newPrimaryLocale
+                : existingValue.primaryLocale || existingValue.locale
+        );
+        newValue.enabledLocales = localesNorm.enabledLocales;
+        newValue.primaryLocale = localesNorm.primaryLocale;
+        newValue.locale = localesNorm.primaryLocale;
+    }
 
     async function uploadVariant(file, variant) {
         if (!file) return;
@@ -90,16 +194,27 @@ export async function updateBranding({ lightFile, darkFile, faviconFile, siteNam
         const ext = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : '';
         const objectPath = ext ? `${variant}.${ext}` : variant;
 
-        if (prevPath && prevPath !== objectPath) {
-            try { await supabase.storage.from('branding').remove([prevPath]); } catch (e) { console.warn('[branding] remove previous variant failed (different path)', variant, prevPath, e); }
-        } else {
-            try { await supabase.storage.from('branding').remove([objectPath]); } catch (_) {
-                console.warn('[branding] remove previous variant failed (same path)', variant, objectPath, _);
+        const pathsToRemove = [...new Set([prevPath, objectPath].filter(Boolean))];
+        if (pathsToRemove.length) {
+            try {
+                await supabase.storage.from('branding').remove(pathsToRemove);
+            } catch (e) {
+                console.warn('[branding] remove previous variant failed', variant, pathsToRemove, e);
             }
         }
 
-        const { error: upErr } = await supabase.storage.from('branding').upload(objectPath, file, { upsert: true, cacheControl: '3600', contentType: file.type });
-        if (upErr) throw upErr;
+        // Prefer insert (not upsert) so RLS only needs INSERT after a clean remove.
+        const { error: upErr } = await supabase.storage.from('branding').upload(objectPath, file, {
+            upsert: false,
+            cacheControl: '3600',
+            contentType: file.type || 'application/octet-stream',
+        });
+        if (upErr) {
+            const err = new Error(upErr.message || 'Failed to upload branding asset');
+            err.cause = upErr;
+            err.step = 'storage';
+            throw err;
+        }
 
         const { data: pub } = supabase.storage.from('branding').getPublicUrl(objectPath);
         if (variant === 'light') {
@@ -120,8 +235,13 @@ export async function updateBranding({ lightFile, darkFile, faviconFile, siteNam
         uploadVariant(faviconFile, 'favicon')
     ]);
 
-    const { error } = await supabase.from('settings').upsert({ key: 'branding', value: newValue });
-    if (error) throw error;
+    const { error } = await saveBrandingSettings(newValue);
+    if (error) {
+        const err = new Error(error.message || 'Failed to save branding settings');
+        err.cause = error;
+        err.step = 'settings';
+        throw err;
+    }
     brandingLoaded.value = false;
     await fetchBranding(true);
     logoVersion.value = Date.now();
@@ -150,7 +270,7 @@ export async function removeBrandingVariant(variant) {
     delete existingValue[urlKey];
     delete existingValue[pathKey];
 
-    const { error } = await supabase.from('settings').upsert({ key: 'branding', value: existingValue });
+    const { error } = await saveBrandingSettings(existingValue);
     if (error) throw error;
     brandingLoaded.value = false;
     await fetchBranding(true);
@@ -164,6 +284,8 @@ export function useBranding() {
         brandingError,
         siteName,
         siteDescription,
+        twitterHandle,
+        footerCredits,
         socialLinks,
         lightLogoUrl,
         darkLogoUrl,
@@ -172,8 +294,12 @@ export function useBranding() {
         darkLogoPath,
         faviconPath,
         logoVersion,
+        enabledLocales,
+        primaryLocale,
         fetchBranding,
         updateBranding,
-        removeBrandingVariant
+        removeBrandingVariant,
+        isLocaleEnabled,
+        allConfiguredLocales,
     };
 }

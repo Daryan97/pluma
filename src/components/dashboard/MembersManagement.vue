@@ -1,206 +1,197 @@
 <template>
   <div class="space-y-6">
     <div
-      class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 members-table-wrapper"
+      class="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden"
     >
-      <div
-        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between"
-      >
-        <h2
-          class="text-sm font-semibold tracking-wide text-gray-900 dark:text-white flex items-center gap-2"
-        >
-          <Icon
-            icon="mdi:account-group-outline"
-            class="text-blue-500 text-base"
-          />
-          Members
-          <span
-            v-if="!loading"
-            class="text-[11px] font-normal text-gray-500 dark:text-gray-400"
-            >({{ totalCount }})</span
+      <div class="px-5 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 shrink-0"
+            >
+              <Icon icon="mdi:account-group-outline" class="w-5 h-5" />
+            </div>
+            <div class="min-w-0">
+              <h2
+                class="text-sm font-semibold tracking-wide text-gray-800 dark:text-gray-100 uppercase"
+              >
+                {{ t('members.title') }}
+              </h2>
+              <p class="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+                {{ loading ? t('common.loading') : t('members.total', { count: totalCount }) }}
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-center h-9 w-full sm:w-72 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 focus-within:ring-2 focus-within:ring-blue-500"
           >
-        </h2>
-        <div class="relative w-full sm:w-80">
-          <div class="flex items-center h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition">
-            <Icon icon="mdi:magnify" class="ml-3 text-gray-500 dark:text-gray-300 text-base" />
+            <Icon icon="mdi:magnify" class="ms-3 text-gray-400 text-base shrink-0" />
             <input
               v-model="searchQuery"
-              @input="onSearchInput"
               type="text"
-              placeholder="Search members..."
-              class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none"
+              :placeholder="t('members.searchPlaceholder')"
+              class="flex-1 h-full bg-transparent px-2 text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none"
+              @input="onSearchInput"
             />
           </div>
         </div>
       </div>
-      <div
-        v-if="loading"
-        class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center"
-      >
-        Loading members...
+
+      <div v-if="loading" class="px-6 py-16 text-center">
+        <Icon icon="mdi:loading" class="mx-auto animate-spin text-3xl text-blue-500 mb-3" />
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('members.loading') }}</p>
       </div>
-      <div v-else class="rounded-b-2xl">
-        <div class="overflow-x-auto -mx-4 sm:mx-0">
-          <table
-            class="min-w-[780px] w-full text-left text-sm text-gray-800 dark:text-gray-100 border-separate border-spacing-0"
-          >
-          <thead
-            class="bg-gray-50 dark:bg-gray-900 text-xs uppercase tracking-wide text-gray-600 dark:text-gray-300"
-          >
-            <tr>
-              <th class="px-6 py-3 font-medium text-left">Username</th>
-              <th class="px-6 py-3 font-medium text-left">Display Name</th>
-              <th class="px-6 py-3 font-medium text-left">Role</th>
-              <th class="px-6 py-3 font-medium text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-            <tr
-              v-for="user in users"
-              :key="user.id"
-              class="transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-            >
-              <td
-                class="px-6 py-3 align-top font-medium text-gray-800 dark:text-gray-100 flex items-center gap-1"
-              >
-                <span>{{ user.username }}</span>
-                <Icon
-                  v-if="user.id === currentUserId"
-                  icon="mdi:account-check"
-                  class="text-blue-500 dark:text-blue-400 text-base"
-                />
-              </td>
-              <td class="px-6 py-3 align-top text-gray-700 dark:text-gray-300">
-                {{ user.display_name || "-" }}
-              </td>
-              <td class="px-6 py-3 align-top">
-                <span
-                  class="inline-flex items-center gap-1.5 h-7 px-3 rounded-md text-xs font-medium capitalize transition select-none"
-                  :class="{
-                    'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300':
-                      user.role === 'reader',
-                    'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300':
-                      user.role === 'author',
-                    'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300':
-                      user.role === 'admin',
-                    'bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300':
-                      user.role === 'disabled',
-                  }"
-                >
-                  <Icon
-                    :icon="
-                      roleInfo.find((r) => r.name.toLowerCase() === user.role)
-                        ?.icon
-                    "
-                    class="text-base"
-                  />
-                  {{ user.role.charAt(0).toUpperCase() + user.role.slice(1) }}
-                </span>
-              </td>
-              <td class="px-6 py-3 align-top">
-                <div class="relative role-select-wrapper">
-                  <SelectRoot
-                    :key="user.id + '-' + originalRoles[user.id]"
-                    v-model="user.role"
-                    @update:modelValue="() => updateRole(user)"
-                    :disabled="updatingRoleId === user.id"
-                  >
-                    <SelectTrigger
-                      class="w-full inline-flex h-8 items-center justify-between rounded border px-2 text-xs bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 disabled:opacity-50"
-                      aria-label="Change role"
-                    >
-                      <span class="flex items-center gap-2">
-                        <Icon
-                          :icon="roleInfo.find(r => r.name.toLowerCase() === user.role)?.icon"
-                          class="text-base"
-                        />
-                        <SelectValue :placeholder="'Select role'" />
-                      </span>
-                      <Icon icon="radix-icons:chevron-down" class="w-4 h-4 opacity-70" />
-                    </SelectTrigger>
-                    <SelectPortal>
-                      <SelectContent
-                        class="z-[120] min-w-[var(--radix-select-trigger-width)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
-                        :side-offset="4"
-                      >
-                        <SelectScrollUpButton class="flex items-center justify-center h-5 bg-white dark:bg-gray-800 text-gray-500">
-                          <Icon icon="radix-icons:chevron-up" />
-                        </SelectScrollUpButton>
-                        <SelectViewport class="p-1 text-xs">
-                          <SelectGroup>
-                            <SelectItem
-                              v-for="role in roleInfo"
-                              :key="role.name"
-                              :value="role.name.toLowerCase()"
-                              class="leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-7 pr-7 pl-7 relative select-none cursor-pointer data-[highlighted]:bg-blue-600 data-[highlighted]:text-white data-[state=checked]:font-semibold"
-                            >
-                              <SelectItemIndicator class="absolute left-0 w-7 inline-flex items-center justify-center">
-                                <Icon icon="radix-icons:check" class="w-4 h-4" />
-                              </SelectItemIndicator>
-                              <Icon :icon="role.icon" class="mr-2 w-4 h-4" />
-                              <SelectItemText>{{ role.name }}</SelectItemText>
-                            </SelectItem>
-                          </SelectGroup>
-                        </SelectViewport>
-                        <SelectScrollDownButton class="flex items-center justify-center h-5 bg-white dark:bg-gray-800 text-gray-500">
-                          <Icon icon="radix-icons:chevron-down" />
-                        </SelectScrollDownButton>
-                      </SelectContent>
-                    </SelectPortal>
-                  </SelectRoot>
-                </div>
-                <span
-                  v-if="updatingRoleId === user.id"
-                  class="ml-2 inline-flex items-center text-xs text-gray-500 dark:text-gray-400"
-                >
-                  <Icon icon="mdi:loading" class="animate-spin mr-1" />
-                  Saving
-                </span>
-              </td>
-            </tr>
-            <tr v-if="!users.length">
-              <td
-                colspan="4"
-                class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
-              >
-                No members found.
-              </td>
-            </tr>
-          </tbody>
-          </table>
-        </div>
-        <div
-          v-if="!loading"
-          class="flex justify-center items-center gap-4 text-gray-700 dark:text-gray-300 px-6 py-4 border-t border-gray-200 dark:border-gray-700 rounded-b-2xl"
+
+      <div v-else-if="!users.length" class="px-6 py-16 text-center">
+        <Icon
+          icon="mdi:account-off-outline"
+          class="mx-auto text-4xl text-gray-300 dark:text-gray-600 mb-3"
+        />
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('members.empty') }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {{ t('members.tryDifferentSearch') }}
+        </p>
+      </div>
+
+      <ul v-else class="divide-y divide-gray-100 dark:divide-gray-700/80">
+        <li
+          v-for="user in users"
+          :key="user.id"
+          class="group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-5 sm:px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-gray-900/40 transition-colors"
         >
-          <button
-            @click="prevPage"
-            :disabled="page === 1"
-            class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            <Icon icon="mdi:chevron-left" class="text-base" />
-            Prev
-          </button>
-          <span class="text-xs font-medium"
-            >Page {{ page }} / {{ totalPages }}</span
-          >
-          <button
-            @click="nextPage"
-            :disabled="page >= totalPages"
-            class="inline-flex items-center gap-2 h-8 px-3 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            Next
-            <Icon icon="mdi:chevron-right" class="text-base" />
-          </button>
-        </div>
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <span
+              class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-sm font-semibold text-white shrink-0"
+            >
+              {{ initials(user.display_name || user.username) }}
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {{ user.display_name || user.username }}
+                </p>
+                <span
+                  v-if="user.id === currentUserId"
+                  class="inline-flex items-center gap-1 h-5 px-1.5 rounded text-[10px] font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                >
+                  <Icon icon="mdi:account-check" class="text-xs" />
+                  {{ t('members.you') }}
+                </span>
+              </div>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                @{{ user.username }}
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:shrink-0">
+            <span
+              class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium"
+              :class="roleBadgeClasses(user.role)"
+            >
+              <Icon :icon="roleIcon(user.role)" class="text-sm" />
+              {{ t(`roles.${user.role}`) }}
+            </span>
+
+            <div class="relative role-select-wrapper min-w-[8.5rem]">
+              <SelectRoot
+                :key="user.id + '-' + originalRoles[user.id]"
+                v-model="user.role"
+                :disabled="updatingRoleId === user.id"
+                @update:modelValue="() => updateRole(user)"
+              >
+                <SelectTrigger
+                  class="w-full inline-flex h-8 items-center justify-between rounded-md px-2.5 text-xs bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  :aria-label="t('members.changeRoleAria')"
+                >
+                  <span class="flex items-center gap-1.5 min-w-0">
+                    <Icon :icon="roleIcon(user.role)" class="text-sm shrink-0" />
+                    <SelectValue :placeholder="t('members.role')" />
+                  </span>
+                  <Icon
+                    v-if="updatingRoleId === user.id"
+                    icon="mdi:loading"
+                    class="w-3.5 h-3.5 animate-spin opacity-70"
+                  />
+                  <Icon
+                    v-else
+                    icon="radix-icons:chevron-down"
+                    class="w-3.5 h-3.5 opacity-70 shrink-0"
+                  />
+                </SelectTrigger>
+                <SelectPortal>
+                  <SelectContent
+                    class="z-[120] min-w-[var(--radix-select-trigger-width)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                    :side-offset="4"
+                  >
+                    <SelectScrollUpButton
+                      class="flex items-center justify-center h-5 bg-white dark:bg-gray-800 text-gray-500"
+                    >
+                      <Icon icon="radix-icons:chevron-up" />
+                    </SelectScrollUpButton>
+                    <SelectViewport class="p-1 text-xs">
+                      <SelectGroup>
+                        <SelectItem
+                          v-for="role in roleInfo"
+                          :key="role.value"
+                          :value="role.value"
+                          class="leading-none text-gray-700 dark:text-gray-100 rounded flex items-center h-8 pe-7 ps-7 relative select-none cursor-pointer data-[highlighted]:bg-blue-600 data-[highlighted]:text-white data-[state=checked]:font-semibold"
+                        >
+                          <SelectItemIndicator
+                            class="absolute start-0 w-7 inline-flex items-center justify-center"
+                          >
+                            <Icon icon="radix-icons:check" class="w-4 h-4" />
+                          </SelectItemIndicator>
+                          <Icon :icon="role.icon" class="me-2 w-4 h-4" />
+                          <SelectItemText>{{ role.name }}</SelectItemText>
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectViewport>
+                    <SelectScrollDownButton
+                      class="flex items-center justify-center h-5 bg-white dark:bg-gray-800 text-gray-500"
+                    >
+                      <Icon icon="radix-icons:chevron-down" />
+                    </SelectScrollDownButton>
+                  </SelectContent>
+                </SelectPortal>
+              </SelectRoot>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div
+        v-if="!loading && totalPages > 1"
+        class="flex items-center justify-center gap-3 px-5 py-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-300"
+      >
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+          :disabled="page === 1"
+          @click="prevPage"
+        >
+          <Icon icon="mdi:chevron-left" class="text-base" />
+          {{ t('common.prev') }}
+        </button>
+        <span class="font-medium tabular-nums">{{ t('common.page', { current: page, total: totalPages }) }}</span>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 h-8 px-3 rounded-md border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+          :disabled="page >= totalPages"
+          @click="nextPage"
+        >
+          {{ t('common.next') }}
+          <Icon icon="mdi:chevron-right" class="text-base" />
+        </button>
       </div>
     </div>
+
     <ConfirmDialog
       v-if="showConfirm"
       :open="showConfirm"
-      title="Confirm Role Change"
+      :title="t('members.confirmRoleChange')"
       :description="confirmMessage"
-      body="Are you sure you want to proceed?"
+      :body="t('members.confirmProceed')"
       @confirm="handleConfirm"
       @cancel="handleCancel"
     />
@@ -208,11 +199,13 @@
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { ref, watch, onMounted, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import { useToast } from "vue-toastification";
 import {
   SelectRoot,
   SelectTrigger,
@@ -226,7 +219,7 @@ import {
   SelectItemIndicator,
   SelectScrollUpButton,
   SelectScrollDownButton,
-} from 'radix-vue';
+} from "radix-vue";
 
 const toast = useToast();
 
@@ -245,28 +238,54 @@ const totalPages = computed(() =>
 );
 const updatingRoleId = ref(null);
 
-const roleInfo = [
+const roleInfo = computed(() => [
   {
-    name: "Reader",
-    description: "Can read and comment on posts.",
+    value: "reader",
+    name: t("roles.reader"),
+    description: t("members.descriptions.reader"),
     icon: "mdi:account-box",
   },
   {
-    name: "Author",
-    description: "Can create and edit their own posts.",
+    value: "author",
+    name: t("roles.author"),
+    description: t("members.descriptions.author"),
     icon: "mdi:account-edit",
   },
   {
-    name: "Admin",
-    description: "Can manage all users and posts.",
+    value: "admin",
+    name: t("roles.admin"),
+    description: t("members.descriptions.admin"),
     icon: "mdi:shield-account",
   },
   {
-    name: "Disabled",
-    description: "Cannot log in or access any features.",
+    value: "disabled",
+    name: t("roles.disabled"),
+    description: t("members.descriptions.disabled"),
     icon: "mdi:account-cancel",
   },
-];
+]);
+
+function initials(name) {
+  const s = String(name || "?").trim();
+  return (s.charAt(0) || "?").toUpperCase();
+}
+
+function roleIcon(role) {
+  return (
+    roleInfo.value.find((r) => r.value === role)?.icon || "mdi:account"
+  );
+}
+
+function roleBadgeClasses(role) {
+  return (
+    {
+      reader: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      author: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      admin: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+      disabled: "bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300",
+    }[role] || "bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300"
+  );
+}
 
 function onSearchInput() {
   clearTimeout(searchTimeout);
@@ -299,7 +318,7 @@ async function fetchUsers() {
 
   const { data, error, count } = await query;
   if (error) {
-    toast.error("Failed to fetch members: " + error.message);
+    toast.error(t("members.fetchFailed", { message: error.message }));
   } else {
     users.value = data;
     totalCount.value = count || 0;
@@ -340,9 +359,7 @@ function handleCancel() {
 
 async function updateRole(user) {
   if (user.id === currentUserId.value) {
-    const proceed = await askConfirmation(
-      "You are changing your own role. This may remove your admin access. Continue?"
-    );
+    const proceed = await askConfirmation(t("members.selfRoleWarning"));
     if (!proceed) {
       user.role = originalRoles.value[user.id] || "reader";
       return;
@@ -357,12 +374,14 @@ async function updateRole(user) {
       .select("id, role")
       .maybeSingle();
     if (error) throw error;
-    if (!data) throw new Error("No rows updated. Check RLS policies.");
+    if (!data) throw new Error(t("members.noRowsUpdated"));
     user.role = data.role;
     originalRoles.value[user.id] = data.role;
-    toast.success(`Role updated to ${data.role} for ${user.username}`);
+    toast.success(
+      t("members.roleUpdated", { role: data.role, username: user.username })
+    );
   } catch (e) {
-    toast.error("Error updating role: " + e.message);
+    toast.error(t("members.updateFailed", { message: e.message }));
     user.role = originalRoles.value[user.id] || "reader";
   } finally {
     updatingRoleId.value = null;
@@ -374,3 +393,4 @@ onMounted(async () => {
   await fetchUsers();
 });
 </script>
+

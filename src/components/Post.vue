@@ -4,7 +4,7 @@
       icon="mdi:file-search-outline"
       class="text-5xl text-gray-300 dark:text-gray-600 mb-4"
     />
-    <p class="text-sm">Post not found or is loading...</p>
+    <p class="text-sm">{{ t('posts.loadingOrMissing') }}</p>
   </div>
 
   <article
@@ -35,11 +35,11 @@
         ></div>
         <div class="absolute top-4 left-4 flex flex-wrap gap-2">
           <router-link
-            :to="`/category/${post.category?.slug || 'uncategorized'}`"
+            :to="localePath(`/category/${post.category?.slug || 'uncategorized'}`)"
             class="inline-flex items-center gap-1 px-3 h-8 rounded-full text-[11px] font-medium bg-white/80 dark:bg-gray-900/60 text-blue-700 dark:text-blue-300 backdrop-blur hover:bg-white dark:hover:bg-gray-900 transition border border-white/60 dark:border-gray-700/60"
           >
             <Icon icon="mdi:folder" class="text-sm" />
-            {{ post.category?.name || "Uncategorized" }}
+            {{ post.category?.name || t('common.uncategorized') }}
           </router-link>
         </div>
       </div>
@@ -62,7 +62,7 @@
       >
         <router-link
           v-if="post.author?.username"
-          :to="`/author/${post.author.username}`"
+          :to="localePath(`/author/${post.author.username}`)"
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
         >
           <Icon icon="mdi:account" class="text-sm" />
@@ -80,7 +80,7 @@
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
         >
           <Icon icon="mdi:clock-outline" class="text-sm" />
-          {{ readingTime }} min read
+          {{ t('posts.minRead', { minutes: readingTime }) }}
         </span>
       </div>
     </div>
@@ -105,7 +105,7 @@
         <h4
           class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-4"
         >
-          Tags
+          {{ t('posts.tags') }}
         </h4>
         <div class="flex flex-wrap gap-2">
           <span
@@ -125,7 +125,7 @@
           class="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400"
         >
           <Icon icon="mdi:share-variant" class="text-lg text-blue-500" />
-          <span class="font-medium">Share this post</span>
+          <span class="font-medium">{{ t('posts.share') }}</span>
         </div>
         <div class="flex items-center gap-3">
           <button
@@ -133,10 +133,10 @@
             class="inline-flex items-center gap-1 h-9 px-4 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
           >
             <div v-if="!linkCopied" class="inline-flex items-center gap-1">
-              <Icon icon="mdi:link" class="text-base" /> Copy Link
+              <Icon icon="mdi:link" class="text-base" /> {{ t('posts.copyLink') }}
             </div>
             <div v-else class="inline-flex items-center gap-1">
-              <Icon icon="mdi:check" class="text-base" /> Link Copied
+              <Icon icon="mdi:check" class="text-base" /> {{ t('posts.linkCopied') }}
             </div>
           </button>
           <a
@@ -145,14 +145,14 @@
             rel="noopener"
             class="inline-flex items-center gap-1 h-9 px-4 rounded-md text-sm font-medium bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/60 focus:outline-none focus:ring-2 focus:ring-sky-400 dark:focus:ring-sky-600"
           >
-            <Icon icon="mdi:twitter" class="text-base" /> Tweet
+            <Icon icon="mdi:twitter" class="text-base" /> {{ t('posts.tweet') }}
           </a>
           <button
             v-if="canNativeShare"
             @click="nativeShare"
             class="inline-flex items-center gap-1 h-9 px-4 rounded-md text-sm font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
           >
-            <Icon icon="mdi:share" class="text-base" /> Share
+            <Icon icon="mdi:share" class="text-base" /> {{ t('posts.shareAction') }}
           </button>
         </div>
       </div>
@@ -174,18 +174,19 @@
     />
     <meta
       itemprop="publisher"
-      :content="post.author?.display_name || post.author?.username || 'Unknown'"
+      :content="post.author?.display_name || post.author?.username || t('common.unknown')"
     />
   </article>
 </template>
 
 <script setup>
+const { t } = useI18n()
+const localePath = useLocalePath()
+
 import { ref, nextTick, watch, computed } from "vue";
 import Markdown from "vue3-markdown-it";
 import { Icon } from "@iconify/vue";
-import NoImage from "./NoImage.vue";
-import { useToast } from "vue-toastification";
-import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
+import NoImage from "./NoImage.vue";import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
 
 const toast = useToast();
 
@@ -211,7 +212,7 @@ const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
 const twitterShareUrl = computed(() => {
   const url = encodeURIComponent(getBrowserUrl());
-  const text = encodeURIComponent(props.post?.title || "Check this out");
+  const text = encodeURIComponent(props.post?.title || t('posts.shareText'));
   return `https://x.com/intent/tweet?text=${text}&url=${url}`;
 });
 
@@ -223,7 +224,7 @@ async function copyLink() {
     linkCopied.value = true;
     setTimeout(() => (linkCopied.value = false), 2000);
   } catch {
-    toast.error("Failed to copy link");
+    toast.error(t('posts.copyFailed'));
   }
 }
 
@@ -234,7 +235,7 @@ async function nativeShare() {
       url: getBrowserUrl(),
     });
   } catch {
-    toast.error("Share cancelled or failed");
+    toast.error(t('posts.shareCancelled'));
   }
 }
 
@@ -277,15 +278,15 @@ function addEnhancements() {
       if (!pre.querySelector(".copy-btn")) {
         const btn = document.createElement("button");
         btn.className = "copy-btn";
-        btn.innerText = "Copy";
+        btn.innerText = t('posts.codeCopy');
         btn.onclick = async () => {
           try {
             await navigator.clipboard.writeText(code.innerText);
-            btn.innerText = "Copied!";
-            setTimeout(() => (btn.innerText = "Copy"), 1500);
+            btn.innerText = t('posts.codeCopied');
+            setTimeout(() => (btn.innerText = t('posts.codeCopy')), 1500);
           } catch {
-            btn.innerText = "Failed";
-            setTimeout(() => (btn.innerText = "Copy"), 1500);
+            btn.innerText = t('posts.codeFailed');
+            setTimeout(() => (btn.innerText = t('posts.codeCopy')), 1500);
           }
         };
         pre.appendChild(btn);
