@@ -1,153 +1,107 @@
-# Pluma - Blogging Platform
+# Pluma
 
 ![Pluma Logo](https://ik.imagekit.io/daryandev/Pluma%20-%20Light%2016:9_EsbqpDdyIv?updatedAt=1756539494268)
 
-A modern, open-source blogging platform built with [Nuxt 3](https://nuxt.com/) (Vue 3) and [Supabase](https://supabase.com/).
+Open-source blogging platform built with [Nuxt 3](https://nuxt.com/) and [Supabase](https://supabase.com/).
+
+**Demo:** [pluma.daryandev.com](https://pluma.daryandev.com)
 
 ## Features
 
-- User authentication and role management (admin, author, reader)
-- Post creation, editing, and deletion with rich text support
-- Commenting system with moderation capabilities
-- Responsive design for mobile and desktop
-- **SSR** with live sitemap, RSS, robots, and SEO (OG/Twitter, JSON-LD, hreflang)
-- **Multi-language** UI (`en`, `ku`, `ar`, `es`, `fr`, `de`) + per-locale posts/categories/series
-- Scheduled publishing, draft preview links, and post series
-- Deploy with Docker **or** Vercel / Netlify (see [docs/DEPLOY.md](docs/DEPLOY.md))
+- Roles: admin, author, and reader
+- Posts with Markdown editor, drafts, scheduled publish, and preview links
+- Categories, series, comments (with moderation)
+- Multi-language UI and content (`en`, `ku`, `ar`, `es`, `fr`, `de`)
+- SSR with sitemap, RSS, robots.txt, and Open Graph / Twitter meta
+- Branding, logos, favicon, and homepage layout from the dashboard
+- Docker image, or deploy on Vercel / Netlify
 
-## Demo
+## Stack
 
-A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma.daryandev.com). You can sign up as a new user to explore the platform's features (except admin functionalities).
+| Layer | Technology |
+|-------|------------|
+| App | Nuxt 3, Vue 3, Tailwind CSS |
+| Auth & data | Supabase (Postgres, Auth, Storage) |
+| Runtime | Nitro (Node SSR) |
 
-## Setup
+## Requirements
 
-1. Clone the repository:
+- Node.js 20+
+- A Supabase project (or compatible Postgres + Auth + Storage)
 
-    ```bash
-    git clone https://github.com/Daryan97/pluma.git
-    cd pluma
-    ```
+## Quick start
 
-2. Install dependencies:
-
-    ```bash
-    npm install
-    ```
-
-3. Copy `.env.example` to `.env` and set Supabase + public site URL (used for sitemap/RSS/canonical URLs):
-
-    ```bash
-    cp .env.example .env
-    ```
-
-4. Set up Supabase:
-
-    - **New installs:** open `/install` in the app (English only), or run `src/install/pluma_initial.sql` in the SQL editor.
-      - Includes series, scheduling, preview tokens, locales, and RLS helpers in one script.
-    - **Existing Pluma DBs** (upgrade in order as needed):
-      - `src/install/pluma_features_v2.sql` — scheduling, preview tokens, series
-      - `src/install/pluma_i18n_v3.sql` — multi-language content (`locale` + translation groups)
-      - `src/install/pluma_rls_fix.sql` — only if storage/settings RLS is broken after a restore
-
-5. Start the development server:
-
-    ```bash
-    npm run dev
-    ```
-
-6. Open `http://localhost:3000` (Nuxt default). In development, `/test` is available for diagnostics (storage, auth, i18n, feeds, RLS).
-
-### Quick Deployment
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDaryan97%2Fpluma&env=VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_SITE_URL,VITE_ENV&envDescription=Required%20Pluma%20runtime%20variables%20(see%20docs%2FDEPLOY.md)&project-name=pluma&repository-name=pluma)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Daryan97/pluma)
-
-Before or during deploy, set these environment variables (same names on Vercel, Netlify, and Docker):
-
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `VITE_SUPABASE_URL` | Yes | Supabase project API URL |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon / publishable key |
-| `VITE_SITE_URL` | Yes | Public site origin (canonical, sitemap, RSS, i18n) |
-| `VITE_ENV` | Yes | Use `production` for live deploys |
-| `VITE_SITE_LOCALE` | No | Default locale (`en` if omitted) |
-
-The Vercel button prompts for the required vars. On Netlify, fill them in the deploy UI (or Site settings → Environment variables).
-
-Full deploy notes (Docker, health checks, backups): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
-
-For a quick Docker deployment using the published image:
-
-```yaml
-services:
-  app:
-    image: daryan997/pluma:latest
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    environment:
-      VITE_SITE_URL: "https://blog.example.com"
-      VITE_SUPABASE_URL: "https://supabase.example.com"
-      VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
-      VITE_ENV: "production"
+```bash
+git clone https://github.com/Daryan97/pluma.git
+cd pluma
+npm install
+cp .env.example .env
 ```
 
-The container runs **Nuxt Nitro** (Node) that:
+Edit `.env` with your Supabase URL, anon key, and public site URL (see [.env.example](.env.example)).
 
-- Serves the SSR Vue app
-- Exposes `/env` runtime config for clients
-- Generates **live** `/sitemap.xml`, `/rss.xml`, and `/robots.txt` from Supabase (including filters and `?locale=`)
-- Renders SEO meta on the server for public routes
-- Health endpoints: `/healthz`, `/readyz`
+### Database
 
-New posts appear in sitemap/RSS after the in-memory cache TTL (default 5 minutes) — no image rebuild required.
+| Scenario | What to run |
+|----------|-------------|
+| New project | Open `/install` in the browser, or run [`src/install/pluma_initial.sql`](src/install/pluma_initial.sql) in the Supabase SQL editor |
+| Upgrade (series / schedule / preview) | [`src/install/pluma_features_v2.sql`](src/install/pluma_features_v2.sql) |
+| Upgrade (i18n content) | [`src/install/pluma_i18n_v3.sql`](src/install/pluma_i18n_v3.sql) (after v2) |
+| Broken storage/settings RLS after restore | [`src/install/pluma_rls_fix.sql`](src/install/pluma_rls_fix.sql) |
 
-### Build and Deployment
+Do not re-run v2/v3 after a fresh `pluma_initial.sql` install; those features are already included.
 
-#### Local production (SSR)
+### Development
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). In development, `/test` is available for diagnostics.
+
+### Production (local)
 
 ```bash
 npm run build
 npm start
 ```
 
-Then open `http://localhost:3000`. The Nitro server reads env from the process / `.env`. Docker uses port `80` via `PORT` / `NITRO_PORT`.
+## Configuration
 
-Platform-specific notes (Vercel / Netlify) are in [docs/DEPLOY.md](docs/DEPLOY.md).
+Use **only** `VITE_*` variables (do not also set `NUXT_PUBLIC_*`).
 
-#### Docker / Compose
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_SUPABASE_URL` | Yes | Supabase API URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon key |
+| `VITE_SITE_URL` | Yes | Public origin (canonical URLs, sitemap, RSS, i18n) |
+| `VITE_ENV` | Yes | `production` or `development` |
+| `VITE_SITE_LOCALE` | No | Default locale (default `en`) |
+| `VITE_TWITTER_SITE` | No | Twitter/X `@handle` for cards |
+| `VITE_FEEDS_CACHE_TTL_MS` | No | Feed cache TTL in ms (default `300000`) |
 
-The `Dockerfile` builds a Node image that runs `.output/server/index.mjs`. **No build-args are required** — credentials and site URL come from container environment variables at runtime.
+## Docker
 
-Build and push:
+Published image: [`daryan997/pluma`](https://hub.docker.com/r/daryan997/pluma)
 
 ```bash
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t your-dockerhub-user/pluma:latest \
-  --push .
+docker compose -f docker-compose.example.yml up -d
 ```
 
-Run with Compose (see also `docker-compose.example.yml`):
+Or set the same `VITE_*` variables on any container that runs `daryan997/pluma:latest` (port `80`).
 
-```yaml
-services:
-  app:
-    image: your-dockerhub-user/pluma:latest
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    environment:
-      VITE_SUPABASE_URL: "https://supabase.example.com"
-      VITE_SUPABASE_ANON_KEY: "your_supabase_anon_key"
-      VITE_ENV: "production"
-      VITE_SITE_URL: "https://blog.example.com"
-```
+Full deployment docs: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
-## Contributing
+One-click hosts:
 
-Contributions are welcome! Please fork the repository and create a pull request with your changes.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDaryan97%2Fpluma&env=VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_SITE_URL,VITE_ENV&envDescription=Required%20Pluma%20runtime%20variables%20(see%20docs%2FDEPLOY.md)&project-name=pluma&repository-name=pluma)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Daryan97/pluma)
+
+## Documentation
+
+- [Deployment](docs/DEPLOY.md) — Docker, Vercel, Netlify, env vars, health checks, backups
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE)
