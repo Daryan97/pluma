@@ -65,7 +65,13 @@ Configure enabled locales and primary locale under **Dashboard → Branding / lo
 
 ## Vercel / Netlify
 
-Use the provided `vercel.json` / `netlify.toml` with the same `VITE_*` env vars as Docker. Prefer the SSR/serverless target so `/sitemap.xml`, `/rss.xml`, and `/env` stay live.
+**Vercel:** use Nuxt’s zero-config SSR deploy. Keep `vercel.json` minimal (`framework: nuxtjs`) — do **not** set Output Directory to `dist` or add SPA catch-all rewrites. Those send `/_nuxt/*.js` as HTML and cause a white screen / MIME errors. Nitro serves `/sitemap.xml`, `/rss.xml`, `/robots.txt`, `/env`, `/healthz`, and `/readyz` from `src/server/routes`.
+
+In the Vercel project settings, clear any manual **Output Directory** override so auto-detection can use `.vercel/output`.
+
+**Netlify:** `netlify.toml` still uses the legacy SPA + functions layout under `netlify/functions`. Prefer Docker or Vercel for full Nuxt SSR until that file is migrated.
+
+Use the same `VITE_*` / `NUXT_PUBLIC_*` env vars as Docker.
 
 ## Backup
 
