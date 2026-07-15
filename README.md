@@ -2,7 +2,7 @@
 
 ![Pluma Logo](https://ik.imagekit.io/daryandev/Pluma%20-%20Light%2016:9_EsbqpDdyIv?updatedAt=1756539494268)
 
-A modern, open-source blogging platform built with [Nuxt 3](https://nuxt.com/) (Vue 3 SSR) and [Supabase](https://supabase.com/).
+A modern, open-source blogging platform built with [Nuxt 3](https://nuxt.com/) (Vue 3) and [Supabase](https://supabase.com/).
 
 ## Features
 
@@ -59,7 +59,22 @@ A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma
 
 ### Quick Deployment
 
-See **[docs/DEPLOY.md](docs/DEPLOY.md)** for Docker, Vercel, Netlify, health checks, and backups.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDaryan97%2Fpluma&env=VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_SITE_URL,VITE_ENV&envDescription=Required%20Pluma%20runtime%20variables%20(see%20docs%2FDEPLOY.md)&project-name=pluma&repository-name=pluma)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Daryan97/pluma)
+
+Before or during deploy, set these environment variables (same names on Vercel, Netlify, and Docker):
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `VITE_SUPABASE_URL` | Yes | Supabase project API URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon / publishable key |
+| `VITE_SITE_URL` | Yes | Public site origin (canonical, sitemap, RSS, i18n) |
+| `VITE_ENV` | Yes | Use `production` for live deploys |
+| `VITE_SITE_LOCALE` | No | Default locale (`en` if omitted) |
+
+The Vercel button prompts for the required vars. On Netlify, fill them in the deploy UI (or Site settings → Environment variables).
+
+Full deploy notes (Docker, health checks, backups): **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 For a quick Docker deployment using the published image:
 

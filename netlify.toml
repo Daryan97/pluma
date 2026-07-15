@@ -6,3 +6,10 @@
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Shown when using the “Deploy to Netlify” button from the README.
+[template.environment]
+  VITE_SUPABASE_URL = "Supabase project API URL"
+  VITE_SUPABASE_ANON_KEY = "Supabase anon / publishable key"
+  VITE_SITE_URL = "Public site URL (e.g. https://your-site.netlify.app)"
+  VITE_ENV = "production"
