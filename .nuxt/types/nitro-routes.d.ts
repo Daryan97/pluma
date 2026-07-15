@@ -9,6 +9,12 @@ declare module "nitropack/types" {
     '/healthz': {
       'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/healthz.get').default>>>>
     }
+    '/manifest.json': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/manifest.json').default>>>>
+    }
+    '/manifest.webmanifest': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/manifest.webmanifest').default>>>>
+    }
     '/readyz': {
       'get': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/readyz.get').default>>>>
     }

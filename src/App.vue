@@ -35,13 +35,16 @@ applyLocalizedBranding();
 
 useHead(() => {
   const href = branding.faviconUrl?.value;
-  if (!href) return {};
-  return {
-    link: [
+  const links = [
+    { rel: "manifest", href: "/manifest.webmanifest", key: "web-manifest" },
+  ];
+  if (href) {
+    links.push(
       { rel: "icon", href, key: "site-favicon" },
-      { rel: "apple-touch-icon", href, key: "apple-touch-icon" },
-    ],
-  };
+      { rel: "apple-touch-icon", href, key: "apple-touch-icon" }
+    );
+  }
+  return { link: links };
 });
 
 async function clampLocaleToEnabled() {

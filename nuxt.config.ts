@@ -92,6 +92,11 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Pluma',
+      link: [
+        { rel: 'alternate', type: 'application/rss+xml', title: 'Pluma RSS', href: '/rss.xml' },
+        { rel: 'sitemap', type: 'application/xml', href: '/sitemap.xml' },
+        { rel: 'manifest', href: '/manifest.webmanifest' },
+      ],
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -99,10 +104,7 @@ export default defineNuxtConfig({
           name: 'description',
           content: 'A simple and modern blogging platform built with Nuxt and Supabase.',
         },
-      ],
-      link: [
-        { rel: 'alternate', type: 'application/rss+xml', title: 'Pluma RSS', href: '/rss.xml' },
-        { rel: 'sitemap', type: 'application/xml', href: '/sitemap.xml' },
+        { name: 'theme-color', content: '#2563eb' },
       ],
       // Apply saved theme before first paint to avoid light→dark flash
       // (primary boot is also in app.html; this is a backup for shells without app.html)

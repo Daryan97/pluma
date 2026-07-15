@@ -2410,7 +2410,7 @@ async function errorHandler(error, event) {
 
 const rootDir = "C:/Projects/Web/Pluma/pluma-frontend";
 
-const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"A simple and modern blogging platform built with Nuxt and Supabase."}],"link":[{"rel":"alternate","type":"application/rss+xml","title":"Pluma RSS","href":"/rss.xml"},{"rel":"sitemap","type":"application/xml","href":"/sitemap.xml"}],"style":[],"script":[{"key":"pluma-theme-boot","innerHTML":"(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){var m=document.cookie.match(/(?:^|; )pluma_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1])}if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t}catch(e){}})();","tagPosition":"head"}],"noscript":[],"title":"Pluma"};
+const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"A simple and modern blogging platform built with Nuxt and Supabase."},{"name":"theme-color","content":"#2563eb"}],"link":[{"rel":"alternate","type":"application/rss+xml","title":"Pluma RSS","href":"/rss.xml"},{"rel":"sitemap","type":"application/xml","href":"/sitemap.xml"},{"rel":"manifest","href":"/manifest.webmanifest"}],"style":[],"script":[{"key":"pluma-theme-boot","innerHTML":"(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){var m=document.cookie.match(/(?:^|; )pluma_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1])}if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t}catch(e){}})();","tagPosition":"head"}],"noscript":[],"title":"Pluma"};
 
 const appRootTag = "div";
 
@@ -3048,6 +3048,8 @@ async function getIslandContext(event) {
 
 const _lazy_LXSlkG = () => Promise.resolve().then(function () { return env_get$1; });
 const _lazy_NautZO = () => Promise.resolve().then(function () { return healthz_get$1; });
+const _lazy_Khe8Y7 = () => Promise.resolve().then(function () { return manifest_json$1; });
+const _lazy_zSM87Y = () => Promise.resolve().then(function () { return manifest_webmanifest$1; });
 const _lazy_IxOjtj = () => Promise.resolve().then(function () { return readyz_get$1; });
 const _lazy_whpQtW = () => Promise.resolve().then(function () { return robots_txt$1; });
 const _lazy_voRbEM = () => Promise.resolve().then(function () { return rss_xml$1; });
@@ -3059,6 +3061,8 @@ const handlers = [
   { route: '', handler: _AZQAXO, lazy: false, middleware: true, method: undefined },
   { route: '/env', handler: _lazy_LXSlkG, lazy: true, middleware: false, method: "get" },
   { route: '/healthz', handler: _lazy_NautZO, lazy: true, middleware: false, method: "get" },
+  { route: '/manifest.json', handler: _lazy_Khe8Y7, lazy: true, middleware: false, method: undefined },
+  { route: '/manifest.webmanifest', handler: _lazy_zSM87Y, lazy: true, middleware: false, method: undefined },
   { route: '/readyz', handler: _lazy_IxOjtj, lazy: true, middleware: false, method: "get" },
   { route: '/robots.txt', handler: _lazy_whpQtW, lazy: true, middleware: false, method: undefined },
   { route: '/rss.xml', handler: _lazy_voRbEM, lazy: true, middleware: false, method: undefined },
@@ -3444,6 +3448,112 @@ const healthz_get = defineEventHandler(() => {
 const healthz_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: healthz_get
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const DEFAULT_NAME = "Pluma";
+const DEFAULT_DESCRIPTION = "A simple and modern blogging platform built with Nuxt and Supabase.";
+const FALLBACK_ICON = "/favicon.png";
+function absoluteUrl(siteUrl, pathOrUrl) {
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const base = String(siteUrl).replace(/\/$/, "");
+  const path = String(pathOrUrl).startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return base ? `${base}${path}` : path;
+}
+function guessImageType(url) {
+  const lower = String(url).toLowerCase();
+  if (lower.includes(".svg")) return "image/svg+xml";
+  if (lower.includes(".ico")) return "image/x-icon";
+  if (lower.includes(".webp")) return "image/webp";
+  if (lower.includes(".jpg") || lower.includes(".jpeg")) return "image/jpeg";
+  return "image/png";
+}
+async function loadBranding(event) {
+  const config = useRuntimeConfig(event);
+  const url = config.public.supabaseUrl || process.env.VITE_SUPABASE_URL || "";
+  const key = config.public.supabaseAnonKey || process.env.VITE_SUPABASE_ANON_KEY || "";
+  if (!url || !key || url.includes("placeholder.supabase")) return null;
+  try {
+    const supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    const { data, error } = await supabase.from("settings").select("value").eq("key", "branding").maybeSingle();
+    if (error) {
+      console.warn("[manifest] branding read failed:", error.message);
+      return null;
+    }
+    return (data == null ? void 0 : data.value) && typeof data.value === "object" ? data.value : null;
+  } catch (e) {
+    console.warn("[manifest] branding error:", (e == null ? void 0 : e.message) || e);
+    return null;
+  }
+}
+async function buildWebManifest(event) {
+  const config = useRuntimeConfig(event);
+  const siteUrl = config.public.siteUrl || process.env.VITE_SITE_URL || "http://localhost:3000";
+  const branding = await loadBranding(event);
+  const name = ((branding == null ? void 0 : branding.siteName) || "").trim() || DEFAULT_NAME;
+  const description = ((branding == null ? void 0 : branding.siteDescription) || "").trim() || DEFAULT_DESCRIPTION;
+  const shortName = name.length > 12 ? name.slice(0, 12) : name;
+  const iconSrc = absoluteUrl(
+    siteUrl,
+    (branding == null ? void 0 : branding.faviconUrl) || (branding == null ? void 0 : branding.lightLogoUrl) || (branding == null ? void 0 : branding.darkLogoUrl) || FALLBACK_ICON
+  ) || FALLBACK_ICON;
+  return {
+    id: "/",
+    name,
+    short_name: shortName,
+    description,
+    start_url: "/",
+    scope: "/",
+    display: "standalone",
+    orientation: "any",
+    background_color: "#ffffff",
+    theme_color: "#2563eb",
+    lang: (branding == null ? void 0 : branding.primaryLocale) || (branding == null ? void 0 : branding.locale) || "en",
+    icons: [
+      {
+        src: iconSrc,
+        sizes: "any",
+        type: guessImageType(iconSrc),
+        purpose: "any"
+      },
+      {
+        src: iconSrc,
+        sizes: "192x192",
+        type: guessImageType(iconSrc),
+        purpose: "any"
+      },
+      {
+        src: iconSrc,
+        sizes: "512x512",
+        type: guessImageType(iconSrc),
+        purpose: "any"
+      }
+    ]
+  };
+}
+function sendWebManifest(event, manifest) {
+  setHeader(event, "Content-Type", "application/manifest+json; charset=utf-8");
+  setHeader(event, "Cache-Control", "public, max-age=300");
+  return manifest;
+}
+
+const manifest_json = defineEventHandler(async (event) => {
+  return sendWebManifest(event, await buildWebManifest(event));
+});
+
+const manifest_json$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: manifest_json
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const manifest_webmanifest = defineEventHandler(async (event) => {
+  return sendWebManifest(event, await buildWebManifest(event));
+});
+
+const manifest_webmanifest$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: manifest_webmanifest
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const readyz_get = defineEventHandler(async (event) => {

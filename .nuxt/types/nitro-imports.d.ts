@@ -14,6 +14,7 @@ declare global {
   const appendResponseHeaders: typeof import('../../node_modules/h3').appendResponseHeaders
   const assertMethod: typeof import('../../node_modules/h3').assertMethod
   const buildHreflangs: typeof import('../../src/server/utils/feeds/seo').buildHreflangs
+  const buildWebManifest: typeof import('../../src/server/utils/webManifest').buildWebManifest
   const cachedEventHandler: typeof import('../../node_modules/nitropack/dist/runtime/internal/cache').cachedEventHandler
   const cachedFunction: typeof import('../../node_modules/nitropack/dist/runtime/internal/cache').cachedFunction
   const callNodeListener: typeof import('../../node_modules/h3').callNodeListener
@@ -118,6 +119,7 @@ declare global {
   const sendProxy: typeof import('../../node_modules/h3').sendProxy
   const sendRedirect: typeof import('../../node_modules/h3').sendRedirect
   const sendStream: typeof import('../../node_modules/h3').sendStream
+  const sendWebManifest: typeof import('../../src/server/utils/webManifest').sendWebManifest
   const sendWebResponse: typeof import('../../node_modules/h3').sendWebResponse
   const serveStatic: typeof import('../../node_modules/h3').serveStatic
   const setCookie: typeof import('../../node_modules/h3').setCookie
@@ -173,3 +175,4 @@ export { defineI18nLocale, defineI18nConfig } from 'C:/Projects/Web/Pluma/pluma-
 export { createFeedGenerator } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/createFeedGenerator';
 export { DEFAULT_SITE_NAME, DEFAULT_SITE_DESCRIPTION, normalizeSiteUrl, escapeXml, stripFormatting, parseFeedFilters, getOriginFromRequest, FeedGenerator } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/feeds/generator';
 export { twitterSiteFromBranding, resolveSeoImage, robotsForPath, injectMeta, resolveSeoPayload, buildHreflangs, localizePath, stripLocalePrefix } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/feeds/seo';
+export { buildWebManifest, sendWebManifest } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/webManifest';
