@@ -9,6 +9,7 @@
       >
         <AvatarImage
           v-if="resolvedAvatarUrl"
+          :key="resolvedAvatarUrl"
           :src="resolvedAvatarUrl"
           alt="User Avatar"
           class="w-full h-full object-cover"
@@ -37,6 +38,7 @@
           >
             <AvatarImage
               v-if="resolvedAvatarUrl"
+              :key="'dd-' + resolvedAvatarUrl"
               :src="resolvedAvatarUrl"
               :alt="displayName"
               class="w-full h-full object-cover"
@@ -183,12 +185,12 @@ function go(path) {
 }
 
 const logout = async () => {
-  await supabase.auth.signOut();
   try {
     useAuthCache().clearAuthCache();
   } catch {
     /* ignore */
   }
+  await supabase.auth.signOut();
   window.location.href = localePath("/");
 };
 </script>

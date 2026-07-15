@@ -28,6 +28,7 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../src/plugins/iconify.js")> &
   InjectionType<typeof import("../../src/plugins/locale-aware-router.js")> &
   InjectionType<typeof import("../../src/plugins/robots-meta.js")> &
+  InjectionType<typeof import("../../src/plugins/runtime-env.js")> &
   InjectionType<typeof import("../../src/plugins/toast.client.js")> &
   InjectionType<typeof import("../../src/plugins/unregister-sw.client.js")> &
   InjectionType<typeof import("../../node_modules/@nuxtjs/i18n/dist/runtime/plugins/ssg-detect.js")> &

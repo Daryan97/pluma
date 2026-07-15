@@ -378,7 +378,7 @@ import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
-import { getBrowserOrigin } from "@/lib/utils";
+import { resolveSiteOrigin } from "@/lib/utils";
 
 const toast = useToast();
 const route = useRoute();
@@ -548,9 +548,10 @@ async function saveEmail() {
   }
 
   if (emailAuthInput.value && emailAuthInput.value !== authUser.value.email) {
+    const origin = await resolveSiteOrigin();
     const { data, error } = await supabase.auth.updateUser(
       { email: emailAuthInput.value },
-      { emailRedirectTo: `${getBrowserOrigin()}/profile` }
+      { emailRedirectTo: `${origin}/profile` }
     );
 
     if (error) {
@@ -677,10 +678,11 @@ async function removeAvatar() {
 }
 
 async function linkProvider(provider) {
+  const origin = await resolveSiteOrigin();
   const { data, error } = await supabase.auth.linkIdentity({
     provider,
     options: {
-      redirectTo: `${getBrowserOrigin()}/profile`,
+      redirectTo: `${origin}/profile`,
       skipBrowserRedirect: true,
     },
   });

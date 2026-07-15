@@ -78,7 +78,8 @@
     "reset": "Zurücksetzen",
     "upload": "Hochladen",
     "done": "Fertig",
-    "generate": "Erzeugen"
+    "generate": "Erzeugen",
+    "continue": "Continue"
   },
   "error": {
     "403": {
@@ -291,7 +292,11 @@
       "strong": "Stark"
     },
     "usernameHint": "A–Z, a–z, 0–9, - und _",
-    "usernameInvalid": "3-20 Zeichen: Buchstaben, Zahlen, - _"
+    "usernameInvalid": "3-20 Zeichen: Buchstaben, Zahlen, - _",
+    "welcomeUser": "Hi, {name}",
+    "enterPasswordContinue": "Enter your password or use a magic link.",
+    "checking": "Checking…",
+    "accountNotFound": "No account found for that email."
   },
   "archive": {
     "title": "Archiv",

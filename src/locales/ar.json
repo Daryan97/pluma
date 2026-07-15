@@ -78,7 +78,8 @@
     "reset": "إعادة تعيين",
     "upload": "رفع",
     "done": "تم",
-    "generate": "إنشاء"
+    "generate": "إنشاء",
+    "continue": "Continue"
   },
   "error": {
     "403": {
@@ -291,7 +292,11 @@
       "strong": "قوية"
     },
     "usernameHint": "A–Z, a–z, 0–9, - and _",
-    "usernameInvalid": "3-20 chars: letters, numbers, - _"
+    "usernameInvalid": "3-20 chars: letters, numbers, - _",
+    "welcomeUser": "Hi, {name}",
+    "enterPasswordContinue": "Enter your password or use a magic link.",
+    "checking": "Checking…",
+    "accountNotFound": "No account found for that email."
   },
   "archive": {
     "title": "الأرشيف",

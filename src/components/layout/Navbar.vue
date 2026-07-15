@@ -596,8 +596,16 @@ async function getUser({ force = false } = {}) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  try {
+    useAuthCache().clearAuthCache();
+  } catch {
+    /* ignore */
+  }
   user.value = null;
+  displayName.value = "";
+  role.value = "";
+  avatar_url.value = null;
+  await supabase.auth.signOut();
   window.location.href = localePath("/");
 }
 
@@ -642,9 +650,15 @@ onMounted(() => {
     setTimeout(() => {
       if (session?.user) getUser();
       else {
+        try {
+          useAuthCache().clearAuthCache();
+        } catch {
+          /* ignore */
+        }
         user.value = null;
         displayName.value = "";
         role.value = "";
+        avatar_url.value = null;
         authReady.value = true;
       }
     }, 0);

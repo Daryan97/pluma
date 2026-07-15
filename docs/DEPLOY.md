@@ -82,6 +82,7 @@ Run in order only if that upgrade has not been applied yet:
 |-------|--------|------|
 | 1 | [`pluma_features_v2.sql`](../src/install/pluma_features_v2.sql) | Scheduling, preview tokens, series |
 | 2 | [`pluma_i18n_v3.sql`](../src/install/pluma_i18n_v3.sql) | Content `locale` + translation groups |
+| — | [`pluma_login_lookup.sql`](../src/install/pluma_login_lookup.sql) | Multi-step login email → profile lookup RPC |
 | — | [`pluma_rls_fix.sql`](../src/install/pluma_rls_fix.sql) | Storage/settings RLS fixes after a restore |
 
 Do **not** re-run v2/v3 after a fresh `pluma_initial.sql` install unless you know you need them.
@@ -98,10 +99,22 @@ Ensure they are public (or otherwise reachable) if the app stores public URLs fo
 
 ### Auth redirect URLs
 
-In Supabase → Authentication → URL configuration, allow:
+In Supabase → Authentication → URL configuration:
 
-- `https://your-domain/` (and `http://localhost:3000/` for local)
-- Any OAuth callback URLs you enable (see Dashboard → provider settings in the app)
+1. Set **Site URL** to your public origin (same as `VITE_SITE_URL`), e.g. `https://blog.example.com`.
+2. Add **Redirect URLs** for every origin you use:
+
+```text
+https://blog.example.com/**
+https://blog.example.com/change-password
+https://blog.example.com/profile
+http://localhost:3000/**
+http://localhost:3000/change-password
+```
+
+Magic links and password resets send `redirect_to` from the app using `VITE_SITE_URL` (via `/env` + Nuxt runtimeConfig), **not** whatever host you typed in the browser. So if you open the app at `http://localhost:3000` but `VITE_SITE_URL=https://blog.example.com`, email links should still redirect to the public site.
+
+Confirm `VITE_SITE_URL` is set on the running process and that `GET /env` returns the same value for `VITE_SITE_URL`.
 
 ---
 

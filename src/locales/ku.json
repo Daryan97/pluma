@@ -88,7 +88,8 @@
     "upload": "بارکردن",
     "done": "تەواو",
     "generate": "دروستکردن",
-    "update": "نوێکردنەوە"
+    "update": "نوێکردنەوە",
+    "continue": "Continue"
   },
   "error": {
     "403": {
@@ -304,7 +305,11 @@
       "strong": "بەهێز"
     },
     "usernameHint": "A–Z، a–z، 0–9، - و _",
-    "usernameInvalid": "٣-٢٠ پیت: پیت، ژمارە، - _"
+    "usernameInvalid": "٣-٢٠ پیت: پیت، ژمارە، - _",
+    "welcomeUser": "Hi, {name}",
+    "enterPasswordContinue": "Enter your password or use a magic link.",
+    "checking": "Checking…",
+    "accountNotFound": "No account found for that email."
   },
   "archive": {
     "title": "ئەرشیف",

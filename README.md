@@ -47,6 +47,7 @@ Edit `.env` with your Supabase URL, anon key, and public site URL (see [.env.exa
 | New project | Open `/install` in the browser, or run [`src/install/pluma_initial.sql`](src/install/pluma_initial.sql) in the Supabase SQL editor |
 | Upgrade (series / schedule / preview) | [`src/install/pluma_features_v2.sql`](src/install/pluma_features_v2.sql) |
 | Upgrade (i18n content) | [`src/install/pluma_i18n_v3.sql`](src/install/pluma_i18n_v3.sql) (after v2) |
+| Multi-step login lookup | [`src/install/pluma_login_lookup.sql`](src/install/pluma_login_lookup.sql) |
 | Broken storage/settings RLS after restore | [`src/install/pluma_rls_fix.sql`](src/install/pluma_rls_fix.sql) |
 
 Do not re-run v2/v3 after a fresh `pluma_initial.sql` install; those features are already included.
