@@ -34,10 +34,10 @@ A live demo of Pluma is available at [https://pluma.daryandev.com](https://pluma
     npm install
     ```
 
-3. Copy `example.env` to `.env` and set Supabase + public site URL (used for sitemap/RSS/canonical URLs):
+3. Copy `.env.example` to `.env` and set Supabase + public site URL (used for sitemap/RSS/canonical URLs):
 
     ```bash
-    cp example.env .env
+    cp .env.example .env
     ```
 
 4. Set up Supabase:

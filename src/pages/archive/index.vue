@@ -31,15 +31,25 @@
         </div>
       </div>
     </section>
-    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
+    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="!categoriesLoaded || categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
-        <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
-        </button>
-        <button v-for="c in categories" :key="c.slug || 'null-' + c.id" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:folder" class="text-sm" />
-          {{ c.name || t('common.uncategorized') }}
-        </button>
+        <template v-if="!categoriesLoaded">
+          <div
+            v-for="n in 4"
+            :key="'arch-chip-sk-' + n"
+            class="animate-pulse h-8 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"
+            aria-hidden="true"
+          />
+        </template>
+        <template v-else>
+          <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
+          </button>
+          <button v-for="c in categories" :key="c.slug || 'null-' + c.id" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:folder" class="text-sm" />
+            {{ c.name || t('common.uncategorized') }}
+          </button>
+        </template>
       </div>
     </section>
     <main class="relative -mt-4">
@@ -65,16 +75,16 @@
           </div>
         </div>
 
-        <div v-if="posts.length === 0 && !loading" class="relative text-center py-24 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700/70 bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm">
+        <div v-else-if="posts.length === 0 && !loading" class="relative text-center py-24 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700/70 bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm">
           <div class="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950 opacity-60"></div>
           <Icon icon="mdi:note-remove" class="block mx-auto text-5xl text-gray-400 dark:text-gray-500 mb-4" />
           <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">{{ t('archive.noPosts') }}</p>
         </div>
-        <div class="space-y-12">
+        <div v-else class="space-y-12">
           <article v-for="post in posts" :key="post.id" class="group relative bg-white/95 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
             <router-link :to="localePath(`/archive/post/${post.slug}`)" class="block group">
               <div class="relative w-full aspect-[16/8] md:aspect-[16/6] overflow-hidden bg-gray-100 dark:bg-gray-700">
-                <img v-if="post.cover_image_url && !imageErrorMap[post.id]" :src="post.cover_image_url" :alt="post.title" class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-[1.05]" loading="lazy" draggable="false" @dragstart.prevent @error="onImageError(post.id)" />
+                <img v-if="post.cover_image_url && !imageErrorMap[post.id]" :src="post.cover_image_url" :alt="post.title" width="1200" height="675" class="w-full h-full object-cover transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-[1.05]" loading="lazy" decoding="async" draggable="false" @dragstart.prevent @error="onImageError(post.id)" />
                 <div v-else class="flex items-center justify-center h-full">
                   <NoImage />
                 </div>
@@ -114,8 +124,32 @@
           </article>
         </div>
         <div ref="loadMoreTrigger" class="h-12"></div>
-        <div v-if="loading && posts.length > 0" class="flex justify-center py-8">
-          <Icon icon="mdi:loading" class="animate-spin text-blue-500" width="32" />
+        <div
+          v-if="loading && posts.length > 0"
+          class="space-y-10 mt-12"
+          aria-hidden="true"
+        >
+          <div
+            class="animate-pulse bg-white/90 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/60 rounded-2xl overflow-hidden shadow-sm backdrop-blur-sm"
+          >
+            <div
+              class="aspect-[16/8] md:aspect-[16/6] bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700"
+            ></div>
+            <div class="p-6 md:p-8 space-y-5">
+              <div class="flex flex-wrap gap-3">
+                <div class="h-6 w-28 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
+                <div class="h-6 w-24 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
+                <div class="h-6 w-32 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
+              </div>
+              <div class="h-7 w-3/4 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              <div class="space-y-2">
+                <div class="h-3 w-full bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-3 w-11/12 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-3 w-4/5 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              </div>
+              <div class="h-9 w-32 bg-gray-200 dark:bg-gray-600 rounded-md"></div>
+            </div>
+          </div>
         </div>
         <div v-if="noMorePosts && posts.length > 0" class="text-center text-gray-500 mt-8 text-sm">{{ t('posts.noMore') }}</div>
       </div>
@@ -124,22 +158,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/services/supabase'
+import { loadCategoriesForLocale } from '@/lib/categoryScope'
 import { Icon } from '@iconify/vue'
 import Markdown from 'vue3-markdown-it'
 import NoImage from '@/components/NoImage.vue'
-import { useSettings, fetchSettings } from '@/stores/settingsStore'
+import { useSettings } from '@/stores/settingsStore'
+import { useBranding } from '@/stores/brandingStore'
+import { usePageSeo } from '@/composables/usePageSeo'
+import { projectInfo } from '@/config/projectInfo'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { contentLocale } = useContentLocale()
 const router = useRouter()
+const branding = useBranding()
 function openGlobalSearch(){ const evt = new CustomEvent('pluma:open-global-search', { detail: { query: '' } }); window.dispatchEvent(evt) }
 
-const { featuresEnabled } = useSettings();
-onMounted(() => { fetchSettings() })
+const { featuresEnabled, fetchSettings } = useSettings();
 const showSearch = computed(() => featuresEnabled.value.search !== false)
+
+usePageSeo(
+  computed(() => {
+    const siteName =
+      branding.resolveLocalizedSiteName?.(locale.value) ||
+      projectInfo.name ||
+      'Pluma'
+    return {
+      title: `${t('archive.title')} | ${siteName}`,
+      description: t('archive.description'),
+      type: 'website',
+      collection: true,
+    }
+  })
+)
 
 const categories = ref([])
 const categoriesLoaded = ref(false)
@@ -148,9 +202,14 @@ const catClass = 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 
 const activeCatClass = 'bg-blue-600 text-white dark:bg-blue-500 dark:text-white border-blue-600 dark:border-blue-500 shadow'
 
 async function loadCategories(){
-  const { data, error } = await supabase.from('categories').select('id, name, slug').order('name')
-  if(!error && data){ categories.value = data }
-  categoriesLoaded.value = true
+  try {
+    const cats = await loadCategoriesForLocale(supabase, contentLocale.value)
+    categories.value = cats || []
+  } catch {
+    categories.value = []
+  } finally {
+    categoriesLoaded.value = true
+  }
 }
 function goToCategory(slug){ if(slug==='all'){ categoryActive.value='all'; router.push(localePath('/archive')); return } categoryActive.value = slug; router.push(localePath(`/archive/category/${slug}`)) }
 
@@ -168,32 +227,47 @@ function getCategoryName(category){ return category ? category.name : t('common.
 function formatDate(dateStr){ const date = new Date(dateStr); return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
 function getExcerptMarkdown(content, maxLength=200){ if(!content) return ''; const excerpt = content.length > maxLength ? content.slice(0, maxLength) + '...' : content; return excerpt }
 
-async function loadPosts(){
-  if (loading.value || noMorePosts.value) return
+async function loadPosts({ reset = false } = {}){
+  if (!reset && (loading.value || noMorePosts.value)) return
   loading.value = true
-  let query = supabase
-    .from('posts')
-    .select(`
-      id,
-      title,
-      content,
-      tags,
-      slug,
-      cover_image_url,
-      created_at,
-      category:categories ( id, name, slug ),
-      author:profiles ( id, username, display_name, role )
-    `)
-    .eq('status', 'archived')
-    .order('created_at', { ascending: false })
-    .range(offset, offset + pageSize - 1)
+  if (reset) {
+    offset = 0
+    noMorePosts.value = false
+    posts.value = []
+  }
+  try {
+    let query = supabase
+      .from('posts')
+      .select(`
+        id,
+        title,
+        content,
+        tags,
+        slug,
+        cover_image_url,
+        created_at,
+        category:categories ( id, name, slug, locale ),
+        author:profiles ( id, username, display_name, role )
+      `)
+      .eq('status', 'archived')
+      .eq('locale', contentLocale.value)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + pageSize - 1)
 
-  const { data, error } = await query
-  if (error) { loading.value = false; return }
-  if (data.length < pageSize) { noMorePosts.value = true }
-  posts.value.push(...data)
-  offset += pageSize
-  loading.value = false
+    const { data, error } = await query
+    if (error) throw error
+    const rows = data || []
+    if (rows.length < pageSize) noMorePosts.value = true
+    if (reset) posts.value = rows
+    else posts.value.push(...rows)
+    offset += rows.length
+  } catch (e) {
+    console.warn('[archive] loadPosts failed', e)
+    if (reset) posts.value = []
+    noMorePosts.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
 const loadMoreTrigger = ref(null)
@@ -201,10 +275,17 @@ function handleIntersect(entries){ if(entries[0].isIntersecting){ loadPosts() } 
 let observer = null
 
 onMounted(async () => {
-  await loadCategories()
-  await loadPosts()
+  fetchSettings()
+  loading.value = true
+  await Promise.all([loadCategories(), loadPosts({ reset: true })])
   observer = new IntersectionObserver(handleIntersect, { root: null, rootMargin: '200px', threshold: 0 })
   if (loadMoreTrigger.value) observer.observe(loadMoreTrigger.value)
 })
+
+watch(contentLocale, async () => {
+  categoriesLoaded.value = false
+  await Promise.all([loadCategories(), loadPosts({ reset: true })])
+})
+
 onUnmounted(() => { if (observer && loadMoreTrigger.value) observer.unobserve(loadMoreTrigger.value) })
 </script>

@@ -4,10 +4,12 @@ declare global {
   const ALL_PROVIDERS: typeof import('../../src/stores/settingsStore').ALL_PROVIDERS
   const CONTENT_LOCALES: typeof import('../../src/composables/useContentLocale').CONTENT_LOCALES
   const DEFAULT_FOOTER_CREDITS: typeof import('../../src/stores/brandingStore').DEFAULT_FOOTER_CREDITS
+  const POST_LIST_LAYOUTS: typeof import('../../src/stores/siteLayoutStore').POST_LIST_LAYOUTS
   const abortNavigation: typeof import('../../node_modules/nuxt/dist/app/composables/router').abortNavigation
   const acceptHMRUpdate: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').acceptHMRUpdate
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router').addRouteMiddleware
   const allConfiguredLocales: typeof import('../../src/stores/brandingStore').allConfiguredLocales
+  const articleSeoFromPost: typeof import('../../src/composables/usePageSeo').articleSeoFromPost
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once').callOnce
   const cancelIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').cancelIdleCallback
   const clearError: typeof import('../../node_modules/nuxt/dist/app/composables/error').clearError
@@ -34,9 +36,6 @@ declare global {
   const defineStore: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').defineStore
   const effect: typeof import('vue').effect
   const effectScope: typeof import('vue').effectScope
-  const fetchBranding: typeof import('../../src/stores/brandingStore').fetchBranding
-  const fetchSettings: typeof import('../../src/stores/settingsStore').fetchSettings
-  const fetchStatsSettings: typeof import('../../src/stores/statsSettingsStore').fetchStatsSettings
   const getAppManifest: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getAppManifest
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
@@ -45,7 +44,6 @@ declare global {
   const hasInjectionContext: typeof import('vue').hasInjectionContext
   const inject: typeof import('vue').inject
   const injectHead: typeof import('../../node_modules/nuxt/dist/app/composables/head').injectHead
-  const isLocaleEnabled: typeof import('../../src/stores/brandingStore').isLocaleEnabled
   const isNuxtError: typeof import('../../node_modules/nuxt/dist/app/composables/error').isNuxtError
   const isPrerendered: typeof import('../../node_modules/nuxt/dist/app/composables/payload').isPrerendered
   const isProxy: typeof import('vue').isProxy
@@ -93,12 +91,9 @@ declare global {
   const refreshDocumentSeo: typeof import('../../src/utils/refreshDocumentSeo').refreshDocumentSeo
   const refreshNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').refreshNuxtData
   const reloadNuxtApp: typeof import('../../node_modules/nuxt/dist/app/composables/chunk').reloadNuxtApp
-  const removeBrandingVariant: typeof import('../../src/stores/brandingStore').removeBrandingVariant
   const requestIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').requestIdleCallback
   const resolveComponent: typeof import('vue').resolveComponent
-  const resolveLocalizedSiteDescription: typeof import('../../src/stores/brandingStore').resolveLocalizedSiteDescription
-  const resolveLocalizedSiteName: typeof import('../../src/stores/brandingStore').resolveLocalizedSiteName
-  const saveProvidersEnabled: typeof import('../../src/stores/settingsStore').saveProvidersEnabled
+  const resolveSiteOrigin: typeof import('../../src/composables/usePageSeo').resolveSiteOrigin
   const setInterval: typeof import('../../node_modules/nuxt/dist/app/compat/interval').setInterval
   const setPageLayout: typeof import('../../node_modules/nuxt/dist/app/composables/router').setPageLayout
   const setResponseStatus: typeof import('../../node_modules/nuxt/dist/app/composables/ssr').setResponseStatus
@@ -107,6 +102,8 @@ declare global {
   const shallowRef: typeof import('vue').shallowRef
   const showError: typeof import('../../node_modules/nuxt/dist/app/composables/error').showError
   const storeToRefs: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').storeToRefs
+  const stripFormatting: typeof import('../../src/composables/usePageSeo').stripFormatting
+  const toIso: typeof import('../../src/composables/usePageSeo').toIso
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
@@ -115,10 +112,10 @@ declare global {
   const tryUseNuxtApp: typeof import('../../node_modules/nuxt/dist/app/nuxt').tryUseNuxtApp
   const unref: typeof import('vue').unref
   const updateAppConfig: typeof import('../../node_modules/nuxt/dist/app/config').updateAppConfig
-  const updateBranding: typeof import('../../src/stores/brandingStore').updateBranding
   const useAppConfig: typeof import('../../node_modules/nuxt/dist/app/config').useAppConfig
   const useAsyncData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').useAsyncData
   const useAttrs: typeof import('vue').useAttrs
+  const useAuthCache: typeof import('../../src/composables/useAuthCache').useAuthCache
   const useBranding: typeof import('../../src/stores/brandingStore').useBranding
   const useBrowserLocale: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index').useBrowserLocale
   const useContentLocale: typeof import('../../src/composables/useContentLocale').useContentLocale
@@ -143,6 +140,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useNuxtApp: typeof import('../../node_modules/nuxt/dist/app/nuxt').useNuxtApp
   const useNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').useNuxtData
+  const usePageSeo: typeof import('../../src/composables/usePageSeo').usePageSeo
   const usePinia: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').usePinia
   const usePreviewMode: typeof import('../../node_modules/nuxt/dist/app/composables/preview').usePreviewMode
   const useRequestEvent: typeof import('../../node_modules/nuxt/dist/app/composables/ssr').useRequestEvent
@@ -154,7 +152,6 @@ declare global {
   const useRoute: typeof import('../../node_modules/nuxt/dist/app/composables/router').useRoute
   const useRouteAnnouncer: typeof import('../../node_modules/nuxt/dist/app/composables/route-announcer').useRouteAnnouncer
   const useRouteBaseName: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index').useRouteBaseName
-  const useRouteLoadingStore: typeof import('../../src/stores/routeLoadingStore').useRouteLoadingStore
   const useRouter: typeof import('../../node_modules/nuxt/dist/app/composables/router').useRouter
   const useRuntimeConfig: typeof import('../../node_modules/nuxt/dist/app/nuxt').useRuntimeConfig
   const useRuntimeHook: typeof import('../../node_modules/nuxt/dist/app/composables/runtime-hook').useRuntimeHook
@@ -208,6 +205,7 @@ declare global {
   const useSetI18nParams: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index').useSetI18nParams
   const useSettings: typeof import('../../src/stores/settingsStore').useSettings
   const useShadowRoot: typeof import('vue').useShadowRoot
+  const useSiteLayout: typeof import('../../src/stores/siteLayoutStore').useSiteLayout
   const useSlots: typeof import('vue').useSlots
   const useState: typeof import('../../node_modules/nuxt/dist/app/composables/state').useState
   const useStatsSettings: typeof import('../../src/stores/statsSettingsStore').useStatsSettings
@@ -241,10 +239,12 @@ declare module 'vue' {
     readonly ALL_PROVIDERS: UnwrapRef<typeof import('../../src/stores/settingsStore')['ALL_PROVIDERS']>
     readonly CONTENT_LOCALES: UnwrapRef<typeof import('../../src/composables/useContentLocale')['CONTENT_LOCALES']>
     readonly DEFAULT_FOOTER_CREDITS: UnwrapRef<typeof import('../../src/stores/brandingStore')['DEFAULT_FOOTER_CREDITS']>
+    readonly POST_LIST_LAYOUTS: UnwrapRef<typeof import('../../src/stores/siteLayoutStore')['POST_LIST_LAYOUTS']>
     readonly abortNavigation: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['acceptHMRUpdate']>
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
     readonly allConfiguredLocales: UnwrapRef<typeof import('../../src/stores/brandingStore')['allConfiguredLocales']>
+    readonly articleSeoFromPost: UnwrapRef<typeof import('../../src/composables/usePageSeo')['articleSeoFromPost']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>
     readonly cancelIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['cancelIdleCallback']>
     readonly clearError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['clearError']>
@@ -271,9 +271,6 @@ declare module 'vue' {
     readonly defineStore: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['defineStore']>
     readonly effect: UnwrapRef<typeof import('vue')['effect']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
-    readonly fetchBranding: UnwrapRef<typeof import('../../src/stores/brandingStore')['fetchBranding']>
-    readonly fetchSettings: UnwrapRef<typeof import('../../src/stores/settingsStore')['fetchSettings']>
-    readonly fetchStatsSettings: UnwrapRef<typeof import('../../src/stores/statsSettingsStore')['fetchStatsSettings']>
     readonly getAppManifest: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getAppManifest']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -282,7 +279,6 @@ declare module 'vue' {
     readonly hasInjectionContext: UnwrapRef<typeof import('vue')['hasInjectionContext']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectHead: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['injectHead']>
-    readonly isLocaleEnabled: UnwrapRef<typeof import('../../src/stores/brandingStore')['isLocaleEnabled']>
     readonly isNuxtError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['isNuxtError']>
     readonly isPrerendered: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/payload')['isPrerendered']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
@@ -330,12 +326,9 @@ declare module 'vue' {
     readonly refreshDocumentSeo: UnwrapRef<typeof import('../../src/utils/refreshDocumentSeo')['refreshDocumentSeo']>
     readonly refreshNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['refreshNuxtData']>
     readonly reloadNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/chunk')['reloadNuxtApp']>
-    readonly removeBrandingVariant: UnwrapRef<typeof import('../../src/stores/brandingStore')['removeBrandingVariant']>
     readonly requestIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['requestIdleCallback']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly resolveLocalizedSiteDescription: UnwrapRef<typeof import('../../src/stores/brandingStore')['resolveLocalizedSiteDescription']>
-    readonly resolveLocalizedSiteName: UnwrapRef<typeof import('../../src/stores/brandingStore')['resolveLocalizedSiteName']>
-    readonly saveProvidersEnabled: UnwrapRef<typeof import('../../src/stores/settingsStore')['saveProvidersEnabled']>
+    readonly resolveSiteOrigin: UnwrapRef<typeof import('../../src/composables/usePageSeo')['resolveSiteOrigin']>
     readonly setInterval: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/interval')['setInterval']>
     readonly setPageLayout: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['setPageLayout']>
     readonly setResponseStatus: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/ssr')['setResponseStatus']>
@@ -344,6 +337,8 @@ declare module 'vue' {
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
     readonly showError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['showError']>
     readonly storeToRefs: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['storeToRefs']>
+    readonly stripFormatting: UnwrapRef<typeof import('../../src/composables/usePageSeo')['stripFormatting']>
+    readonly toIso: UnwrapRef<typeof import('../../src/composables/usePageSeo')['toIso']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
@@ -352,10 +347,10 @@ declare module 'vue' {
     readonly tryUseNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['tryUseNuxtApp']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly updateAppConfig: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/config')['updateAppConfig']>
-    readonly updateBranding: UnwrapRef<typeof import('../../src/stores/brandingStore')['updateBranding']>
     readonly useAppConfig: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/config')['useAppConfig']>
     readonly useAsyncData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useAsyncData']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
+    readonly useAuthCache: UnwrapRef<typeof import('../../src/composables/useAuthCache')['useAuthCache']>
     readonly useBranding: UnwrapRef<typeof import('../../src/stores/brandingStore')['useBranding']>
     readonly useBrowserLocale: UnwrapRef<typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index')['useBrowserLocale']>
     readonly useContentLocale: UnwrapRef<typeof import('../../src/composables/useContentLocale')['useContentLocale']>
@@ -380,6 +375,7 @@ declare module 'vue' {
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNuxtApp: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['useNuxtApp']>
     readonly useNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['useNuxtData']>
+    readonly usePageSeo: UnwrapRef<typeof import('../../src/composables/usePageSeo')['usePageSeo']>
     readonly usePinia: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['usePinia']>
     readonly usePreviewMode: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/preview')['usePreviewMode']>
     readonly useRequestEvent: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/ssr')['useRequestEvent']>
@@ -391,7 +387,6 @@ declare module 'vue' {
     readonly useRoute: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['useRoute']>
     readonly useRouteAnnouncer: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/route-announcer')['useRouteAnnouncer']>
     readonly useRouteBaseName: UnwrapRef<typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index')['useRouteBaseName']>
-    readonly useRouteLoadingStore: UnwrapRef<typeof import('../../src/stores/routeLoadingStore')['useRouteLoadingStore']>
     readonly useRouter: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['useRouter']>
     readonly useRuntimeConfig: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['useRuntimeConfig']>
     readonly useRuntimeHook: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/runtime-hook')['useRuntimeHook']>
@@ -445,6 +440,7 @@ declare module 'vue' {
     readonly useSetI18nParams: UnwrapRef<typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/index')['useSetI18nParams']>
     readonly useSettings: UnwrapRef<typeof import('../../src/stores/settingsStore')['useSettings']>
     readonly useShadowRoot: UnwrapRef<typeof import('vue')['useShadowRoot']>
+    readonly useSiteLayout: UnwrapRef<typeof import('../../src/stores/siteLayoutStore')['useSiteLayout']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['useState']>
     readonly useStatsSettings: UnwrapRef<typeof import('../../src/stores/statsSettingsStore')['useStatsSettings']>

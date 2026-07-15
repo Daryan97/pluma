@@ -18,7 +18,7 @@ export function getGenerator() {
       supabaseUrl: process.env.VITE_SUPABASE_URL,
       supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY,
       siteUrl: process.env.VITE_SITE_URL,
-      cacheTtl: Number(process.env.FEEDS_CACHE_TTL_MS || 5 * 60 * 1000),
+      cacheTtl: Number(process.env.VITE_FEEDS_CACHE_TTL_MS || 5 * 60 * 1000),
     })
   }
   return generator

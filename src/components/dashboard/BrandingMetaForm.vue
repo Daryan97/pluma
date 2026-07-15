@@ -324,9 +324,10 @@ import {
   computed,
 } from "vue";
 import { Icon } from "@iconify/vue";
-import { useBranding, updateBranding } from "@/stores/brandingStore";
+import { useBranding } from "@/stores/brandingStore";
 import { projectInfo } from "@/config/projectInfo";
 const branding = useBranding();
+const { updateBranding } = branding;
 const toast = useToast();
 
 const siteName = ref("");

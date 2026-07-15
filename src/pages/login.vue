@@ -177,7 +177,8 @@ definePageMeta({ requireAnonymous: true, ssr: false })
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { supabase } from "@/services/supabase";
-import { Icon } from "@iconify/vue";import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
+import { Icon } from "@iconify/vue";
+import { useSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 import { getBrowserOrigin } from "@/lib/utils";
 
 const { t } = useI18n();
@@ -194,7 +195,7 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 
-const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
+const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor, fetchSettings } = useSettings();
 const enabledProviders = computed(() =>
   ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
 );

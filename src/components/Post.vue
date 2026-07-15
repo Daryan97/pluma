@@ -23,8 +23,12 @@
           v-if="post.cover_image_url && !coverImageError"
           :src="post.cover_image_url"
           :alt="post.title + ' cover image'"
+          width="1200"
+          height="525"
           class="w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(.25,.1,.25,1)] group-hover:scale-[1.04]"
-          loading="lazy"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
           draggable="false"
           @dragstart.prevent
           @error="coverImageError = true"

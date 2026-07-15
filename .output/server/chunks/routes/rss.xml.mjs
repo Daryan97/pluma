@@ -11,9 +11,7 @@ import 'node:url';
 import '@supabase/supabase-js';
 
 const rss_xml = defineEventHandler(async (event) => {
-  const query = getQuery(event);
-  const filters = parseFeedFilters(query);
-  if (typeof query.locale === "string") filters.locale = query.locale;
+  const filters = parseFeedFilters(getQuery(event));
   const generator = createFeedGenerator(event);
   const { rss } = await generator.generate({ rssFilters: filters });
   setHeader(event, "Content-Type", "application/rss+xml; charset=utf-8");

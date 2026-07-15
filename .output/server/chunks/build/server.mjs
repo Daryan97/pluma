@@ -1,10 +1,10 @@
-import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { getCurrentInstance, computed, ref, hasInjectionContext, inject, defineComponent, shallowRef, h, resolveComponent, unref, toRef, isRef, createElementBlock, provide, cloneVNode, Suspense, Fragment, watch, createApp, createVNode, Text, shallowReactive, onErrorCaptured, onServerPrefetch, resolveDynamicComponent, reactive, effectScope, defineAsyncComponent, mergeProps, getCurrentScope, withCtx, openBlock, createBlock, toDisplayString as toDisplayString$1, createTextVNode, renderList, createCommentVNode, nextTick, isReadonly, toRaw, useSSRContext, isShallow, isReactive } from 'vue';
-import { o as klona, p as getRequestHeader, d as destr, q as isEqual$1, r as setCookie, v as getCookie, w as deleteCookie, x as getContext, y as sanitizeStatusCode, $ as $fetch, z as createHooks, k as createError$1, A as executeAsync, B as defu, C as getRequestProtocol, D as getRequestHeaders } from '../_/nitro.mjs';
-import { u as useHead$1, h as headSymbol, b as baseURL } from '../routes/renderer.mjs';
-import { defineStore, createPinia, setActivePinia, shouldHydrate } from 'pinia';
+import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { computed, ref, toValue, getCurrentInstance, onServerPrefetch, hasInjectionContext, inject, defineComponent, shallowRef, h, resolveComponent, nextTick, unref, toRef, isRef, createElementBlock, provide, cloneVNode, Suspense, Fragment, watch, createApp, createVNode, Text, shallowReactive, onErrorCaptured, resolveDynamicComponent, reactive, effectScope, mergeProps, withAsyncContext, getCurrentScope, withCtx, openBlock, createBlock, toDisplayString as toDisplayString$1, createTextVNode, renderList, createCommentVNode, isReadonly, toRaw, useSSRContext, isShallow, isReactive } from 'vue';
+import { o as klona, p as getRequestHeader, d as destr, q as isEqual$1, r as setCookie, v as getCookie, w as deleteCookie, x as getContext, k as createError$1, y as sanitizeStatusCode, $ as $fetch, z as createHooks, A as executeAsync, B as defu, C as getRequestProtocol, D as getRequestHeaders } from '../_/nitro.mjs';
+import { u as useHead$1, a as useSeoMeta$1, h as headSymbol, b as baseURL } from '../routes/renderer.mjs';
+import { defineStore, storeToRefs, createPinia, setActivePinia, shouldHydrate } from 'pinia';
 import { RouterView, isNavigationFailure, useRouter as useRouter$1, createMemoryHistory, createRouter, START_LOCATION, RouterLink } from 'vue-router';
 import { createClient } from '@supabase/supabase-js';
-import { ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode, ssrRenderAttrs, ssrRenderAttr, ssrInterpolate, ssrRenderClass, ssrRenderList } from 'vue/server-renderer';
+import { ssrRenderSuspense, ssrRenderComponent, ssrRenderVNode, ssrRenderAttrs, ssrInterpolate, ssrRenderAttr, ssrRenderClass, ssrRenderList } from 'vue/server-renderer';
 import { Icon } from '@iconify/vue';
 import { DropdownMenuRoot, DropdownMenuTrigger, DropdownMenuPortal, DropdownMenuContent, DropdownMenuItem, DropdownMenuArrow, AvatarRoot, AvatarImage, AvatarFallback, DropdownMenuSeparator } from 'radix-vue';
 import 'node:http';
@@ -18,8 +18,8 @@ import 'node:url';
 import 'vue-bundle-renderer/runtime';
 import 'unhead/server';
 import 'devalue';
-import 'unhead/utils';
 import 'unhead/plugins';
+import 'unhead/utils';
 
 const NullObject = /* @__PURE__ */ (() => {
   const C = function() {
@@ -74,6 +74,93 @@ function tryDecode(str, decode2) {
   }
 }
 
+//#region src/index.ts
+const DEBOUNCE_DEFAULTS = { trailing: true };
+/**
+Debounce functions
+@param fn - Promise-returning/async function to debounce.
+@param wait - Milliseconds to wait before calling `fn`. Default value is 25ms
+@returns A function that delays calling `fn` until after `wait` milliseconds have elapsed since the last time it was called.
+@example
+```
+import { debounce } from 'perfect-debounce';
+const expensiveCall = async input => input;
+const debouncedFn = debounce(expensiveCall, 200);
+for (const number of [1, 2, 3]) {
+console.log(await debouncedFn(number));
+}
+//=> 1
+//=> 2
+//=> 3
+```
+*/
+function debounce(fn, wait = 25, options = {}) {
+	options = {
+		...DEBOUNCE_DEFAULTS,
+		...options
+	};
+	if (!Number.isFinite(wait)) throw new TypeError("Expected `wait` to be a finite number");
+	let leadingValue;
+	let timeout;
+	let resolveList = [];
+	let currentPromise;
+	let trailingArgs;
+	const applyFn = (_this, args) => {
+		currentPromise = _applyPromised(fn, _this, args);
+		currentPromise.finally(() => {
+			currentPromise = null;
+			if (options.trailing && trailingArgs && !timeout) {
+				const promise = applyFn(_this, trailingArgs);
+				trailingArgs = null;
+				return promise;
+			}
+		});
+		return currentPromise;
+	};
+	const debounced = function(...args) {
+		if (options.trailing) trailingArgs = args;
+		if (currentPromise) return currentPromise;
+		return new Promise((resolve) => {
+			const shouldCallNow = !timeout && options.leading;
+			clearTimeout(timeout);
+			timeout = setTimeout(() => {
+				timeout = null;
+				const promise = options.leading ? leadingValue : applyFn(this, args);
+				trailingArgs = null;
+				for (const _resolve of resolveList) _resolve(promise);
+				resolveList = [];
+			}, wait);
+			if (shouldCallNow) {
+				leadingValue = applyFn(this, args);
+				resolve(leadingValue);
+			} else resolveList.push(resolve);
+		});
+	};
+	const _clearTimeout = (timer) => {
+		if (timer) {
+			clearTimeout(timer);
+			timeout = null;
+		}
+	};
+	debounced.isPending = () => !!timeout;
+	debounced.cancel = () => {
+		_clearTimeout(timeout);
+		resolveList = [];
+		trailingArgs = null;
+	};
+	debounced.flush = () => {
+		_clearTimeout(timeout);
+		if (!trailingArgs || currentPromise) return;
+		const args = trailingArgs;
+		trailingArgs = null;
+		return applyFn(this, args);
+	};
+	return debounced;
+}
+async function _applyPromised(fn, _this, args) {
+	return await fn.apply(_this, args);
+}
+
 if (!globalThis.$fetch) {
   globalThis.$fetch = $fetch.create({
     baseURL: baseURL()
@@ -83,6 +170,7 @@ if (!("global" in globalThis)) {
   globalThis.global = globalThis;
 }
 const nuxtLinkDefaults = { "componentName": "NuxtLink" };
+const asyncDataDefaults = { "value": null, "errorValue": null, "deep": true };
 const appId = "nuxt-app";
 function getNuxtAppCtx(id = appId) {
   return getContext(id, {
@@ -715,6 +803,12 @@ function useHead(input, options = {}) {
     return useHead$1(input, { head, ...options });
   }
 }
+function useSeoMeta(input, options = {}) {
+  const head = injectHead(options.nuxt);
+  if (head) {
+    return useSeoMeta$1(input, { head, ...options });
+  }
+}
 const matcher = (m, p) => {
   return [];
 };
@@ -766,9 +860,13 @@ const unhead_k2P3m_ZDyjlr2mMYnoDPwavjsDN8hBlk9cFai0bbopU = /* @__PURE__ */ defin
 function toArray$1(value) {
   return Array.isArray(value) ? value : [value];
 }
-const __nuxt_page_meta$7 = { devOnly: true };
+const __nuxt_page_meta$8 = { devOnly: true };
+const __nuxt_page_meta$7 = { requireAnonymous: true, ssr: false };
 const __nuxt_page_meta$6 = { requireAnonymous: true, ssr: false };
-const __nuxt_page_meta$5 = { requireAnonymous: true, ssr: false };
+const __nuxt_page_meta$5 = {
+  // Install wizard is English-only — no /ku/install, /ar/install, etc.
+  i18n: false
+};
 const __nuxt_page_meta$4 = { requiresAuth: true, ssr: false };
 const __nuxt_page_meta$3 = { requiresAuth: true, ssr: false };
 const __nuxt_page_meta$2 = { requiresAuth: true, requiresAuthorOrAdmin: true, ssr: false };
@@ -778,530 +876,506 @@ const _routes = [
   {
     name: "Test___en",
     path: "/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "Test___ku",
     path: "/ku/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "Test___ar",
     path: "/ar/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "Test___es",
     path: "/es/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "Test___fr",
     path: "/fr/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "Test___de",
     path: "/de/Test",
-    meta: __nuxt_page_meta$7 || {},
-    component: () => import('./Test-CXrJH0XM.mjs')
+    meta: __nuxt_page_meta$8 || {},
+    component: () => import('./Test-Fd2YV1tP.mjs')
   },
   {
     name: "index___en",
     path: "/",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "index___ku",
     path: "/ku",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "index___ar",
     path: "/ar",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "index___es",
     path: "/es",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "index___fr",
     path: "/fr",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "index___de",
     path: "/de",
-    component: () => import('./index-CqXnXryy.mjs')
+    component: () => import('./index-b46YHEJT.mjs')
   },
   {
     name: "login___en",
     path: "/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "login___ku",
     path: "/ku/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "login___ar",
     path: "/ar/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "login___es",
     path: "/es/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "login___fr",
     path: "/fr/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "login___de",
     path: "/de/login",
-    meta: __nuxt_page_meta$6 || {},
-    component: () => import('./login-BKez3e7t.mjs')
+    meta: __nuxt_page_meta$7 || {},
+    component: () => import('./login-C9NODX5K.mjs')
   },
   {
     name: "signup___en",
     path: "/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
     name: "signup___ku",
     path: "/ku/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
     name: "signup___ar",
     path: "/ar/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
     name: "signup___es",
     path: "/es/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
     name: "signup___fr",
     path: "/fr/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
     name: "signup___de",
     path: "/de/signup",
-    meta: __nuxt_page_meta$5 || {},
-    component: () => import('./signup-B9Vr7Pxq.mjs')
+    meta: __nuxt_page_meta$6 || {},
+    component: () => import('./signup-Ce9Dugnc.mjs')
   },
   {
-    name: "install___en",
+    name: "install",
     path: "/install",
-    component: () => import('./install-C89X4xjm.mjs')
-  },
-  {
-    name: "install___ku",
-    path: "/ku/install",
-    component: () => import('./install-C89X4xjm.mjs')
-  },
-  {
-    name: "install___ar",
-    path: "/ar/install",
-    component: () => import('./install-C89X4xjm.mjs')
-  },
-  {
-    name: "install___es",
-    path: "/es/install",
-    component: () => import('./install-C89X4xjm.mjs')
-  },
-  {
-    name: "install___fr",
-    path: "/fr/install",
-    component: () => import('./install-C89X4xjm.mjs')
-  },
-  {
-    name: "install___de",
-    path: "/de/install",
-    component: () => import('./install-C89X4xjm.mjs')
+    meta: __nuxt_page_meta$5 || {},
+    component: () => import('./install-XoyxJovp.mjs')
   },
   {
     name: "profile___en",
     path: "/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "profile___ku",
     path: "/ku/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "profile___ar",
     path: "/ar/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "profile___es",
     path: "/es/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "profile___fr",
     path: "/fr/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "profile___de",
     path: "/de/profile",
     meta: __nuxt_page_meta$4 || {},
-    component: () => import('./profile-CQZ8qPn1.mjs')
+    component: () => import('./profile-BIy3O2VW.mjs')
   },
   {
     name: "posts-slug___en",
     path: "/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "posts-slug___ku",
     path: "/ku/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "posts-slug___ar",
     path: "/ar/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "posts-slug___es",
     path: "/es/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "posts-slug___fr",
     path: "/fr/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "posts-slug___de",
     path: "/de/posts/:slug()",
-    component: () => import('./_slug_-D-80aeRq.mjs')
+    component: () => import('./_slug_-FoYfbwb1.mjs')
   },
   {
     name: "archive___en",
     path: "/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "archive___ku",
     path: "/ku/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "archive___ar",
     path: "/ar/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "archive___es",
     path: "/es/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "archive___fr",
     path: "/fr/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "archive___de",
     path: "/de/archive",
-    component: () => import('./index-DTvtyiXx.mjs')
+    component: () => import('./index-B_uLS72B.mjs')
   },
   {
     name: "category-slug___en",
     path: "/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "category-slug___ku",
     path: "/ku/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "category-slug___ar",
     path: "/ar/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "category-slug___es",
     path: "/es/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "category-slug___fr",
     path: "/fr/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "category-slug___de",
     path: "/de/category/:slug()",
-    component: () => import('./_slug_-D9EhAq4k.mjs')
+    component: () => import('./_slug_-DIhhmtyy.mjs')
   },
   {
     name: "change-password___en",
     path: "/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "change-password___ku",
     path: "/ku/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "change-password___ar",
     path: "/ar/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "change-password___es",
     path: "/es/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "change-password___fr",
     path: "/fr/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "change-password___de",
     path: "/de/change-password",
     meta: __nuxt_page_meta$3 || {},
-    component: () => import('./change-password-CIULpnGx.mjs')
+    component: () => import('./change-password-DFRoDUOB.mjs')
   },
   {
     name: "dashboard___en",
     path: "/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "dashboard___ku",
     path: "/ku/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "dashboard___ar",
     path: "/ar/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "dashboard___es",
     path: "/es/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "dashboard___fr",
     path: "/fr/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "dashboard___de",
     path: "/de/dashboard",
     meta: __nuxt_page_meta$2 || {},
-    component: () => import('./index-DMMFlTPT.mjs')
+    component: () => import('./index-CRVDGkpu.mjs')
   },
   {
     name: "author-username___en",
     path: "/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "author-username___ku",
     path: "/ku/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "author-username___ar",
     path: "/ar/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "author-username___es",
     path: "/es/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "author-username___fr",
     path: "/fr/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "author-username___de",
     path: "/de/author/:username()",
-    component: () => import('./_username_-Ds9dksP8.mjs')
+    component: () => import('./_username_-CO-A_nJq.mjs')
   },
   {
     name: "dashboard-new-post___en",
     path: "/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "dashboard-new-post___ku",
     path: "/ku/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "dashboard-new-post___ar",
     path: "/ar/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "dashboard-new-post___es",
     path: "/es/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "dashboard-new-post___fr",
     path: "/fr/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "dashboard-new-post___de",
     path: "/de/dashboard/new-post",
     meta: __nuxt_page_meta$1 || {},
-    component: () => import('./new-post-AVFqjN_c.mjs')
+    component: () => import('./new-post-CHnLjI_B.mjs')
   },
   {
     name: "archive-post-slug___en",
     path: "/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "archive-post-slug___ku",
     path: "/ku/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "archive-post-slug___ar",
     path: "/ar/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "archive-post-slug___es",
     path: "/es/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "archive-post-slug___fr",
     path: "/fr/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "archive-post-slug___de",
     path: "/de/archive/post/:slug()",
-    component: () => import('./_slug_-BNaIUkaz.mjs')
+    component: () => import('./_slug_-CoDBWza9.mjs')
   },
   {
     name: "dashboard-edit-id___en",
     path: "/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "dashboard-edit-id___ku",
     path: "/ku/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "dashboard-edit-id___ar",
     path: "/ar/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "dashboard-edit-id___es",
     path: "/es/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "dashboard-edit-id___fr",
     path: "/fr/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "dashboard-edit-id___de",
     path: "/de/dashboard/edit/:id()",
     meta: __nuxt_page_meta || {},
-    component: () => import('./_id_-jAG0UN7k.mjs')
+    component: () => import('./_id_-RZmhjE0z.mjs')
   },
   {
     name: "archive-category-slug___en",
     path: "/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   },
   {
     name: "archive-category-slug___ku",
     path: "/ku/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   },
   {
     name: "archive-category-slug___ar",
     path: "/ar/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   },
   {
     name: "archive-category-slug___es",
     path: "/es/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   },
   {
     name: "archive-category-slug___fr",
     path: "/fr/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   },
   {
     name: "archive-category-slug___de",
     path: "/de/archive/category/:slug()",
-    component: () => import('./_slug_-Cy_cS41h.mjs')
+    component: () => import('./_slug_-C3Kctexe.mjs')
   }
 ];
 const ROUTE_KEY_PARENTHESES_RE = /(:\w+)\([^)]+\)/g;
@@ -1418,39 +1492,50 @@ const validate = /* @__PURE__ */ defineNuxtRouteMiddleware(async (to, from) => {
 });
 function getBundleEnv() {
   return {
-    VITE_SUPABASE_URL: "https://callback.daryandev.com",
-    VITE_SUPABASE_ANON_KEY: "sb_publishable_pn_DqyaTaieNgXsGeVaOvz_YJWZOwOk",
+    VITE_SUPABASE_URL: "https://fzsazbuqdwwcoavibjiy.supabase.co",
+    VITE_SUPABASE_ANON_KEY: "sb_publishable_ouXo2hj0agfnUUySksEY5A_Yq3TJr0L",
     VITE_ENV: "development",
-    VITE_SITE_URL: "http://localhost:5173"
+    VITE_SITE_URL: "http://localhost:3000"
   };
 }
 function getRuntimeEnvSync() {
   return getBundleEnv();
 }
 let _client$1 = null;
-function useSupabaseClient() {
-  if (_client$1) return _client$1;
+let _clientKey = "";
+function resolveUrlKey() {
   const config = /* @__PURE__ */ useRuntimeConfig();
-  const fromConfig = {
-    url: config.public.supabaseUrl,
-    key: config.public.supabaseAnonKey
-  };
-  let url = fromConfig.url;
-  let key = fromConfig.key;
+  let url = config.public.supabaseUrl || "";
+  let key = config.public.supabaseAnonKey || "";
   if ((!url || !key) && false) {
     const env = getRuntimeEnvSync();
-    url = url || env.VITE_SUPABASE_URL;
-    key = key || env.VITE_SUPABASE_ANON_KEY;
+    url = url || env.VITE_SUPABASE_URL || "";
+    key = key || env.VITE_SUPABASE_ANON_KEY || "";
   }
   if ((!url || !key) && true) {
-    url = url || process.env.VITE_SUPABASE_URL;
-    key = key || process.env.VITE_SUPABASE_ANON_KEY;
+    url = url || process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+    key = key || process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
   }
-  if (!url || !key) {
+  return { url, key };
+}
+function isPlaceholder(url, key) {
+  return !url || !key || url.includes("placeholder.supabase") || key === "public-anon-key";
+}
+function useSupabaseClient() {
+  const { url: resolvedUrl, key: resolvedKey } = resolveUrlKey();
+  let url = resolvedUrl;
+  let key = resolvedKey;
+  if (isPlaceholder(url, key)) {
     console.warn("[pluma] Supabase URL/key missing — client created with placeholders");
     url = url || "https://placeholder.supabase.co";
     key = key || "public-anon-key";
   }
+  const cacheKey = `${url}::${key}`;
+  if (_client$1 && _clientKey === cacheKey) return _client$1;
+  if (_client$1 && _clientKey !== cacheKey && !isPlaceholder(resolvedUrl, resolvedKey)) {
+    _client$1 = null;
+  }
+  _clientKey = cacheKey;
   _client$1 = createClient(url, key, {
     auth: {
       persistSession: false,
@@ -1559,7 +1644,7 @@ const localeLoaders = {
     {
       key: "locale_en_46json_c72587b4",
       load: () => import(
-        './en-Bumq2gE0.mjs'
+        './en-C_LaNo3-.mjs'
         /* webpackChunkName: "locale_en_46json_c72587b4" */
       ),
       cache: true
@@ -1569,7 +1654,7 @@ const localeLoaders = {
     {
       key: "locale_ku_46json_d640beeb",
       load: () => import(
-        './ku-BhS_qxn9.mjs'
+        './ku-QfLcCmxc.mjs'
         /* webpackChunkName: "locale_ku_46json_d640beeb" */
       ),
       cache: true
@@ -1579,7 +1664,7 @@ const localeLoaders = {
     {
       key: "locale_ar_46json_cc8ede9e",
       load: () => import(
-        './ar-CzFqaEXF.mjs'
+        './ar-2mVZdhxA.mjs'
         /* webpackChunkName: "locale_ar_46json_cc8ede9e" */
       ),
       cache: true
@@ -1589,7 +1674,7 @@ const localeLoaders = {
     {
       key: "locale_es_46json_e6292bd2",
       load: () => import(
-        './es-COsQaosr.mjs'
+        './es-CY4gMDHY.mjs'
         /* webpackChunkName: "locale_es_46json_e6292bd2" */
       ),
       cache: true
@@ -1599,7 +1684,7 @@ const localeLoaders = {
     {
       key: "locale_fr_46json_0f744e2d",
       load: () => import(
-        './fr-C_99kuCt.mjs'
+        './fr-BVgqHZyS.mjs'
         /* webpackChunkName: "locale_fr_46json_0f744e2d" */
       ),
       cache: true
@@ -1609,7 +1694,7 @@ const localeLoaders = {
     {
       key: "locale_de_46json_b92507d1",
       load: () => import(
-        './de-e2ZSzHcg.mjs'
+        './de-C5QJE260.mjs'
         /* webpackChunkName: "locale_de_46json_b92507d1" */
       ),
       cache: true
@@ -1699,7 +1784,7 @@ defineComponent({
   }
 });
 const clientOnlySymbol = /* @__PURE__ */ Symbol.for("nuxt:client-only");
-const __nuxt_component_0$1 = defineComponent({
+defineComponent({
   name: "ClientOnly",
   inheritAttrs: false,
   props: ["fallback", "placeholder", "placeholderTag", "fallbackTag"],
@@ -1729,6 +1814,308 @@ const __nuxt_component_0$1 = defineComponent({
     };
   }
 });
+const isDefer = (dedupe) => dedupe === "defer" || dedupe === false;
+function useAsyncData(...args) {
+  const autoKey = typeof args[args.length - 1] === "string" ? args.pop() : void 0;
+  if (_isAutoKeyNeeded(args[0], args[1])) {
+    args.unshift(autoKey);
+  }
+  let [_key, _handler, options = {}] = args;
+  const key = computed(() => toValue(_key));
+  if (typeof key.value !== "string") {
+    throw new TypeError("[nuxt] [useAsyncData] key must be a string.");
+  }
+  if (typeof _handler !== "function") {
+    throw new TypeError("[nuxt] [useAsyncData] handler must be a function.");
+  }
+  const nuxtApp = useNuxtApp();
+  options.server ??= true;
+  options.default ??= getDefault;
+  options.getCachedData ??= getDefaultCachedData;
+  options.lazy ??= false;
+  options.immediate ??= true;
+  options.deep ??= asyncDataDefaults.deep;
+  options.dedupe ??= "cancel";
+  options._functionName || "useAsyncData";
+  nuxtApp._asyncData[key.value];
+  function createInitialFetch() {
+    const initialFetchOptions = { cause: "initial", dedupe: options.dedupe };
+    if (!nuxtApp._asyncData[key.value]?._init) {
+      initialFetchOptions.cachedData = options.getCachedData(key.value, nuxtApp, { cause: "initial" });
+      nuxtApp._asyncData[key.value] = createAsyncData(nuxtApp, key.value, _handler, options, initialFetchOptions.cachedData);
+    }
+    return () => nuxtApp._asyncData[key.value].execute(initialFetchOptions);
+  }
+  const initialFetch = createInitialFetch();
+  const asyncData = nuxtApp._asyncData[key.value];
+  asyncData._deps++;
+  const fetchOnServer = options.server !== false && nuxtApp.payload.serverRendered;
+  if (fetchOnServer && options.immediate) {
+    const promise = initialFetch();
+    if (getCurrentInstance()) {
+      onServerPrefetch(() => promise);
+    } else {
+      nuxtApp.hook("app:created", async () => {
+        await promise;
+      });
+    }
+  }
+  const asyncReturn = {
+    data: writableComputedRef(() => nuxtApp._asyncData[key.value]?.data),
+    pending: writableComputedRef(() => nuxtApp._asyncData[key.value]?.pending),
+    status: writableComputedRef(() => nuxtApp._asyncData[key.value]?.status),
+    error: writableComputedRef(() => nuxtApp._asyncData[key.value]?.error),
+    refresh: (...args2) => {
+      if (!nuxtApp._asyncData[key.value]?._init) {
+        const initialFetch2 = createInitialFetch();
+        return initialFetch2();
+      }
+      return nuxtApp._asyncData[key.value].execute(...args2);
+    },
+    execute: (...args2) => asyncReturn.refresh(...args2),
+    clear: () => {
+      const entry2 = nuxtApp._asyncData[key.value];
+      if (entry2?._abortController) {
+        try {
+          entry2._abortController.abort(new DOMException("AsyncData aborted by user.", "AbortError"));
+        } finally {
+          entry2._abortController = void 0;
+        }
+      }
+      clearNuxtDataByKey(nuxtApp, key.value);
+    }
+  };
+  const asyncDataPromise = Promise.resolve(nuxtApp._asyncDataPromises[key.value]).then(() => asyncReturn);
+  Object.assign(asyncDataPromise, asyncReturn);
+  Object.defineProperties(asyncDataPromise, {
+    then: { enumerable: true, value: asyncDataPromise.then.bind(asyncDataPromise) },
+    catch: { enumerable: true, value: asyncDataPromise.catch.bind(asyncDataPromise) },
+    finally: { enumerable: true, value: asyncDataPromise.finally.bind(asyncDataPromise) }
+  });
+  return asyncDataPromise;
+}
+function writableComputedRef(getter) {
+  return computed({
+    get() {
+      return getter()?.value;
+    },
+    set(value) {
+      const ref2 = getter();
+      if (ref2) {
+        ref2.value = value;
+      }
+    }
+  });
+}
+function _isAutoKeyNeeded(keyOrFetcher, fetcher) {
+  if (typeof keyOrFetcher === "string") {
+    return false;
+  }
+  if (typeof keyOrFetcher === "object" && keyOrFetcher !== null) {
+    return false;
+  }
+  if (typeof keyOrFetcher === "function" && typeof fetcher === "function") {
+    return false;
+  }
+  return true;
+}
+function clearNuxtDataByKey(nuxtApp, key) {
+  if (key in nuxtApp.payload.data) {
+    nuxtApp.payload.data[key] = void 0;
+  }
+  if (key in nuxtApp.payload._errors) {
+    nuxtApp.payload._errors[key] = asyncDataDefaults.errorValue;
+  }
+  if (nuxtApp._asyncData[key]) {
+    nuxtApp._asyncData[key].data.value = void 0;
+    nuxtApp._asyncData[key].error.value = asyncDataDefaults.errorValue;
+    {
+      nuxtApp._asyncData[key].pending.value = false;
+    }
+    nuxtApp._asyncData[key].status.value = "idle";
+  }
+  if (key in nuxtApp._asyncDataPromises) {
+    nuxtApp._asyncDataPromises[key] = void 0;
+  }
+}
+function pick(obj, keys) {
+  const newObj = {};
+  for (const key of keys) {
+    newObj[key] = obj[key];
+  }
+  return newObj;
+}
+function createAsyncData(nuxtApp, key, _handler, options, initialCachedData) {
+  nuxtApp.payload._errors[key] ??= asyncDataDefaults.errorValue;
+  const hasCustomGetCachedData = options.getCachedData !== getDefaultCachedData;
+  const handler = _handler ;
+  const _ref = options.deep ? ref : shallowRef;
+  const hasCachedData = initialCachedData != null;
+  const unsubRefreshAsyncData = nuxtApp.hook("app:data:refresh", async (keys) => {
+    if (!keys || keys.includes(key)) {
+      await asyncData.execute({ cause: "refresh:hook" });
+    }
+  });
+  const asyncData = {
+    data: _ref(hasCachedData ? initialCachedData : options.default()),
+    pending: shallowRef(!hasCachedData),
+    error: toRef(nuxtApp.payload._errors, key),
+    status: shallowRef("idle"),
+    execute: (...args) => {
+      const [_opts, newValue = void 0] = args;
+      const opts = _opts && newValue === void 0 && typeof _opts === "object" ? _opts : {};
+      if (nuxtApp._asyncDataPromises[key]) {
+        if (isDefer(opts.dedupe ?? options.dedupe)) {
+          return nuxtApp._asyncDataPromises[key];
+        }
+      }
+      if (opts.cause === "initial" || nuxtApp.isHydrating) {
+        const cachedData = "cachedData" in opts ? opts.cachedData : options.getCachedData(key, nuxtApp, { cause: opts.cause ?? "refresh:manual" });
+        if (cachedData != null) {
+          nuxtApp.payload.data[key] = asyncData.data.value = cachedData;
+          asyncData.error.value = asyncDataDefaults.errorValue;
+          asyncData.status.value = "success";
+          return Promise.resolve(cachedData);
+        }
+      }
+      {
+        asyncData.pending.value = true;
+      }
+      if (asyncData._abortController) {
+        asyncData._abortController.abort(new DOMException("AsyncData request cancelled by deduplication", "AbortError"));
+      }
+      asyncData._abortController = new AbortController();
+      asyncData.status.value = "pending";
+      const cleanupController = new AbortController();
+      const promise = new Promise(
+        (resolve2, reject) => {
+          try {
+            const timeout = opts.timeout ?? options.timeout;
+            const mergedSignal = mergeAbortSignals([asyncData._abortController?.signal, opts?.signal], cleanupController.signal, timeout);
+            if (mergedSignal.aborted) {
+              const reason = mergedSignal.reason;
+              reject(reason instanceof Error ? reason : new DOMException(String(reason ?? "Aborted"), "AbortError"));
+              return;
+            }
+            mergedSignal.addEventListener("abort", () => {
+              const reason = mergedSignal.reason;
+              reject(reason instanceof Error ? reason : new DOMException(String(reason ?? "Aborted"), "AbortError"));
+            }, { once: true, signal: cleanupController.signal });
+            return Promise.resolve(handler(nuxtApp, { signal: mergedSignal })).then(resolve2, reject);
+          } catch (err) {
+            reject(err);
+          }
+        }
+      ).then(async (_result) => {
+        if (nuxtApp._asyncDataPromises[key] !== promise) {
+          return;
+        }
+        let result = _result;
+        if (options.transform) {
+          result = await options.transform(_result);
+        }
+        if (options.pick) {
+          result = pick(result, options.pick);
+        }
+        nuxtApp.payload.data[key] = result;
+        asyncData.data.value = result;
+        asyncData.error.value = asyncDataDefaults.errorValue;
+        asyncData.status.value = "success";
+      }).catch((error) => {
+        if (nuxtApp._asyncDataPromises[key] !== promise) {
+          return nuxtApp._asyncDataPromises[key];
+        }
+        if (asyncData._abortController?.signal.aborted) {
+          return nuxtApp._asyncDataPromises[key];
+        }
+        if (typeof DOMException !== "undefined" && error instanceof DOMException && error.name === "AbortError") {
+          asyncData.status.value = "idle";
+          return nuxtApp._asyncDataPromises[key];
+        }
+        asyncData.error.value = createError(error);
+        asyncData.data.value = unref(options.default());
+        asyncData.status.value = "error";
+      }).finally(() => {
+        cleanupController.abort();
+        if (nuxtApp._asyncDataPromises[key] === promise) {
+          {
+            asyncData.pending.value = false;
+          }
+          delete nuxtApp._asyncDataPromises[key];
+        }
+      });
+      nuxtApp._asyncDataPromises[key] = promise;
+      return nuxtApp._asyncDataPromises[key];
+    },
+    _execute: debounce((...args) => asyncData.execute(...args), 0, { leading: true }),
+    _default: options.default,
+    _deps: 0,
+    _init: true,
+    _hash: void 0,
+    _off: () => {
+      unsubRefreshAsyncData();
+      if (nuxtApp._asyncData[key]?._init) {
+        nuxtApp._asyncData[key]._init = false;
+      }
+      if (!hasCustomGetCachedData) {
+        nextTick(() => {
+          if (!nuxtApp._asyncData[key]?._init) {
+            clearNuxtDataByKey(nuxtApp, key);
+            asyncData.execute = () => Promise.resolve();
+            asyncData.data.value = asyncDataDefaults.value;
+          }
+        });
+      }
+    }
+  };
+  return asyncData;
+}
+const getDefault = () => asyncDataDefaults.value;
+const getDefaultCachedData = (key, nuxtApp, ctx) => {
+  if (nuxtApp.isHydrating) {
+    return nuxtApp.payload.data[key];
+  }
+  if (ctx.cause !== "refresh:manual" && ctx.cause !== "refresh:hook") {
+    return nuxtApp.static.data[key];
+  }
+};
+function mergeAbortSignals(signals, cleanupSignal, timeout) {
+  const list = signals.filter((s) => !!s);
+  if (typeof timeout === "number" && timeout >= 0) {
+    const timeoutSignal = AbortSignal.timeout?.(timeout);
+    if (timeoutSignal) {
+      list.push(timeoutSignal);
+    }
+  }
+  if (AbortSignal.any) {
+    return AbortSignal.any(list);
+  }
+  const controller = new AbortController();
+  for (const sig of list) {
+    if (sig.aborted) {
+      const reason = sig.reason ?? new DOMException("Aborted", "AbortError");
+      try {
+        controller.abort(reason);
+      } catch {
+        controller.abort();
+      }
+      return controller.signal;
+    }
+  }
+  const onAbort = () => {
+    const abortedSignal = list.find((s) => s.aborted);
+    const reason = abortedSignal?.reason ?? new DOMException("Aborted", "AbortError");
+    try {
+      controller.abort(reason);
+    } catch {
+      controller.abort();
+    }
+  };
+  for (const sig of list) {
+    sig.addEventListener?.("abort", onAbort, { once: true, signal: cleanupSignal });
+  }
+  return controller.signal;
+}
 const useStateKeyPrefix = "$s";
 function useState(...args) {
   const autoKey = typeof args[args.length - 1] === "string" ? args.pop() : void 0;
@@ -2133,7 +2520,7 @@ function defineNuxtLink(options) {
     }
   });
 }
-const __nuxt_component_0 = /* @__PURE__ */ defineNuxtLink(nuxtLinkDefaults);
+const __nuxt_component_0$1 = /* @__PURE__ */ defineNuxtLink(nuxtLinkDefaults);
 function applyTrailingSlashBehavior(to, trailingSlash) {
   const normalizeFn = trailingSlash === "append" ? withTrailingSlash : withoutTrailingSlash;
   const hasProtocolDifferentFromHttp = hasProtocol(to) && !to.startsWith("http");
@@ -4536,7 +4923,7 @@ function fallbackWithSimple(ctx, fallback, start) {
   ])];
 }
 function fallbackWithLocaleChain(ctx, fallback, start) {
-  const startLocale = isString(start) ? start : DEFAULT_LOCALE;
+  const startLocale = isString(start) ? start : DEFAULT_LOCALE$1;
   const context = ctx;
   if (!context.__localeChainCache) {
     context.__localeChainCache = /* @__PURE__ */ new Map();
@@ -5046,7 +5433,7 @@ function resolveValue(obj, path) {
 }
 const VERSION$1 = "10.0.8";
 const NOT_REOSLVED = -1;
-const DEFAULT_LOCALE = "en-US";
+const DEFAULT_LOCALE$1 = "en-US";
 const MISSING_RESOLVE_VALUE = "";
 const capitalize = (str) => `${str.charAt(0).toLocaleUpperCase()}${str.substr(1)}`;
 function getDefaultLinkedModifiers() {
@@ -5085,8 +5472,8 @@ let _cid = 0;
 function createCoreContext(options = {}) {
   const onWarn = isFunction(options.onWarn) ? options.onWarn : warn;
   const version = isString(options.version) ? options.version : VERSION$1;
-  const locale = isString(options.locale) || isFunction(options.locale) ? options.locale : DEFAULT_LOCALE;
-  const _locale = isFunction(locale) ? DEFAULT_LOCALE : locale;
+  const locale = isString(options.locale) || isFunction(options.locale) ? options.locale : DEFAULT_LOCALE$1;
+  const _locale = isFunction(locale) ? DEFAULT_LOCALE$1 : locale;
   const fallbackLocale = isArray(options.fallbackLocale) || isPlainObject(options.fallbackLocale) || isString(options.fallbackLocale) || options.fallbackLocale === false ? options.fallbackLocale : _locale;
   const messages = isPlainObject(options.messages) ? options.messages : createResources(_locale);
   const datetimeFormats = isPlainObject(options.datetimeFormats) ? options.datetimeFormats : createResources(_locale);
@@ -5880,7 +6267,7 @@ function createComposer(options = {}) {
   let _inheritLocale = isBoolean(options.inheritLocale) ? options.inheritLocale : true;
   const _locale = _ref(
     // prettier-ignore
-    __root && _inheritLocale ? __root.locale.value : isString(options.locale) ? options.locale : DEFAULT_LOCALE
+    __root && _inheritLocale ? __root.locale.value : isString(options.locale) ? options.locale : DEFAULT_LOCALE$1
   );
   const _fallbackLocale = _ref(
     // prettier-ignore
@@ -6727,32 +7114,56 @@ const auth_45global = /* @__PURE__ */ defineNuxtRouteMiddleware(async (to) => {
   if (devOnly && config.public.env !== "development") {
     return navigateTo(lp("/"));
   }
+  const isInstallRoute = to.name === "install" || to.path === "/install" || to.path.endsWith("/install") || /(^|\/)install(\/|$)/.test(to.path);
+  if (isInstallRoute && to.path !== "/install") {
+    return navigateTo({ path: "/install", query: to.query, hash: to.hash });
+  }
+  function normalizeInstallFlag(raw) {
+    if (raw === true || raw === "true" || raw === 1 || raw === "1") return true;
+    if (raw && typeof raw === "object" && raw !== null) {
+      if (raw.complete === true || raw.complete === "true") return true;
+      if (raw.installed === true || raw.installed === "true") return true;
+    }
+    return false;
+  }
   try {
-    const isInstallRoute = to.name === "install" || to.path.endsWith("/install") || to.path.includes("/install");
-    const { data, error } = ([__temp, __restore] = executeAsync(() => supabase2.from("settings").select("value").eq("key", "installation").maybeSingle()), __temp = await __temp, __restore(), __temp);
-    let value = data?.value;
-    if (value && typeof value === "object" && value !== null && "complete" in value) {
-      value = value.complete === true;
-    }
-    const installDone = !error && value === true;
-    if (!installDone && !isInstallRoute) {
-      return navigateTo(lp("/install"));
-    }
-    if (installDone && isInstallRoute) {
-      return navigateTo(lp("/"));
+    const url = config.public.supabaseUrl || "";
+    const key = config.public.supabaseAnonKey || "";
+    const credsMissing = !url || !key || url.includes("placeholder.supabase") || key === "public-anon-key";
+    if (credsMissing) {
+      console.warn("[install-gate] Supabase credentials missing; skipping gate");
+    } else {
+      const { data, error } = ([__temp, __restore] = executeAsync(() => supabase2.from("settings").select("value").eq("key", "installation").maybeSingle()), __temp = await __temp, __restore(), __temp);
+      if (error) {
+        if (/relation .* does not exist|Could not find the table|schema cache/i.test(
+          error.message || ""
+        )) {
+          if (!isInstallRoute) return navigateTo("/install");
+        } else {
+          console.warn("[install-gate] settings read failed:", error.message);
+        }
+      } else {
+        const installDone = !!data && normalizeInstallFlag(data.value);
+        if (!installDone && !isInstallRoute) {
+          return navigateTo("/install");
+        }
+        if (installDone && isInstallRoute) {
+          return navigateTo(lp("/"));
+        }
+      }
     }
   } catch (e) {
     if (e?.message?.includes("JWSError")) {
       return;
     }
-    if (!to.path.includes("/install")) {
-      return navigateTo(lp("/install"));
-    }
+    console.warn("[install-gate] unexpected error:", e?.message || e);
   }
   if (needsAuthGate) {
     return;
   }
-  const { data: { session } } = ([__temp, __restore] = executeAsync(() => supabase2.auth.getSession()), __temp = await __temp, __restore(), __temp);
+  const {
+    data: { session }
+  } = ([__temp, __restore] = executeAsync(() => supabase2.auth.getSession()), __temp = await __temp, __restore(), __temp);
   const user = session?.user;
   if (user && !to.path.includes("/profile")) {
     const { data: prof, error: profErr } = ([__temp, __restore] = executeAsync(() => supabase2.from("profiles").select("username, display_name, role").eq("id", user.id).single()), __temp = await __temp, __restore(), __temp);
@@ -6783,358 +7194,7 @@ const auth_45global = /* @__PURE__ */ defineNuxtRouteMiddleware(async (to) => {
     }
   }
 });
-let _client = null;
-function resolveCredentials() {
-  let url = "";
-  let key = "";
-  try {
-    const config = /* @__PURE__ */ useRuntimeConfig();
-    url = config.public.supabaseUrl || "";
-    key = config.public.supabaseAnonKey || "";
-  } catch {
-  }
-  if (!url || !key) {
-    const env = getRuntimeEnvSync();
-    url = url || env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
-    key = key || env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
-  }
-  if (!url || !key) {
-    console.warn("[pluma] Supabase credentials missing — using placeholders");
-    url = "https://placeholder.supabase.co";
-    key = "public-anon-key";
-  }
-  return { url, key };
-}
-function getSupabase() {
-  if (_client) return _client;
-  const { url, key } = resolveCredentials();
-  _client = createClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
-  });
-  return _client;
-}
-const supabase = new Proxy(
-  {},
-  {
-    get(_t, prop) {
-      const client = getSupabase();
-      const value = client[prop];
-      return typeof value === "function" ? value.bind(client) : value;
-    }
-  }
-);
-const CONTENT_LOCALES = [
-  { code: "en", name: "English" },
-  { code: "ku", name: "کوردی" },
-  { code: "ar", name: "العربية" },
-  { code: "es", name: "Español" },
-  { code: "fr", name: "Français" },
-  { code: "de", name: "Deutsch" }
-];
-function allConfiguredLocaleCodes() {
-  return CONTENT_LOCALES.map((l) => l.code);
-}
-const DEFAULT_FOOTER_CREDITS = {
-  plumaWatermark: true,
-  poweredByStack: true,
-  rss: true,
-  sitemap: true
-};
-function allConfiguredLocales() {
-  return allConfiguredLocaleCodes();
-}
-function normalizeFooterCredits(raw) {
-  const src = raw && typeof raw === "object" ? raw : {};
-  return {
-    plumaWatermark: src.plumaWatermark !== false,
-    poweredByStack: src.poweredByStack !== false,
-    rss: src.rss !== false,
-    sitemap: src.sitemap !== false
-  };
-}
-function normalizeLocaleSettings(rawEnabled, rawPrimary) {
-  const known = allConfiguredLocales();
-  const knownSet = new Set(known);
-  let enabled = Array.isArray(rawEnabled) ? rawEnabled.map(String).filter((c) => knownSet.has(c)) : [...known];
-  if (!enabled.length) {
-    enabled = known.includes("en") ? ["en"] : [known[0]].filter(Boolean);
-  }
-  let primary = typeof rawPrimary === "string" ? rawPrimary : "en";
-  if (!enabled.includes(primary)) {
-    primary = enabled.includes("en") ? "en" : enabled[0];
-  }
-  return { enabledLocales: enabled, primaryLocale: primary };
-}
-const brandingLoaded = ref(false);
-const brandingLoading = ref(false);
-const brandingError = ref(null);
-const siteName = ref(null);
-const siteDescription = ref(null);
-const twitterHandle = ref(null);
-const footerCredits = ref({ ...DEFAULT_FOOTER_CREDITS });
-const socialLinks = ref([]);
-const lightLogoUrl = ref(null);
-const darkLogoUrl = ref(null);
-const faviconUrl = ref(null);
-const lightLogoPath = ref(null);
-const darkLogoPath = ref(null);
-const faviconPath = ref(null);
-const logoVersion = ref(Date.now());
-const enabledLocales = ref(allConfiguredLocales());
-const primaryLocale = ref("en");
-function isLocaleEnabled(code) {
-  if (!code) return false;
-  return enabledLocales.value.includes(code);
-}
-async function saveBrandingSettings(value) {
-  const { data: existingRow, error: readErr } = await supabase.from("settings").select("key").eq("key", "branding").maybeSingle();
-  if (readErr) return { error: readErr };
-  if (existingRow?.key) {
-    return supabase.from("settings").update({ value }).eq("key", "branding");
-  }
-  return supabase.from("settings").insert({ key: "branding", value });
-}
-function storagePathFromPublicUrl(url) {
-  if (!url) return null;
-  try {
-    const m = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
-    if (m) {
-      return m[2];
-    }
-  } catch (e) {
-    console.warn("[branding] invalid public URL:", url, e);
-  }
-  return null;
-}
-async function fetchBranding(force = false) {
-  if (brandingLoaded.value && !force) return;
-  brandingLoading.value = true;
-  brandingError.value = null;
-  try {
-    const { data, error } = await supabase.from("settings").select("value").eq("key", "branding").maybeSingle();
-    if (error) throw error;
-    const value = data?.value || {};
-    siteName.value = value.siteName || null;
-    siteDescription.value = value.siteDescription || null;
-    twitterHandle.value = value.twitterHandle || null;
-    footerCredits.value = normalizeFooterCredits(value.footerCredits);
-    socialLinks.value = Array.isArray(value.socialLinks) ? value.socialLinks : [];
-    lightLogoUrl.value = value.lightLogoUrl || null;
-    darkLogoUrl.value = value.darkLogoUrl || null;
-    faviconUrl.value = value.faviconUrl || null;
-    lightLogoPath.value = value.lightLogoPath || null;
-    darkLogoPath.value = value.darkLogoPath || null;
-    faviconPath.value = value.faviconPath || null;
-    const localesNorm = normalizeLocaleSettings(
-      value.enabledLocales,
-      value.primaryLocale || value.locale
-    );
-    enabledLocales.value = localesNorm.enabledLocales;
-    primaryLocale.value = localesNorm.primaryLocale;
-    brandingLoaded.value = true;
-  } catch (e) {
-    console.error("[branding] fetch error", e);
-    if (e.message === "JWSError JWSInvalidSignature") {
-      await supabase.auth.signOut();
-    }
-    brandingError.value = e;
-  } finally {
-    brandingLoading.value = false;
-  }
-}
-async function updateBranding({
-  lightFile,
-  darkFile,
-  faviconFile,
-  siteName: newSiteName,
-  siteDescription: newSiteDescription,
-  socialLinks: newSocialLinks,
-  twitterHandle: newTwitterHandle,
-  footerCredits: newFooterCredits,
-  enabledLocales: newEnabledLocales,
-  primaryLocale: newPrimaryLocale
-}) {
-  let existingValue = {};
-  const { data: existingRow } = await supabase.from("settings").select("value").eq("key", "branding").maybeSingle();
-  if (existingRow?.value) existingValue = existingRow.value;
-  const newValue = { ...existingValue };
-  if (typeof newSiteName === "string") newValue.siteName = newSiteName.trim() || null;
-  if (typeof newSiteDescription === "string") newValue.siteDescription = newSiteDescription.trim() || null;
-  if (typeof newTwitterHandle === "string") {
-    const cleaned = newTwitterHandle.trim().replace(/^@/, "");
-    newValue.twitterHandle = cleaned || null;
-  }
-  if (newFooterCredits && typeof newFooterCredits === "object") {
-    newValue.footerCredits = normalizeFooterCredits(newFooterCredits);
-  }
-  if (Array.isArray(newSocialLinks)) newValue.socialLinks = newSocialLinks.filter((l) => l && l.label && l.url);
-  if (Array.isArray(newEnabledLocales) || typeof newPrimaryLocale === "string") {
-    const localesNorm = normalizeLocaleSettings(
-      Array.isArray(newEnabledLocales) ? newEnabledLocales : existingValue.enabledLocales,
-      typeof newPrimaryLocale === "string" ? newPrimaryLocale : existingValue.primaryLocale || existingValue.locale
-    );
-    newValue.enabledLocales = localesNorm.enabledLocales;
-    newValue.primaryLocale = localesNorm.primaryLocale;
-    newValue.locale = localesNorm.primaryLocale;
-  }
-  async function uploadVariant(file, variant) {
-    if (!file) return;
-    let prevUrlOrPath;
-    if (variant === "light") prevUrlOrPath = newValue.lightLogoUrl || newValue.lightLogoPath;
-    else if (variant === "dark") prevUrlOrPath = newValue.darkLogoUrl || newValue.darkLogoPath;
-    else if (variant === "favicon") prevUrlOrPath = newValue.faviconUrl || newValue.faviconPath;
-    const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
-    const originalName = file.name || "";
-    const ext = originalName.includes(".") ? originalName.split(".").pop().toLowerCase() : "";
-    const objectPath = ext ? `${variant}.${ext}` : variant;
-    const pathsToRemove = [...new Set([prevPath, objectPath].filter(Boolean))];
-    if (pathsToRemove.length) {
-      try {
-        await supabase.storage.from("branding").remove(pathsToRemove);
-      } catch (e) {
-        console.warn("[branding] remove previous variant failed", variant, pathsToRemove, e);
-      }
-    }
-    const { error: upErr } = await supabase.storage.from("branding").upload(objectPath, file, {
-      upsert: false,
-      cacheControl: "3600",
-      contentType: file.type || "application/octet-stream"
-    });
-    if (upErr) {
-      const err = new Error(upErr.message || "Failed to upload branding asset");
-      err.cause = upErr;
-      err.step = "storage";
-      throw err;
-    }
-    const { data: pub } = supabase.storage.from("branding").getPublicUrl(objectPath);
-    if (variant === "light") {
-      newValue.lightLogoUrl = pub.publicUrl;
-      newValue.lightLogoPath = objectPath;
-    } else if (variant === "dark") {
-      newValue.darkLogoUrl = pub.publicUrl;
-      newValue.darkLogoPath = objectPath;
-    } else if (variant === "favicon") {
-      newValue.faviconUrl = pub.publicUrl;
-      newValue.faviconPath = objectPath;
-    }
-  }
-  await Promise.all([
-    uploadVariant(lightFile, "light"),
-    uploadVariant(darkFile, "dark"),
-    uploadVariant(faviconFile, "favicon")
-  ]);
-  const { error } = await saveBrandingSettings(newValue);
-  if (error) {
-    const err = new Error(error.message || "Failed to save branding settings");
-    err.cause = error;
-    err.step = "settings";
-    throw err;
-  }
-  brandingLoaded.value = false;
-  await fetchBranding(true);
-  logoVersion.value = Date.now();
-}
-async function removeBrandingVariant(variant) {
-  const valid = ["light", "dark", "favicon"];
-  if (!valid.includes(variant)) return;
-  let existingValue = {};
-  const { data: existingRow } = await supabase.from("settings").select("value").eq("key", "branding").single();
-  if (existingRow?.value) existingValue = existingRow.value;
-  const urlKey = variant === "light" ? "lightLogoUrl" : variant === "dark" ? "darkLogoUrl" : "faviconUrl";
-  const pathKey = variant === "light" ? "lightLogoPath" : variant === "dark" ? "darkLogoPath" : "faviconPath";
-  const prevUrlOrPath = existingValue[urlKey] || existingValue[pathKey];
-  const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
-  if (prevPath) {
-    try {
-      await supabase.storage.from("branding").remove([prevPath]);
-    } catch (e) {
-      console.warn("[branding] remove variant file failed", variant, e);
-    }
-  }
-  delete existingValue[urlKey];
-  delete existingValue[pathKey];
-  const { error } = await saveBrandingSettings(existingValue);
-  if (error) throw error;
-  brandingLoaded.value = false;
-  await fetchBranding(true);
-  logoVersion.value = Date.now();
-}
-function useBranding() {
-  return {
-    brandingLoaded,
-    brandingLoading,
-    brandingError,
-    siteName,
-    siteDescription,
-    twitterHandle,
-    footerCredits,
-    socialLinks,
-    lightLogoUrl,
-    darkLogoUrl,
-    faviconUrl,
-    lightLogoPath,
-    darkLogoPath,
-    faviconPath,
-    logoVersion,
-    enabledLocales,
-    primaryLocale,
-    fetchBranding,
-    updateBranding,
-    removeBrandingVariant,
-    isLocaleEnabled,
-    allConfiguredLocales
-  };
-}
-const primary_45locale_45global = /* @__PURE__ */ defineNuxtRouteMiddleware(async (to) => {
-  let __temp, __restore;
-  const nuxtApp = useNuxtApp();
-  const i18n = nuxtApp.$i18n;
-  const localeCookie = useCookie("pluma_locale");
-  const localeSettings = useState("pluma-branding-locales", () => null);
-  const supabase2 = useSupabaseClient();
-  if (!i18n) return;
-  if (to.path.includes("/install")) return;
-  if (localeCookie.value) return;
-  const def = unref(i18n.defaultLocale) || "en";
-  const current = unref(i18n.locale) || def;
-  if (current !== def) return;
-  const path = to.path || "/";
-  const firstSeg = path.split("/").filter(Boolean)[0];
-  if (firstSeg && firstSeg !== def) {
-    const codes = (unref(i18n.locales) || []).map(
-      (l) => typeof l === "string" ? l : l.code
-    );
-    if (codes.includes(firstSeg)) return;
-  }
-  if (!localeSettings.value) {
-    try {
-      const { data, error } = ([__temp, __restore] = executeAsync(() => supabase2.from("settings").select("value").eq("key", "branding").maybeSingle()), __temp = await __temp, __restore(), __temp);
-      if (error) throw error;
-      const value = data?.value || {};
-      localeSettings.value = normalizeLocaleSettings(
-        value.enabledLocales,
-        value.primaryLocale || value.locale
-      );
-    } catch {
-      return;
-    }
-  }
-  const primary = localeSettings.value?.primaryLocale;
-  const enabled = localeSettings.value?.enabledLocales;
-  if (!primary || primary === def) return;
-  if (Array.isArray(enabled) && enabled.length && !enabled.includes(primary)) {
-    return;
-  }
-  localeCookie.value = primary;
-  if (typeof i18n.setLocale === "function") {
-    return i18n.setLocale(primary);
-  }
-  const dest = path === "/" || path === `/${def}` || path === `/${def}/` ? `/${primary}` : `/${primary}${path.startsWith("/") ? path : `/${path}`}`;
-  return navigateTo(dest, { redirectCode: 302 });
+const primary_45locale_45global = /* @__PURE__ */ defineNuxtRouteMiddleware(() => {
 });
 const manifest_45route_45rule = /* @__PURE__ */ defineNuxtRouteMiddleware((to) => {
   {
@@ -7670,7 +7730,7 @@ const locale_aware_router_yclislyGP0IShjdtyY35jxjgSGM_X99l_Tot7kR5C1g = /* @__PU
   function currentLocale() {
     return unref(i18n.locale) || defaultLocale();
   }
-  function stripLocalePrefix(path) {
+  function stripLocalePrefix2(path) {
     const def = defaultLocale();
     for (const code of localeCodes2()) {
       if (code === def) continue;
@@ -7684,27 +7744,34 @@ const locale_aware_router_yclislyGP0IShjdtyY35jxjgSGM_X99l_Tot7kR5C1g = /* @__PU
     const def = defaultLocale();
     return localeCodes2().filter((c) => c !== def).some((code) => path === `/${code}` || path.startsWith(`/${code}/`));
   }
-  function localizePath(path) {
+  function localizePath2(path) {
     if (!path || typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) {
       return path;
     }
     if (/\.[a-z0-9]{1,8}(?:\?.*)?$/i.test(path)) {
       return path;
     }
+    if (path === "/install" || path.startsWith("/install/") || path.startsWith("/install?") || path.startsWith("/install#")) {
+      return path;
+    }
+    const stripped = stripLocalePrefix2(path);
+    if (stripped === "/install" || stripped.startsWith("/install/") || stripped.startsWith("/install?")) {
+      return stripped;
+    }
     if (alreadyLocalized(path)) return path;
     const locale = currentLocale();
     const def = defaultLocale();
     if (locale === def) return path;
-    const bare = stripLocalePrefix(path);
+    const bare = stripLocalePrefix2(path);
     return bare === "/" ? `/${locale}` : `/${locale}${bare}`;
   }
   function localizeTo(to) {
     if (to == null) return to;
-    if (typeof to === "string") return localizePath(to);
+    if (typeof to === "string") return localizePath2(to);
     if (typeof to === "object") {
       if (to.name != null) return to;
       if (typeof to.path === "string" && to.path.startsWith("/")) {
-        return { ...to, path: localizePath(to.path) };
+        return { ...to, path: localizePath2(to.path) };
       }
     }
     return to;
@@ -7713,6 +7780,186 @@ const locale_aware_router_yclislyGP0IShjdtyY35jxjgSGM_X99l_Tot7kR5C1g = /* @__PU
   const originalReplace = router.replace.bind(router);
   router.push = (to, ...args) => originalPush(localizeTo(to), ...args);
   router.replace = (to, ...args) => originalReplace(localizeTo(to), ...args);
+});
+const DEFAULT_LOCALE = "en";
+const KNOWN_LOCALES = ["en", "ku", "ar", "es", "fr", "de"];
+function normalizeSiteOrigin(url = "") {
+  return String(url || "").replace(/\/$/, "");
+}
+function stripLocalePrefix(pathname = "/", locales = KNOWN_LOCALES) {
+  const path = String(pathname || "/").replace(/\/+/g, "/") || "/";
+  const codes = (locales || KNOWN_LOCALES).filter((c) => c && c !== DEFAULT_LOCALE);
+  for (const code of codes) {
+    if (path === `/${code}`) return "/";
+    if (path.startsWith(`/${code}/`)) {
+      const rest = path.slice(code.length + 1);
+      return rest.startsWith("/") ? rest : `/${rest}`;
+    }
+  }
+  return path === "" ? "/" : path;
+}
+function localizePath(pathname = "/", locale = DEFAULT_LOCALE, defaultLocale = DEFAULT_LOCALE) {
+  const bare = pathname.startsWith("/") ? pathname : `/${pathname}`;
+  const normalized = bare.replace(/\/+/g, "/") || "/";
+  if (!locale || locale === defaultLocale) {
+    return normalized === "/" ? "/" : normalized.replace(/\/$/, "") || "/";
+  }
+  if (normalized === "/") return `/${locale}`;
+  return `/${locale}${normalized}`.replace(/\/$/, "");
+}
+function buildHreflangs(canonical, locale = DEFAULT_LOCALE, options = {}) {
+  const baseUrl = normalizeSiteOrigin(options.baseUrl || "");
+  const locales = Array.isArray(options.locales) && options.locales.length ? options.locales : KNOWN_LOCALES;
+  const defaultLocale = options.defaultLocale || DEFAULT_LOCALE;
+  let path = options.path;
+  if (!baseUrl || path == null) return [];
+  const bare = stripLocalePrefix(path, locales);
+  const out = [];
+  for (const code of locales) {
+    const localized = localizePath(bare, code, defaultLocale);
+    out.push({
+      lang: code,
+      href: `${baseUrl}${localized === "/" ? "/" : localized}`
+    });
+  }
+  const defaultHref = `${baseUrl}${localizePath(bare, defaultLocale, defaultLocale) === "/" ? "/" : localizePath(bare, defaultLocale, defaultLocale)}`;
+  out.push({ lang: "x-default", href: defaultHref });
+  return out;
+}
+function robotsForClientPath(path = "/") {
+  const raw = path.replace(/\/+$/, "") || "/";
+  const p = stripLocalePrefix(raw);
+  const noindex = [
+    "/dashboard",
+    "/profile",
+    "/login",
+    "/signup",
+    "/install",
+    "/change-password",
+    "/test"
+  ];
+  if (noindex.some((prefix) => p === prefix || p.startsWith(`${prefix}/`))) {
+    return "noindex, nofollow";
+  }
+  return "index, follow";
+}
+function twitterHandleFromSocialLinks(socialLinks2 = []) {
+  if (!Array.isArray(socialLinks2)) return null;
+  for (const link of socialLinks2) {
+    const label = String(link?.label || "").toLowerCase();
+    const icon = String(link?.icon || "").toLowerCase();
+    const url = String(link?.url || "");
+    const isTwitter = /twitter|\bx\b/.test(label) || /twitter|(^|:)x($|:)/.test(icon) || /(?:twitter\.com|x\.com)/i.test(url);
+    if (!isTwitter || !url) continue;
+    const handle = extractTwitterHandleFromUrl(url);
+    if (handle) return handle;
+  }
+  return null;
+}
+function resolveTwitterSite({
+  twitterHandle: twitterHandle2 = null,
+  socialLinks: socialLinks2 = [],
+  envHandle = null
+} = {}) {
+  const candidates = [
+    twitterHandle2,
+    twitterHandleFromSocialLinks(socialLinks2),
+    envHandle
+  ];
+  for (const raw of candidates) {
+    if (!raw) continue;
+    const cleaned = String(raw).trim();
+    if (!cleaned) continue;
+    if (/^https?:\/\//i.test(cleaned) || /(?:twitter\.com|x\.com)/i.test(cleaned)) {
+      const fromUrl = extractTwitterHandleFromUrl(cleaned);
+      if (fromUrl) return fromUrl;
+      continue;
+    }
+    const handle = cleaned.replace(/^@/, "").replace(/\s+/g, "");
+    if (/^[\w]{1,15}$/.test(handle)) return `@${handle}`;
+  }
+  return null;
+}
+function extractTwitterHandleFromUrl(url) {
+  try {
+    const u = new URL(url.startsWith("http") ? url : `https://${url}`);
+    if (!/(^|\.)(twitter\.com|x\.com)$/i.test(u.hostname)) return null;
+    const screenName = u.searchParams.get("screen_name");
+    if (screenName) return `@${screenName.replace(/^@/, "")}`;
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (!parts.length) return null;
+    const skip = /* @__PURE__ */ new Set([
+      "intent",
+      "share",
+      "i",
+      "home",
+      "explore",
+      "search",
+      "hashtag",
+      "settings",
+      "compose",
+      "messages",
+      "notifications"
+    ]);
+    const first = parts[0];
+    if (skip.has(first.toLowerCase())) return null;
+    return `@${first.replace(/^@/, "")}`;
+  } catch (_) {
+    const m = url.match(/(?:twitter\.com|x\.com)\/(@?[\w]+)/i);
+    if (m?.[1] && !/^(intent|share|i|home)$/i.test(m[1])) {
+      return `@${m[1].replace(/^@/, "")}`;
+    }
+  }
+  return null;
+}
+function absoluteAssetUrl(url, origin = "") {
+  if (!url) return null;
+  const value = String(url).trim();
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (value.startsWith("//")) return `https:${value}`;
+  if (!origin) return value;
+  return value.startsWith("/") ? `${origin.replace(/\/$/, "")}${value}` : `${origin.replace(/\/$/, "")}/${value}`;
+}
+function resolveSeoImage(preferred, branding, baseUrl) {
+  const base = baseUrl ? String(baseUrl).replace(/\/$/, "") : "";
+  const candidates = [
+    preferred,
+    branding?.ogImageUrl,
+    branding?.lightLogoUrl,
+    branding?.darkLogoUrl,
+    branding?.faviconUrl,
+    base ? `${base}/og-default.png` : "/og-default.png",
+    base ? `${base}/favicon.png` : "/favicon.png"
+  ].filter(Boolean);
+  for (const raw of candidates) {
+    const value = String(raw).trim();
+    if (!value) continue;
+    if (/^https?:\/\//i.test(value)) return value;
+    if (value.startsWith("//")) return `https:${value}`;
+    if (base) {
+      return value.startsWith("/") ? `${base}${value}` : `${base}/${value}`;
+    }
+    return value;
+  }
+  return null;
+}
+const robots_meta_wtrJrtW6xVUMuVseqALK4rcGlQCJtQ9HbpRLvyAs7jw = /* @__PURE__ */ defineNuxtPlugin(() => {
+  const route = useRoute();
+  useHead(() => ({
+    meta: [
+      {
+        name: "robots",
+        content: robotsForClientPath(String(route.path || "/")),
+        key: "robots"
+      },
+      {
+        name: "googlebot",
+        content: robotsForClientPath(String(route.path || "/")),
+        key: "googlebot"
+      }
+    ]
+  }));
 });
 const ssg_detect_IpHCGcQQ_IR5Rl99qyukWoMA9fJGfuTYyoksTzy81cs = /* @__PURE__ */ defineNuxtPlugin({
   name: "i18n:plugin:ssg-detect",
@@ -7735,6 +7982,7 @@ const plugins = [
   plugin,
   components_plugin_z4hgvsiddfKkfXTP6M8M4zG5Cb7sGnDhcryKVM45Di4,
   locale_aware_router_yclislyGP0IShjdtyY35jxjgSGM_X99l_Tot7kR5C1g,
+  robots_meta_wtrJrtW6xVUMuVseqALK4rcGlQCJtQ9HbpRLvyAs7jw,
   ssg_detect_IpHCGcQQ_IR5Rl99qyukWoMA9fJGfuTYyoksTzy81cs
 ];
 const defineRouteProvider = (name = "RouteProvider") => defineComponent({
@@ -7769,7 +8017,7 @@ const defineRouteProvider = (name = "RouteProvider") => defineComponent({
   }
 });
 const RouteProvider = defineRouteProvider();
-const __nuxt_component_1 = defineComponent({
+const __nuxt_component_0 = defineComponent({
   name: "NuxtPage",
   inheritAttrs: false,
   props: {
@@ -7820,6 +8068,50 @@ function normalizeSlot(slot, data) {
   const slotContent = slot(data);
   return slotContent.length === 1 ? h(slotContent[0]) : h(Fragment, void 0, slotContent);
 }
+let _client = null;
+function resolveCredentials() {
+  let url = "";
+  let key = "";
+  try {
+    const config = /* @__PURE__ */ useRuntimeConfig();
+    url = config.public.supabaseUrl || "";
+    key = config.public.supabaseAnonKey || "";
+  } catch {
+  }
+  if (!url || !key) {
+    const env = getRuntimeEnvSync();
+    url = url || env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+    key = key || env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
+  }
+  if (!url || !key) {
+    console.warn("[pluma] Supabase credentials missing — using placeholders");
+    url = "https://placeholder.supabase.co";
+    key = "public-anon-key";
+  }
+  return { url, key };
+}
+function getSupabase() {
+  if (_client) return _client;
+  const { url, key } = resolveCredentials();
+  _client = createClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+  return _client;
+}
+const supabase = new Proxy(
+  {},
+  {
+    get(_t, prop) {
+      const client = getSupabase();
+      const value = client[prop];
+      return typeof value === "function" ? value.bind(client) : value;
+    }
+  }
+);
 const useThemeStore = defineStore("theme", () => {
   const themeCookie = useCookie("pluma_theme", {
     sameSite: "lax",
@@ -7842,24 +8134,7 @@ const useThemeStore = defineStore("theme", () => {
   }
   return { theme, toggleTheme, syncFromClientStorage };
 });
-let projectName = "Pluma";
-let projectDescription = "A modern blogging platform";
-const projectInfo = {
-  get name() {
-    return projectName;
-  },
-  get description() {
-    return projectDescription;
-  },
-  applyBranding(branding) {
-    if (branding?.siteName) projectName = branding.siteName;
-    if (branding?.siteDescription) projectDescription = branding.siteDescription;
-    if (Array.isArray(branding?.socialLinks)) {
-      this.socialLinks = Object.fromEntries(branding.socialLinks.filter((l) => l.url).map((l) => [l.label, { url: l.url, icon: l.icon || "mdi:link-variant" }]));
-    }
-  }
-};
-const _sfc_main$8 = {
+const _sfc_main$9 = {
   __name: "UserDropdown",
   __ssrInlineRender: true,
   props: {
@@ -8680,13 +8955,13 @@ const _sfc_main$8 = {
     };
   }
 };
-const _sfc_setup$8 = _sfc_main$8.setup;
-_sfc_main$8.setup = (props, ctx) => {
+const _sfc_setup$9 = _sfc_main$9.setup;
+_sfc_main$9.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/UserDropdown.vue");
-  return _sfc_setup$8 ? _sfc_setup$8(props, ctx) : void 0;
+  return _sfc_setup$9 ? _sfc_setup$9(props, ctx) : void 0;
 };
-const _sfc_main$7 = {
+const _sfc_main$8 = {
   __name: "CategoriesDropdown",
   __ssrInlineRender: true,
   props: {
@@ -8947,13 +9222,322 @@ const _sfc_main$7 = {
     };
   }
 };
-const _sfc_setup$7 = _sfc_main$7.setup;
-_sfc_main$7.setup = (props, ctx) => {
+const _sfc_setup$8 = _sfc_main$8.setup;
+_sfc_main$8.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/CategoriesDropdown.vue");
-  return _sfc_setup$7 ? _sfc_setup$7(props, ctx) : void 0;
+  return _sfc_setup$8 ? _sfc_setup$8(props, ctx) : void 0;
 };
-const _sfc_main$6 = {
+const CONTENT_LOCALES = [
+  { code: "en", name: "English" },
+  { code: "ku", name: "کوردی" },
+  { code: "ar", name: "العربية" },
+  { code: "es", name: "Español" },
+  { code: "fr", name: "Français" },
+  { code: "de", name: "Deutsch" }
+];
+function allConfiguredLocaleCodes() {
+  return CONTENT_LOCALES.map((l) => l.code);
+}
+const DEFAULT_FOOTER_CREDITS = {
+  plumaWatermark: true,
+  rss: true,
+  sitemap: true
+};
+function allConfiguredLocales() {
+  return allConfiguredLocaleCodes();
+}
+function normalizeFooterCredits(raw) {
+  const src = raw && typeof raw === "object" ? raw : {};
+  return {
+    plumaWatermark: src.plumaWatermark !== false,
+    rss: src.rss !== false,
+    sitemap: src.sitemap !== false
+  };
+}
+function normalizeMetaTranslations(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [code, entry2] of Object.entries(raw)) {
+    if (!code || !entry2 || typeof entry2 !== "object") continue;
+    const siteName2 = typeof entry2.siteName === "string" ? entry2.siteName.trim() || null : null;
+    const siteDescription2 = typeof entry2.siteDescription === "string" ? entry2.siteDescription.trim() || null : null;
+    if (siteName2 || siteDescription2) {
+      out[code] = { siteName: siteName2, siteDescription: siteDescription2 };
+    }
+  }
+  return out;
+}
+function resolveLocalizedSiteName(locale) {
+  const primary = primaryLocale.value || "en";
+  const code = locale || primary;
+  if (code !== primary) {
+    const tr = metaTranslations.value?.[code];
+    if (tr) return tr.siteName || null;
+    return siteName.value;
+  }
+  return siteName.value;
+}
+function resolveLocalizedSiteDescription(locale) {
+  const primary = primaryLocale.value || "en";
+  const code = locale || primary;
+  if (code !== primary) {
+    const tr = metaTranslations.value?.[code];
+    if (tr) return tr.siteDescription || null;
+    return siteDescription.value;
+  }
+  return siteDescription.value;
+}
+function normalizeLocaleSettings(rawEnabled, rawPrimary) {
+  const known = allConfiguredLocales();
+  const knownSet = new Set(known);
+  let enabled = Array.isArray(rawEnabled) ? rawEnabled.map(String).filter((c) => knownSet.has(c)) : [...known];
+  if (!enabled.length) {
+    enabled = known.includes("en") ? ["en"] : [known[0]].filter(Boolean);
+  }
+  let primary = typeof rawPrimary === "string" ? rawPrimary : "en";
+  if (!enabled.includes(primary)) {
+    primary = enabled.includes("en") ? "en" : enabled[0];
+  }
+  return { enabledLocales: enabled, primaryLocale: primary };
+}
+const brandingLoaded = ref(false);
+const brandingLoading = ref(false);
+const brandingError = ref(null);
+const siteName = ref(null);
+const siteDescription = ref(null);
+const twitterHandle = ref(null);
+const footerCredits = ref({ ...DEFAULT_FOOTER_CREDITS });
+const socialLinks = ref([]);
+const lightLogoUrl = ref(null);
+const darkLogoUrl = ref(null);
+const faviconUrl = ref(null);
+const lightLogoPath = ref(null);
+const darkLogoPath = ref(null);
+const faviconPath = ref(null);
+const logoVersion = ref(Date.now());
+const enabledLocales = ref(allConfiguredLocales());
+const primaryLocale = ref("en");
+const metaTranslations = ref({});
+function isLocaleEnabled(code) {
+  if (!code) return false;
+  return enabledLocales.value.includes(code);
+}
+async function saveBrandingSettings(value) {
+  const { data: existingRow, error: readErr } = await supabase.from("settings").select("key").eq("key", "branding").maybeSingle();
+  if (readErr) return { error: readErr };
+  if (existingRow?.key) {
+    return supabase.from("settings").update({ value }).eq("key", "branding");
+  }
+  return supabase.from("settings").insert({ key: "branding", value });
+}
+function storagePathFromPublicUrl(url) {
+  if (!url) return null;
+  try {
+    const m = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+    if (m) {
+      return m[2];
+    }
+  } catch (e) {
+    console.warn("[branding] invalid public URL:", url, e);
+  }
+  return null;
+}
+async function fetchBranding(force = false) {
+  if (brandingLoaded.value && !force) return;
+  brandingLoading.value = true;
+  brandingError.value = null;
+  try {
+    const { data, error } = await supabase.from("settings").select("value").eq("key", "branding").maybeSingle();
+    if (error) throw error;
+    const value = data?.value || {};
+    siteName.value = value.siteName || null;
+    siteDescription.value = value.siteDescription || null;
+    twitterHandle.value = value.twitterHandle || null;
+    footerCredits.value = normalizeFooterCredits(value.footerCredits);
+    socialLinks.value = Array.isArray(value.socialLinks) ? value.socialLinks : [];
+    lightLogoUrl.value = value.lightLogoUrl || null;
+    darkLogoUrl.value = value.darkLogoUrl || null;
+    faviconUrl.value = value.faviconUrl || null;
+    lightLogoPath.value = value.lightLogoPath || null;
+    darkLogoPath.value = value.darkLogoPath || null;
+    faviconPath.value = value.faviconPath || null;
+    const localesNorm = normalizeLocaleSettings(
+      value.enabledLocales,
+      value.primaryLocale || value.locale
+    );
+    enabledLocales.value = localesNorm.enabledLocales;
+    primaryLocale.value = localesNorm.primaryLocale;
+    metaTranslations.value = normalizeMetaTranslations(value.metaTranslations);
+    brandingLoaded.value = true;
+  } catch (e) {
+    console.error("[branding] fetch error", e);
+    if (e.message === "JWSError JWSInvalidSignature") {
+      await supabase.auth.signOut();
+    }
+    brandingError.value = e;
+  } finally {
+    brandingLoading.value = false;
+  }
+}
+async function updateBranding({
+  lightFile,
+  darkFile,
+  faviconFile,
+  siteName: newSiteName,
+  siteDescription: newSiteDescription,
+  socialLinks: newSocialLinks,
+  twitterHandle: newTwitterHandle,
+  footerCredits: newFooterCredits,
+  enabledLocales: newEnabledLocales,
+  primaryLocale: newPrimaryLocale,
+  metaTranslations: newMetaTranslations
+}) {
+  let existingValue = {};
+  const { data: existingRow } = await supabase.from("settings").select("value").eq("key", "branding").maybeSingle();
+  if (existingRow?.value) existingValue = existingRow.value;
+  const newValue = { ...existingValue };
+  if (typeof newSiteName === "string") newValue.siteName = newSiteName.trim() || null;
+  if (typeof newSiteDescription === "string") newValue.siteDescription = newSiteDescription.trim() || null;
+  if (typeof newTwitterHandle === "string") {
+    const cleaned = newTwitterHandle.trim().replace(/^@/, "");
+    newValue.twitterHandle = cleaned || null;
+  }
+  if (newFooterCredits && typeof newFooterCredits === "object") {
+    newValue.footerCredits = normalizeFooterCredits(newFooterCredits);
+  }
+  if (Array.isArray(newSocialLinks)) newValue.socialLinks = newSocialLinks.filter((l) => l && l.label && l.url);
+  if (newMetaTranslations !== void 0) {
+    newValue.metaTranslations = normalizeMetaTranslations(newMetaTranslations);
+  }
+  if (Array.isArray(newEnabledLocales) || typeof newPrimaryLocale === "string") {
+    const localesNorm = normalizeLocaleSettings(
+      Array.isArray(newEnabledLocales) ? newEnabledLocales : existingValue.enabledLocales,
+      typeof newPrimaryLocale === "string" ? newPrimaryLocale : existingValue.primaryLocale || existingValue.locale
+    );
+    newValue.enabledLocales = localesNorm.enabledLocales;
+    newValue.primaryLocale = localesNorm.primaryLocale;
+    newValue.locale = localesNorm.primaryLocale;
+    const kept = normalizeMetaTranslations(newValue.metaTranslations);
+    for (const code of Object.keys(kept)) {
+      if (!localesNorm.enabledLocales.includes(code) || code === localesNorm.primaryLocale) {
+        delete kept[code];
+      }
+    }
+    newValue.metaTranslations = kept;
+  }
+  async function uploadVariant(file, variant) {
+    if (!file) return;
+    let prevUrlOrPath;
+    if (variant === "light") prevUrlOrPath = newValue.lightLogoUrl || newValue.lightLogoPath;
+    else if (variant === "dark") prevUrlOrPath = newValue.darkLogoUrl || newValue.darkLogoPath;
+    else if (variant === "favicon") prevUrlOrPath = newValue.faviconUrl || newValue.faviconPath;
+    const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
+    const originalName = file.name || "";
+    const ext = originalName.includes(".") ? originalName.split(".").pop().toLowerCase() : "";
+    const objectPath = ext ? `${variant}.${ext}` : variant;
+    const pathsToRemove = [...new Set([prevPath, objectPath].filter(Boolean))];
+    if (pathsToRemove.length) {
+      try {
+        await supabase.storage.from("branding").remove(pathsToRemove);
+      } catch (e) {
+        console.warn("[branding] remove previous variant failed", variant, pathsToRemove, e);
+      }
+    }
+    const { error: upErr } = await supabase.storage.from("branding").upload(objectPath, file, {
+      upsert: false,
+      cacheControl: "3600",
+      contentType: file.type || "application/octet-stream"
+    });
+    if (upErr) {
+      const err = new Error(upErr.message || "Failed to upload branding asset");
+      err.cause = upErr;
+      err.step = "storage";
+      throw err;
+    }
+    const { data: pub } = supabase.storage.from("branding").getPublicUrl(objectPath);
+    if (variant === "light") {
+      newValue.lightLogoUrl = pub.publicUrl;
+      newValue.lightLogoPath = objectPath;
+    } else if (variant === "dark") {
+      newValue.darkLogoUrl = pub.publicUrl;
+      newValue.darkLogoPath = objectPath;
+    } else if (variant === "favicon") {
+      newValue.faviconUrl = pub.publicUrl;
+      newValue.faviconPath = objectPath;
+    }
+  }
+  await Promise.all([
+    uploadVariant(lightFile, "light"),
+    uploadVariant(darkFile, "dark"),
+    uploadVariant(faviconFile, "favicon")
+  ]);
+  const { error } = await saveBrandingSettings(newValue);
+  if (error) {
+    const err = new Error(error.message || "Failed to save branding settings");
+    err.cause = error;
+    err.step = "settings";
+    throw err;
+  }
+  brandingLoaded.value = false;
+  await fetchBranding(true);
+  logoVersion.value = Date.now();
+}
+async function removeBrandingVariant(variant) {
+  const valid = ["light", "dark", "favicon"];
+  if (!valid.includes(variant)) return;
+  let existingValue = {};
+  const { data: existingRow } = await supabase.from("settings").select("value").eq("key", "branding").single();
+  if (existingRow?.value) existingValue = existingRow.value;
+  const urlKey = variant === "light" ? "lightLogoUrl" : variant === "dark" ? "darkLogoUrl" : "faviconUrl";
+  const pathKey = variant === "light" ? "lightLogoPath" : variant === "dark" ? "darkLogoPath" : "faviconPath";
+  const prevUrlOrPath = existingValue[urlKey] || existingValue[pathKey];
+  const prevPath = /^https?:\/\//i.test(prevUrlOrPath) ? storagePathFromPublicUrl(prevUrlOrPath) : prevUrlOrPath;
+  if (prevPath) {
+    try {
+      await supabase.storage.from("branding").remove([prevPath]);
+    } catch (e) {
+      console.warn("[branding] remove variant file failed", variant, e);
+    }
+  }
+  delete existingValue[urlKey];
+  delete existingValue[pathKey];
+  const { error } = await saveBrandingSettings(existingValue);
+  if (error) throw error;
+  brandingLoaded.value = false;
+  await fetchBranding(true);
+  logoVersion.value = Date.now();
+}
+function useBranding() {
+  return {
+    brandingLoaded,
+    brandingLoading,
+    brandingError,
+    siteName,
+    siteDescription,
+    twitterHandle,
+    footerCredits,
+    socialLinks,
+    lightLogoUrl,
+    darkLogoUrl,
+    faviconUrl,
+    lightLogoPath,
+    darkLogoPath,
+    faviconPath,
+    logoVersion,
+    enabledLocales,
+    primaryLocale,
+    metaTranslations,
+    fetchBranding,
+    updateBranding,
+    removeBrandingVariant,
+    isLocaleEnabled,
+    allConfiguredLocales,
+    resolveLocalizedSiteName,
+    resolveLocalizedSiteDescription
+  };
+}
+const _sfc_main$7 = {
   __name: "LocaleSwitcher",
   __ssrInlineRender: true,
   setup(__props) {
@@ -8981,6 +9565,8 @@ const _sfc_main$6 = {
       open.value = false;
       if (!code || code === unref(locale)) return;
       if (!isLocaleEnabled(code)) return;
+      const cookie = useCookie("pluma_locale", { sameSite: "lax", path: "/" });
+      cookie.value = code;
       await setLocale(code);
     }
     return (_ctx, _push, _parent, _attrs) => {
@@ -9236,11 +9822,11 @@ const _sfc_main$6 = {
     };
   }
 };
-const _sfc_setup$6 = _sfc_main$6.setup;
-_sfc_main$6.setup = (props, ctx) => {
+const _sfc_setup$7 = _sfc_main$7.setup;
+_sfc_main$7.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/layout/LocaleSwitcher.vue");
-  return _sfc_setup$6 ? _sfc_setup$6(props, ctx) : void 0;
+  return _sfc_setup$7 ? _sfc_setup$7(props, ctx) : void 0;
 };
 function useContentLocale() {
   const { locale } = useI18n();
@@ -9272,7 +9858,7 @@ const _export_sfc = (sfc, props) => {
   return target;
 };
 const debounceMs = 260;
-const _sfc_main$5 = {
+const _sfc_main$6 = {
   __name: "GlobalSearch",
   __ssrInlineRender: true,
   props: {
@@ -9587,14 +10173,14 @@ const _sfc_main$5 = {
     };
   }
 };
-const _sfc_setup$5 = _sfc_main$5.setup;
-_sfc_main$5.setup = (props, ctx) => {
+const _sfc_setup$6 = _sfc_main$6.setup;
+_sfc_main$6.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/GlobalSearch.vue");
-  return _sfc_setup$5 ? _sfc_setup$5(props, ctx) : void 0;
+  return _sfc_setup$6 ? _sfc_setup$6(props, ctx) : void 0;
 };
-const GlobalSearch = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-289b3f74"]]);
-const _sfc_main$4 = {
+const GlobalSearch = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["__scopeId", "data-v-289b3f74"]]);
+const _sfc_main$5 = {
   __name: "Navbar",
   __ssrInlineRender: true,
   setup(__props) {
@@ -9615,7 +10201,15 @@ const _sfc_main$4 = {
     const mobileLocalesOpen = ref(false);
     const branding = useBranding();
     const localeSettings = useState("pluma-branding-locales", () => null);
+    const localizedSiteName = computed(
+      () => branding.resolveLocalizedSiteName(locale.value) || ""
+    );
     const router = useRouter$1();
+    const route = useRoute();
+    const isInstallPage = computed(() => {
+      const p = route.path || "";
+      return p === "/install" || p.endsWith("/install") || /(^|\/)install(\/|$)/.test(p);
+    });
     const mobileLocales = computed(() => {
       const list = unref(locales) || [];
       let enabled = null;
@@ -9673,7 +10267,7 @@ const _sfc_main$4 = {
       }
     });
     return (_ctx, _push, _parent, _attrs) => {
-      const _component_NuxtLink = __nuxt_component_0;
+      const _component_NuxtLink = __nuxt_component_0$1;
       _push(`<!--[--><nav class="relative z-50 border-b border-gray-200 dark:border-gray-800"><div class="pointer-events-none absolute inset-0 overflow-hidden -z-10"><div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div><div class="absolute inset-0 bg-white/35 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"></div><div class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-200/40 blur-2xl mix-blend-multiply dark:hidden"></div><div class="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-indigo-200/40 blur-2xl mix-blend-multiply dark:hidden"></div></div><div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center relative z-10"><div class="flex items-center gap-2">`);
       _push(ssrRenderComponent(_component_NuxtLink, {
         to: unref(localePath2)("/"),
@@ -9685,22 +10279,22 @@ const _sfc_main$4 = {
               _push2(`<img${ssrRenderAttr(
                 "src",
                 (unref(theme).theme === "light" ? unref(branding).lightLogoUrl.value || unref(branding).darkLogoUrl.value : unref(branding).darkLogoUrl.value || unref(branding).lightLogoUrl.value) + (((unref(theme).theme === "light" ? unref(branding).lightLogoUrl.value || unref(branding).darkLogoUrl.value : unref(branding).darkLogoUrl.value || unref(branding).lightLogoUrl.value)?.includes("?") ? "&" : "?") + "v=" + unref(branding).logoVersion.value)
-              )}${ssrRenderAttr("alt", (unref(branding).siteName.value || unref(projectInfo).name) + " logo")} class="h-10 w-auto object-contain select-none" draggable="false"${_scopeId}>`);
+              )}${ssrRenderAttr("alt", localizedSiteName.value + " logo")} class="h-10 w-auto object-contain select-none" draggable="false"${_scopeId}>`);
             } else {
-              _push2(`<span class="text-xl font-bold text-gray-900 dark:text-gray-100"${_scopeId}>${ssrInterpolate(unref(branding).siteName.value || unref(projectInfo).name)}</span>`);
+              _push2(`<span class="text-xl font-bold text-gray-900 dark:text-gray-100"${_scopeId}>${ssrInterpolate(localizedSiteName.value)}</span>`);
             }
           } else {
             return [
               unref(theme).theme === "light" && unref(branding).lightLogoUrl.value || unref(theme).theme === "dark" && unref(branding).darkLogoUrl.value ? (openBlock(), createBlock("img", {
                 key: 0,
                 src: (unref(theme).theme === "light" ? unref(branding).lightLogoUrl.value || unref(branding).darkLogoUrl.value : unref(branding).darkLogoUrl.value || unref(branding).lightLogoUrl.value) + (((unref(theme).theme === "light" ? unref(branding).lightLogoUrl.value || unref(branding).darkLogoUrl.value : unref(branding).darkLogoUrl.value || unref(branding).lightLogoUrl.value)?.includes("?") ? "&" : "?") + "v=" + unref(branding).logoVersion.value),
-                alt: (unref(branding).siteName.value || unref(projectInfo).name) + " logo",
+                alt: localizedSiteName.value + " logo",
                 class: "h-10 w-auto object-contain select-none",
                 draggable: "false"
               }, null, 8, ["src", "alt"])) : (openBlock(), createBlock("span", {
                 key: 1,
                 class: "text-xl font-bold text-gray-900 dark:text-gray-100"
-              }, toDisplayString$1(unref(branding).siteName.value || unref(projectInfo).name), 1))
+              }, toDisplayString$1(localizedSiteName.value), 1))
             ];
           }
         }),
@@ -9731,7 +10325,7 @@ const _sfc_main$4 = {
         _: 1
       }, _parent));
       if (categories.value.length) {
-        _push(ssrRenderComponent(_sfc_main$7, { categories: categories.value }, null, _parent));
+        _push(ssrRenderComponent(_sfc_main$8, { categories: categories.value }, null, _parent));
       } else {
         _push(`<!---->`);
       }
@@ -9786,7 +10380,11 @@ const _sfc_main$4 = {
         _push(`<!---->`);
       }
       _push(`</div><div class="hidden md:flex items-center gap-3 relative">`);
-      _push(ssrRenderComponent(_sfc_main$6, null, null, _parent));
+      if (!isInstallPage.value) {
+        _push(ssrRenderComponent(_sfc_main$7, null, null, _parent));
+      } else {
+        _push(`<!---->`);
+      }
       _push(`<button class="nav-pill bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60">`);
       _push(ssrRenderComponent(unref(Icon), {
         icon: "mdi:magnify",
@@ -9794,7 +10392,7 @@ const _sfc_main$4 = {
       }, null, _parent));
       _push(`<span class="hidden lg:flex items-center text-sm text-gray-500 dark:text-gray-400" dir="ltr">${ssrInterpolate(unref(t)("nav.typeSlash"))} <kbd class="ms-1 me-1 px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-200 dark:hover:bg-gray-700">/</kbd> ${ssrInterpolate(unref(t)("nav.toSearch"))}</span></button>`);
       if (authReady.value) {
-        _push(ssrRenderComponent(_sfc_main$8, {
+        _push(ssrRenderComponent(_sfc_main$9, {
           user: user.value,
           "avatar-url": avatar_url.value
         }, null, _parent));
@@ -9993,7 +10591,7 @@ const _sfc_main$4 = {
         _push(`</div><div class="flex flex-col gap-3 border-t pt-4 border-gray-200 dark:border-gray-700"><button class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline">`);
         _push(ssrRenderComponent(unref(Icon), { icon: "mdi:magnify" }, null, _parent));
         _push(`<span>${ssrInterpolate(unref(t)("nav.search"))}</span><kbd class="ml-auto px-1.5 py-0.5 rounded border border-gray-300 dark:border-gray-600 text-xs font-mono bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-sm">/</kbd></button>`);
-        if (mobileLocales.value.length > 1) {
+        if (!isInstallPage.value && mobileLocales.value.length > 1) {
           _push(`<div class="relative"><button type="button" class="w-full flex items-center justify-between gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60"><span class="flex items-center gap-2">`);
           _push(ssrRenderComponent(unref(Icon), { icon: "mdi:translate" }, null, _parent));
           _push(` ${ssrInterpolate(unref(t)("locale.switch"))}</span>`);
@@ -10046,36 +10644,95 @@ const _sfc_main$4 = {
     };
   }
 };
-const _sfc_setup$4 = _sfc_main$4.setup;
-_sfc_main$4.setup = (props, ctx) => {
+const _sfc_setup$5 = _sfc_main$5.setup;
+_sfc_main$5.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/layout/Navbar.vue");
-  return _sfc_setup$4 ? _sfc_setup$4(props, ctx) : void 0;
+  return _sfc_setup$5 ? _sfc_setup$5(props, ctx) : void 0;
 };
-const _sfc_main$3 = {
+let projectName = "";
+let projectDescription = "";
+const projectInfo = {
+  get name() {
+    return projectName;
+  },
+  get description() {
+    return projectDescription;
+  },
+  applyBranding(branding) {
+    if (branding && Object.prototype.hasOwnProperty.call(branding, "siteName")) {
+      projectName = branding.siteName || "";
+    }
+    if (branding && Object.prototype.hasOwnProperty.call(branding, "siteDescription")) {
+      projectDescription = branding.siteDescription || "";
+    }
+    if (Array.isArray(branding?.socialLinks)) {
+      this.socialLinks = Object.fromEntries(branding.socialLinks.filter((l) => l.url).map((l) => [l.label, { url: l.url, icon: l.icon || "mdi:link-variant" }]));
+    }
+  }
+};
+function buildFeedSearchParams({
+  locale,
+  primaryLocale: primaryLocale2 = "en",
+  category,
+  author,
+  tag,
+  alwaysIncludeLocale = false
+} = {}) {
+  const params = new URLSearchParams();
+  const code = typeof locale === "string" ? locale.trim().toLowerCase() : "";
+  const primary = typeof primaryLocale2 === "string" ? primaryLocale2.trim().toLowerCase() : "en";
+  if (code && (alwaysIncludeLocale || code !== primary)) {
+    params.set("locale", code);
+  }
+  if (category) params.set("category", category);
+  if (author) params.set("author", author);
+  if (tag) params.set("tag", tag);
+  return params;
+}
+function feedHref(path, options = {}) {
+  const params = buildFeedSearchParams(options);
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+function rssHref(options = {}) {
+  return feedHref("/rss.xml", options);
+}
+function sitemapHref(options = {}) {
+  return feedHref("/sitemap.xml", options);
+}
+const _sfc_main$4 = {
   __name: "Footer",
   __ssrInlineRender: true,
   setup(__props) {
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const branding = useBranding();
-    const siteTitle = computed(() => branding.siteName.value || projectInfo.name);
+    const siteTitle = computed(
+      () => branding.resolveLocalizedSiteName(locale.value) || ""
+    );
+    const localizedDescription = computed(
+      () => branding.resolveLocalizedSiteDescription(locale.value) || ""
+    );
     const credits = computed(() => ({
       ...DEFAULT_FOOTER_CREDITS,
       ...branding.footerCredits?.value || {}
     }));
-    const showPoweredBy = computed(
-      () => credits.value.plumaWatermark || credits.value.poweredByStack
-    );
     const showCreditsRow = computed(
-      () => showPoweredBy.value || credits.value.rss || credits.value.sitemap
+      () => credits.value.plumaWatermark || credits.value.rss || credits.value.sitemap
     );
+    const feedOptions = computed(() => ({
+      locale: locale.value,
+      primaryLocale: branding.primaryLocale?.value || "en"
+    }));
+    const rssFeedHref = computed(() => rssHref(feedOptions.value));
+    const sitemapFeedHref = computed(() => sitemapHref(feedOptions.value));
     return (_ctx, _push, _parent, _attrs) => {
       _push(`<footer${ssrRenderAttrs(mergeProps({ class: "relative mt-20 border-t border-gray-200 dark:border-gray-800 overflow-hidden" }, _attrs))}><div class="absolute inset-0 z-0 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div><div class="absolute inset-0 z-0 bg-white/40 dark:bg-gray-900/55 backdrop-blur-md supports-[backdrop-filter]:bg-white/25 supports-[backdrop-filter]:dark:bg-gray-900/45"></div><div class="pointer-events-none absolute -top-16 -right-24 w-72 h-72 rounded-full bg-blue-200/35 blur-3xl mix-blend-multiply dark:hidden"></div><div class="pointer-events-none absolute -bottom-24 -left-32 w-80 h-80 rounded-full bg-indigo-200/40 blur-3xl mix-blend-multiply dark:hidden"></div><div class="relative z-10 max-w-6xl mx-auto px-6 py-10"><div class="flex flex-col md:flex-row md:items-center md:justify-between gap-8"><div><h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">`);
       _push(ssrRenderComponent(unref(Icon), {
         icon: "mdi:feather",
         class: "text-blue-500"
       }, null, _parent));
-      _push(` ${ssrInterpolate(siteTitle.value)}</h2><p class="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-sm">${ssrInterpolate(unref(branding).siteDescription.value || unref(projectInfo).description)}</p></div>`);
+      _push(` ${ssrInterpolate(siteTitle.value)}</h2><p class="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-sm">${ssrInterpolate(localizedDescription.value)}</p></div>`);
       if (unref(branding).socialLinks.value && unref(branding).socialLinks.value.length || Object.keys(unref(projectInfo).socialLinks || {}).length) {
         _push(`<div class="md:text-right"><span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">${ssrInterpolate(unref(t)("footer.follow"))}</span><div class="mt-3 flex flex-wrap md:justify-end gap-3">`);
         if ((unref(branding).socialLinks.value || []).length) {
@@ -10107,27 +10764,16 @@ const _sfc_main$3 = {
       }
       _push(`</div><div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-[12px] text-gray-500 dark:text-gray-500"> © ${ssrInterpolate((/* @__PURE__ */ new Date()).getFullYear())} ${ssrInterpolate(siteTitle.value)}. ${ssrInterpolate(unref(t)("footer.rights"))}</div>`);
       if (showCreditsRow.value) {
-        _push(`<div class="mt-3 flex flex-wrap items-center justify-between gap-3 text-[11px] font-medium">`);
-        if (showPoweredBy.value) {
-          _push(`<div class="flex flex-wrap items-center gap-2"><span class="text-gray-500 dark:text-gray-400">${ssrInterpolate(unref(t)("footer.poweredBy"))}</span>`);
-          if (credits.value.plumaWatermark) {
-            _push(`<a href="https://github.com/Daryan97/pluma" target="_blank" rel="noopener" class="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60">Pluma</a>`);
-          } else {
-            _push(`<!---->`);
-          }
-          if (credits.value.poweredByStack) {
-            _push(`<!--[--><a href="https://nuxt.com" target="_blank" rel="noopener" class="px-2 py-1 rounded-md bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-lime-900/50">Nuxt</a><a href="https://vuejs.org" target="_blank" rel="noopener" class="px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50">Vue</a><a href="https://supabase.com" target="_blank" rel="noopener" class="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50">Supabase</a><a href="https://tailwindcss.com" target="_blank" rel="noopener" class="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/50">Tailwind</a><!--]-->`);
-          } else {
-            _push(`<!---->`);
-          }
-          _push(`</div>`);
+        _push(`<div class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[11px]">`);
+        if (credits.value.plumaWatermark) {
+          _push(`<p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-gray-500 dark:text-gray-500"><span>${ssrInterpolate(unref(t)("footer.poweredBy"))}</span><a href="https://github.com/Daryan97/pluma" target="_blank" rel="noopener" class="font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"> Pluma </a></p>`);
         } else {
           _push(`<!---->`);
         }
         if (credits.value.rss || credits.value.sitemap) {
-          _push(`<div class="flex items-center gap-2 ml-auto">`);
+          _push(`<div class="flex items-center gap-3 ms-auto">`);
           if (credits.value.rss) {
-            _push(`<a href="/rss.xml" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[11px] font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/50 transition">`);
+            _push(`<a${ssrRenderAttr("href", rssFeedHref.value)} target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors">`);
             _push(ssrRenderComponent(unref(Icon), {
               icon: "mdi:rss",
               class: "text-sm"
@@ -10137,7 +10783,7 @@ const _sfc_main$3 = {
             _push(`<!---->`);
           }
           if (credits.value.sitemap) {
-            _push(`<a href="/sitemap.xml" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition">`);
+            _push(`<a${ssrRenderAttr("href", sitemapFeedHref.value)} target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">`);
             _push(ssrRenderComponent(unref(Icon), {
               icon: "mdi:map-outline",
               class: "text-sm"
@@ -10158,30 +10804,122 @@ const _sfc_main$3 = {
     };
   }
 };
+const _sfc_setup$4 = _sfc_main$4.setup;
+_sfc_main$4.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/layout/Footer.vue");
+  return _sfc_setup$4 ? _sfc_setup$4(props, ctx) : void 0;
+};
+const useRouteLoadingStore = defineStore("routeLoading", () => {
+  const isLoading = ref(false);
+  let hideTimeout = null;
+  function start() {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+    isLoading.value = true;
+  }
+  function stop() {
+    hideTimeout = setTimeout(() => {
+      isLoading.value = false;
+      hideTimeout = null;
+    }, 180);
+  }
+  return {
+    isLoading,
+    start,
+    stop
+  };
+});
+const _sfc_main$3 = {
+  __name: "RouteLoadingOverlay",
+  __ssrInlineRender: true,
+  setup(__props) {
+    const { t } = useI18n();
+    const { isLoading } = storeToRefs(useRouteLoadingStore());
+    return (_ctx, _push, _parent, _attrs) => {
+      if (unref(isLoading)) {
+        _push(`<div${ssrRenderAttrs(mergeProps({
+          class: "fixed inset-0 z-50 overflow-hidden bg-white dark:bg-gray-900",
+          role: "status",
+          "aria-live": "polite",
+          "aria-label": unref(t)("common.loading")
+        }, _attrs))} data-v-60a01d39><div class="h-16 border-b border-gray-200 dark:border-gray-800 px-4 flex items-center justify-between gap-4 animate-pulse" data-v-60a01d39><div class="flex items-center gap-3" data-v-60a01d39><div class="h-8 w-8 rounded-lg bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-4 w-28 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div></div><div class="hidden sm:flex items-center gap-3" data-v-60a01d39><div class="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div></div></div><div class="max-w-6xl mx-auto px-4 pt-16 pb-10 animate-pulse" data-v-60a01d39><div class="flex flex-col items-center gap-6" data-v-60a01d39><div class="h-4 w-40 rounded-full bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-10 w-2/3 max-w-xl rounded-lg bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-4 w-1/2 max-w-md rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-12 w-full max-w-xl rounded-xl bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div></div></div><div class="max-w-5xl mx-auto px-4 space-y-8 animate-pulse" data-v-60a01d39><!--[-->`);
+        ssrRenderList(2, (n) => {
+          _push(`<div class="rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden" data-v-60a01d39><div class="aspect-[16/7] bg-gray-200 dark:bg-gray-800" data-v-60a01d39></div><div class="p-6 space-y-4" data-v-60a01d39><div class="h-5 w-2/3 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="flex gap-3" data-v-60a01d39><div class="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div></div><div class="space-y-2" data-v-60a01d39><div class="h-3 w-full rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-3 w-11/12 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div><div class="h-3 w-4/5 rounded bg-gray-200 dark:bg-gray-700" data-v-60a01d39></div></div></div></div>`);
+        });
+        _push(`<!--]--></div><span class="sr-only" data-v-60a01d39>${ssrInterpolate(unref(t)("common.loading"))}</span></div>`);
+      } else {
+        _push(`<!---->`);
+      }
+    };
+  }
+};
 const _sfc_setup$3 = _sfc_main$3.setup;
 _sfc_main$3.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/layout/Footer.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/RouteLoadingOverlay.vue");
   return _sfc_setup$3 ? _sfc_setup$3(props, ctx) : void 0;
 };
+const RouteLoadingOverlay = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-60a01d39"]]);
 const _sfc_main$2 = {
   __name: "app",
   __ssrInlineRender: true,
-  setup(__props) {
+  async setup(__props) {
+    let __temp, __restore;
     const { locale, locales, setLocale } = useI18n();
     const branding = useBranding();
+    [__temp, __restore] = withAsyncContext(async () => useAsyncData(
+      "site-branding",
+      async () => {
+        await branding.fetchBranding(true);
+        return true;
+      },
+      { server: true, lazy: false }
+    )), await __temp, __restore();
+    applyLocalizedBranding();
+    watch(
+      () => branding.faviconUrl?.value,
+      (href) => {
+        useHead({
+          link: [{ rel: "icon", href: href || "/favicon.png", key: "favicon" }]
+        });
+      },
+      { immediate: true }
+    );
     async function clampLocaleToEnabled() {
       const code = unref(locale);
       const enabled = branding.enabledLocales?.value;
-      const primary = branding.primaryLocale?.value || "en";
+      const fallback = Array.isArray(enabled) && enabled.includes("en") ? "en" : branding.primaryLocale?.value || "en";
       if (!Array.isArray(enabled) || !enabled.length) return;
       if (enabled.includes(code)) return;
-      if (primary !== code) {
-        const cookie = useCookie("pluma_locale");
-        cookie.value = primary;
-        await setLocale(primary);
+      if (fallback !== code) {
+        const cookie = useCookie("pluma_locale", { sameSite: "lax", path: "/" });
+        cookie.value = fallback;
+        await setLocale(fallback);
       }
     }
+    function applyLocalizedBranding() {
+      projectInfo.applyBranding({
+        siteName: branding.resolveLocalizedSiteName(unref(locale)),
+        siteDescription: branding.resolveLocalizedSiteDescription(unref(locale)),
+        socialLinks: branding.socialLinks.value
+      });
+    }
+    watch(
+      () => [
+        unref(locale),
+        branding.siteName?.value,
+        branding.siteDescription?.value,
+        branding.metaTranslations?.value,
+        branding.socialLinks?.value
+      ],
+      () => {
+        if (branding.brandingLoaded?.value) applyLocalizedBranding();
+      },
+      { deep: true }
+    );
     watch(
       () => [branding.enabledLocales?.value, branding.primaryLocale?.value],
       () => {
@@ -10203,15 +10941,14 @@ const _sfc_main$2 = {
       { immediate: true }
     );
     return (_ctx, _push, _parent, _attrs) => {
-      const _component_ClientOnly = __nuxt_component_0$1;
-      const _component_NuxtPage = __nuxt_component_1;
+      const _component_NuxtPage = __nuxt_component_0;
       _push(`<div${ssrRenderAttrs(mergeProps({ class: "relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900" }, _attrs))}>`);
-      _push(ssrRenderComponent(_component_ClientOnly, null, {}, _parent));
-      _push(ssrRenderComponent(_sfc_main$4, null, null, _parent));
+      _push(ssrRenderComponent(RouteLoadingOverlay, null, null, _parent));
+      _push(ssrRenderComponent(_sfc_main$5, null, null, _parent));
       _push(`<main>`);
       _push(ssrRenderComponent(_component_NuxtPage, null, null, _parent));
       _push(`</main>`);
-      _push(ssrRenderComponent(_sfc_main$3, null, null, _parent));
+      _push(ssrRenderComponent(_sfc_main$4, null, null, _parent));
       _push(`</div>`);
     };
   }
@@ -10223,31 +10960,98 @@ _sfc_main$2.setup = (props, ctx) => {
   return _sfc_setup$2 ? _sfc_setup$2(props, ctx) : void 0;
 };
 const _sfc_main$1 = {
-  __name: "nuxt-error-page",
+  __name: "error",
   __ssrInlineRender: true,
   props: {
-    error: Object
+    error: {
+      type: Object,
+      default: () => ({})
+    }
   },
   setup(__props) {
     const props = __props;
-    const _error = props.error;
-    const status = Number(_error.statusCode || 500);
-    const is404 = status === 404;
-    const statusText = _error.statusMessage ?? (is404 ? "Page Not Found" : "Internal Server Error");
-    const description = _error.message || _error.toString();
-    const stack = void 0;
-    const _Error404 = defineAsyncComponent(() => import('./error-404-C74iaWDl.mjs'));
-    const _Error = defineAsyncComponent(() => import('./error-500-Cb3TqANb.mjs'));
-    const ErrorTemplate = is404 ? _Error404 : _Error;
+    const { t } = useI18n();
+    useLocalePath();
+    const statusCode = computed(() => Number(props.error?.statusCode) || 500);
+    const kind = computed(() => {
+      const code = statusCode.value;
+      if (code === 404) return "404";
+      if (code === 401 || code === 403) return "403";
+      if (code >= 500) return "500";
+      return "generic";
+    });
+    const title = computed(() => t(`error.${kind.value}.title`));
+    const description = computed(() => {
+      const custom = props.error?.statusMessage || props.error?.message;
+      if (kind.value === "generic" && custom && !/^Page not found$/i.test(custom)) {
+        return custom;
+      }
+      return t(`error.${kind.value}.description`);
+    });
+    const icon = computed(() => {
+      switch (kind.value) {
+        case "404":
+          return "mdi:map-search-outline";
+        case "403":
+          return "mdi:lock-outline";
+        case "500":
+          return "mdi:server-network-off";
+        default:
+          return "mdi:alert-circle-outline";
+      }
+    });
+    const devDetail = computed(() => {
+      return "";
+    });
+    useHead(() => ({
+      title: `${statusCode.value} · ${title.value} | ${projectInfo.name}`,
+      meta: [{ name: "robots", content: "noindex" }]
+    }));
     return (_ctx, _push, _parent, _attrs) => {
-      _push(ssrRenderComponent(unref(ErrorTemplate), mergeProps({ status: unref(status), statusText: unref(statusText), statusCode: unref(status), statusMessage: unref(statusText), description: unref(description), stack: unref(stack) }, _attrs), null, _parent));
+      _push(`<div${ssrRenderAttrs(mergeProps({ class: "relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900" }, _attrs))}>`);
+      _push(ssrRenderComponent(_sfc_main$5, null, null, _parent));
+      _push(`<main><section class="relative overflow-hidden min-h-[70vh] flex items-center"><div class="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950"></div><div class="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-3xl"></div><div class="absolute -bottom-40 -left-40 w-[32rem] h-[32rem] rounded-full bg-indigo-200/30 dark:bg-indigo-500/10 blur-3xl"></div><div class="max-w-3xl mx-auto px-4 py-20 lg:py-28 w-full text-center"><p class="text-7xl md:text-8xl font-extrabold tracking-tight tabular-nums bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 dark:from-white dark:via-gray-200 dark:to-white" aria-hidden="true">${ssrInterpolate(unref(statusCode))}</p><div class="mx-auto mt-4 mb-8 w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center shadow-sm">`);
+      _push(ssrRenderComponent(unref(Icon), {
+        icon: unref(icon),
+        class: "text-3xl"
+      }, null, _parent));
+      _push(`</div><h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">${ssrInterpolate(unref(title))}</h1><p class="mt-3 text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl mx-auto">${ssrInterpolate(unref(description))}</p>`);
+      if (unref(devDetail)) {
+        _push(`<p class="mt-4 text-left text-xs font-mono text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 rounded-lg px-3 py-2 max-w-xl mx-auto break-words">${ssrInterpolate(unref(devDetail))}</p>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`<div class="mt-10 flex flex-wrap items-center justify-center gap-3"><button type="button" class="inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition">`);
+      _push(ssrRenderComponent(unref(Icon), {
+        icon: "mdi:home-outline",
+        class: "text-lg"
+      }, null, _parent));
+      _push(` ${ssrInterpolate(unref(t)("error.goHome"))}</button><button type="button" class="inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 transition">`);
+      _push(ssrRenderComponent(unref(Icon), {
+        icon: "mdi:arrow-left",
+        class: "text-lg"
+      }, null, _parent));
+      _push(` ${ssrInterpolate(unref(t)("error.goBack"))}</button>`);
+      if (unref(statusCode) >= 500) {
+        _push(`<button type="button" class="inline-flex items-center gap-2 h-10 px-5 rounded-md text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 transition">`);
+        _push(ssrRenderComponent(unref(Icon), {
+          icon: "mdi:refresh",
+          class: "text-lg"
+        }, null, _parent));
+        _push(` ${ssrInterpolate(unref(t)("error.tryAgain"))}</button>`);
+      } else {
+        _push(`<!---->`);
+      }
+      _push(`</div></div></section></main>`);
+      _push(ssrRenderComponent(_sfc_main$4, null, null, _parent));
+      _push(`</div>`);
     };
   }
 };
 const _sfc_setup$1 = _sfc_main$1.setup;
 _sfc_main$1.setup = (props, ctx) => {
   const ssrContext = useSSRContext();
-  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("../node_modules/nuxt/dist/app/components/nuxt-error-page.vue");
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("error.vue");
   return _sfc_setup$1 ? _sfc_setup$1(props, ctx) : void 0;
 };
 const _sfc_main = {
@@ -10329,5 +11133,5 @@ let entry;
 }
 const entry_default = ((ssrContext) => entry(ssrContext));
 
-export { CONTENT_LOCALES as C, DEFAULT_FOOTER_CREDITS as D, _export_sfc as _, __nuxt_component_0 as a, useI18n as b, useLocalePath as c, useContentLocale as d, entry_default as default, useCookie as e, useBranding as f, useRuntimeConfig as g, getRuntimeEnvSync as h, fetchBranding as i, useRoute as j, normalizeLocaleSettings as n, projectInfo as p, supabase as s, useHead as u };
+export { CONTENT_LOCALES as C, DEFAULT_FOOTER_CREDITS as D, _export_sfc as _, useLocalePath as a, useContentLocale as b, useCookie as c, useBranding as d, entry_default as default, useRuntimeConfig as e, useAsyncData as f, __nuxt_component_0$1 as g, useHead as h, getRuntimeEnvSync as i, fetchBranding as j, useRoute as k, useRequestEvent as l, allConfiguredLocaleCodes as m, normalizeLocaleSettings as n, localizePath as o, projectInfo as p, absoluteAssetUrl as q, resolveSeoImage as r, supabase as s, robotsForClientPath as t, useI18n as u, resolveTwitterSite as v, buildHreflangs as w, useSeoMeta as x, stripLocalePrefix as y };
 //# sourceMappingURL=server.mjs.map

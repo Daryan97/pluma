@@ -6,9 +6,7 @@
     >
       {{ t('posts.previewMode') }}
     </div>
-    <div v-if="loading" class="flex justify-center items-center py-32">
-      <div class="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-    </div>
+    <PostPageSkeleton v-if="pending" />
     <div v-else-if="!post" class="text-center py-32">
       <Icon icon="mdi:alert-circle-outline" class="text-5xl text-gray-300 dark:text-gray-600 mb-6" />
       <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('posts.notFound') }}</p>
@@ -36,8 +34,7 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
-const localePath = useLocalePath()
+const { t, locale } = useI18n()
 const { contentLocale } = useContentLocale()
 
 import { ref, watch, computed } from "vue";
@@ -47,25 +44,159 @@ import { supabase } from "@/services/supabase";
 import Post from "@/components/Post.vue";
 import Comments from "@/components/Comments.vue";
 import SeriesNav from "@/components/SeriesNav.vue";
+import PostPageSkeleton from "@/components/PostPageSkeleton.vue";
 import { projectInfo } from "@/config/projectInfo";
+import { useBranding } from "@/stores/brandingStore";
+import { usePageSeo, articleSeoFromPost } from "@/composables/usePageSeo";
 
 const route = useRoute();
-const post = ref(null);
-const loading = ref(true);
+const branding = useBranding();
 const user = ref(null);
 const seriesPosts = ref([]);
 
-const slug = ref(route.params.slug);
 const isPreview = computed(() => Boolean(route.query.preview));
+
+const POST_SELECT = `
+  id,
+  title,
+  content,
+  locale,
+  category:categories (
+    id,
+    name,
+    slug,
+    locale
+  ),
+  series_id,
+  series_order,
+  tags,
+  slug,
+  comments_disabled,
+  cover_image_url,
+  created_at,
+  status,
+  updated_at,
+  author:profiles (
+    id,
+    username,
+    display_name
+  )
+`;
+
+async function loadSeriesPosts(seriesId) {
+  if (!seriesId) {
+    seriesPosts.value = [];
+    return;
+  }
+  const { data } = await supabase
+    .from("posts")
+    .select("id, title, slug, series_order, locale")
+    .eq("series_id", seriesId)
+    .eq("status", "published")
+    .eq("locale", contentLocale.value)
+    .order("series_order", { ascending: true, nullsFirst: false });
+  seriesPosts.value = data || [];
+}
+
+async function fetchPostPayload(slug, previewToken, locale) {
+  if (!slug) return null;
+
+  if (previewToken) {
+    const { data, error } = await supabase.rpc("get_post_by_preview_token", {
+      p_token: previewToken,
+    });
+    if (error || !data) return null;
+    if (data.series_id) {
+      const { data: seriesRow } = await supabase
+        .from("series")
+        .select("id, name, slug")
+        .eq("id", data.series_id)
+        .maybeSingle();
+      data.series = seriesRow || null;
+    }
+    return data;
+  }
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("slug", slug)
+    .eq("locale", locale)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  if (data.series_id) {
+    const { data: seriesRow } = await supabase
+      .from("series")
+      .select("id, name, slug")
+      .eq("id", data.series_id)
+      .maybeSingle();
+    data.series = seriesRow || null;
+  }
+  return data;
+}
+
+const slug = computed(() => route.params.slug);
+const previewToken = computed(() =>
+  typeof route.query.preview === "string" ? route.query.preview : null
+);
+
+const { data: post, pending } = await useLazyAsyncData(
+  () => `post-${slug.value}-${contentLocale.value}-${previewToken.value || "pub"}`,
+  async () => {
+    const data = await fetchPostPayload(
+      slug.value,
+      previewToken.value,
+      contentLocale.value
+    );
+    return data;
+  },
+  { watch: [slug, contentLocale, previewToken], server: true }
+);
+
 const seriesMeta = computed(() => post.value?.series || null);
 
 watch(
-  () => [route.params.slug, route.query.preview, contentLocale.value],
-  ([newSlug]) => {
-    slug.value = newSlug;
-    fetchPost();
+  post,
+  async (data) => {
+    if (import.meta.client && data) {
+      window.__PLUMA_CURRENT_POST = data;
+    }
+    if (data?.series_id) {
+      await loadSeriesPosts(data.series_id);
+    } else {
+      seriesPosts.value = [];
+    }
   },
   { immediate: true }
+);
+
+const siteName = computed(
+  () =>
+    branding.resolveLocalizedSiteName?.(locale.value) ||
+    projectInfo.name ||
+    "Pluma"
+);
+
+usePageSeo(
+  computed(() => {
+    if (post.value) {
+      return articleSeoFromPost(post.value, siteName.value);
+    }
+    if (!pending.value) {
+      return {
+        title: `${t("posts.notFoundTitle")} | ${siteName.value}`,
+        description: t("posts.notFoundMeta"),
+        type: "website",
+        robots: "noindex, follow",
+      };
+    }
+    return {
+      title: siteName.value,
+      type: "website",
+    };
+  })
 );
 
 async function getUser() {
@@ -83,129 +214,7 @@ async function getUser() {
   }
 }
 
-async function loadSeriesPosts(seriesId) {
-  if (!seriesId) {
-    seriesPosts.value = [];
-    return;
-  }
-  const { data } = await supabase
-    .from("posts")
-    .select("id, title, slug, series_order, locale")
-    .eq("series_id", seriesId)
-    .eq("status", "published")
-    .eq("locale", contentLocale.value)
-    .order("series_order", { ascending: true, nullsFirst: false });
-  seriesPosts.value = data || [];
+if (import.meta.client) {
+  getUser();
 }
-
-async function fetchPost() {
-  if (!slug.value) {
-    post.value = null;
-    loading.value = false;
-    return;
-  }
-
-  loading.value = true;
-  seriesPosts.value = [];
-
-  const previewToken = typeof route.query.preview === "string" ? route.query.preview : null;
-
-  if (previewToken) {
-    const { data, error } = await supabase.rpc("get_post_by_preview_token", {
-      p_token: previewToken,
-    });
-    if (error || !data) {
-      post.value = null;
-    } else {
-      post.value = data;
-      if (import.meta.client) window.__PLUMA_CURRENT_POST = data;
-      if (data.series_id) await loadSeriesPosts(data.series_id);
-    }
-    loading.value = false;
-    return;
-  }
-
-  // Unique key is (locale, slug) — filtering by locale avoids .single() failing
-  // when a translation shares the same slug.
-  const { data, error } = await supabase
-    .from("posts")
-    .select(
-      `
-      id,
-      title,
-      content,
-      locale,
-      category:categories (
-        id,
-        name,
-        slug,
-        locale
-      ),
-      series_id,
-      series_order,
-      tags,
-      slug,
-      comments_disabled,
-      cover_image_url,
-      created_at,
-      status,
-      updated_at,
-      author:profiles (
-        id,
-        username,
-        display_name
-      )
-    `
-    )
-    .eq("slug", slug.value)
-    .eq("locale", contentLocale.value)
-    .maybeSingle();
-
-  if (error || !data) {
-    post.value = null;
-  } else {
-    if (data.series_id) {
-      const { data: seriesRow } = await supabase
-        .from("series")
-        .select("id, name, slug")
-        .eq("id", data.series_id)
-        .maybeSingle();
-      data.series = seriesRow || null;
-      await loadSeriesPosts(data.series_id);
-    }
-    post.value = data;
-    if (import.meta.client) window.__PLUMA_CURRENT_POST = data;
-  }
-
-  loading.value = false;
-}
-
-watch(
-  post,
-  (newPost) => {
-    if (!import.meta.client) return;
-    if (newPost !== null) {
-      document.title = `${newPost.title} | ${projectInfo.name}`;
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute(
-          "content",
-          (newPost.content || "").slice(0, 150) + "..."
-        );
-      }
-    } else {
-      document.title = `${t('posts.notFoundTitle')} | ${projectInfo.name}`;
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute(
-          "content",
-          t('posts.notFoundMeta')
-        );
-      }
-    }
-  },
-  { immediate: true }
-);
-
-getUser();
 </script>

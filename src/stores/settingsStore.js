@@ -1,19 +1,8 @@
-
-import { ref } from 'vue';
 import { supabase } from '@/services/supabase';
-
-const featuresEnabled = ref({
-  welcome: true,
-  siteName: true,
-  siteDescription: true,
-  search: true,
-});
 
 export const ALL_PROVIDERS = [
   'apple', 'azure', 'bitbucket', 'discord', 'facebook', 'figma', 'github', 'gitlab', 'google', 'kakao', 'keycloak', 'linkedin_oidc', 'notion', 'twitch', 'twitter', 'slack_oidc', 'spotify', 'workos', 'zoom'
 ];
-
-const providersEnabled = ref({});
 
 const PROVIDER_META = {
   apple: { label: 'Apple', icon: 'logos:apple', bg: '#ececef', border: '#e5e7eb' },
@@ -53,52 +42,72 @@ function providerGlyphColor(key) {
   return PROVIDER_META[key]?.glyph || null;
 }
 
-
-export async function fetchSettings() {
-  const { data: featuresData, error: featuresError } = await supabase
-    .from('settings')
-    .select('value')
-    .eq('key', 'features_home_enabled')
-    .maybeSingle();
-  if (!featuresError && featuresData && featuresData.value && typeof featuresData.value === 'object') {
-    featuresEnabled.value = {
-      welcome: featuresData.value.welcome !== false,
-      siteName: featuresData.value.siteName !== false,
-      siteDescription: featuresData.value.siteDescription !== false,
-      search: featuresData.value.search !== false,
-    };
-  } else {
-    featuresEnabled.value = { welcome: true, siteName: true, siteDescription: true, search: true };
-  }
-
-  const { data: provData, error: provError } = await supabase
-    .from('settings')
-    .select('value')
-    .eq('key', 'auth_providers_enabled')
-    .maybeSingle();
-  if (!provError && provData && provData.value && typeof provData.value === 'object') {
-    providersEnabled.value = {};
-    for (const p of ALL_PROVIDERS) {
-      providersEnabled.value[p] = provData.value[p] === true;
-    }
-  } else {
-    providersEnabled.value = {};
-    for (const p of ALL_PROVIDERS) providersEnabled.value[p] = false;
-  }
-}
-
-export async function saveProvidersEnabled(newProviders) {
-  await supabase.from('settings').upsert([
-    { key: 'auth_providers_enabled', value: newProviders }
-  ], { onConflict: 'key' });
-  providersEnabled.value = { ...newProviders };
-}
-
+/**
+ * SSR-safe settings. Call from Nuxt setup / asyncData only.
+ * useState must run synchronously before any await.
+ */
 export function useSettings() {
+  const featuresEnabled = useState('settings.featuresEnabled', () => ({
+    welcome: true,
+    siteName: true,
+    siteDescription: true,
+    search: true,
+  }));
+  const featuresSettingsLoaded = useState('settings.featuresLoaded', () => false);
+  const providersEnabled = useState('settings.providersEnabled', () => ({}));
+
+  async function fetchSettings() {
+    try {
+      const { data: featuresData, error: featuresError } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'features_home_enabled')
+        .maybeSingle();
+      if (!featuresError && featuresData && featuresData.value && typeof featuresData.value === 'object') {
+        featuresEnabled.value = {
+          welcome: featuresData.value.welcome !== false,
+          siteName: featuresData.value.siteName !== false,
+          siteDescription: featuresData.value.siteDescription !== false,
+          search: featuresData.value.search !== false,
+        };
+      } else {
+        featuresEnabled.value = { welcome: true, siteName: true, siteDescription: true, search: true };
+      }
+
+      const { data: provData, error: provError } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'auth_providers_enabled')
+        .maybeSingle();
+      if (!provError && provData && provData.value && typeof provData.value === 'object') {
+        const next = {};
+        for (const p of ALL_PROVIDERS) {
+          next[p] = provData.value[p] === true;
+        }
+        providersEnabled.value = next;
+      } else {
+        const next = {};
+        for (const p of ALL_PROVIDERS) next[p] = false;
+        providersEnabled.value = next;
+      }
+    } finally {
+      featuresSettingsLoaded.value = true;
+    }
+  }
+
+  async function saveProvidersEnabled(newProviders) {
+    await supabase.from('settings').upsert([
+      { key: 'auth_providers_enabled', value: newProviders }
+    ], { onConflict: 'key' });
+    providersEnabled.value = { ...newProviders };
+  }
+
   return {
     featuresEnabled,
+    featuresSettingsLoaded,
     providersEnabled,
     ALL_PROVIDERS,
+    fetchSettings,
     saveProvidersEnabled,
     providerLabel,
     providerIcon,
@@ -108,3 +117,7 @@ export function useSettings() {
     PROVIDER_META,
   };
 }
+
+// No standalone fetchSettings/saveProvidersEnabled exports — Nuxt auto-imports
+// store named exports and that breaks `const { fetchSettings } = useSettings()`.
+

@@ -72,7 +72,18 @@
         &copy; {{ new Date().getFullYear() }} {{ siteTitle }}. {{ t("footer.rights") }}
       </div>
       <div
-        v-if="showCreditsRow"
+        v-if="!creditsReady"
+        class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2"
+        aria-hidden="true"
+      >
+        <div class="h-3 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        <div class="flex items-center gap-3 ms-auto">
+          <div class="h-3 w-14 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+          <div class="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700 animate-pulse" />
+        </div>
+      </div>
+      <div
+        v-else-if="showCreditsRow"
         class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[11px]"
       >
         <p
@@ -119,7 +130,7 @@
 <script setup>
 import { Icon } from "@iconify/vue";
 import { projectInfo } from "@/config/projectInfo";
-import { useBranding, fetchBranding, DEFAULT_FOOTER_CREDITS } from "@/stores/brandingStore";
+import { useBranding, DEFAULT_FOOTER_CREDITS } from "@/stores/brandingStore";
 import { rssHref, sitemapHref } from "@/lib/feedUrls";
 import { computed, onMounted } from "vue";
 
@@ -139,6 +150,17 @@ const showCreditsRow = computed(
   () =>
     credits.value.plumaWatermark || credits.value.rss || credits.value.sitemap
 );
+/**
+ * SSR paints the credits skeleton; reveal after mount once branding is ready
+ * so powered-by / RSS / sitemap don't pop in without a placeholder.
+ */
+const creditsUiReady = ref(false);
+const creditsReady = computed(
+  () =>
+    creditsUiReady.value &&
+    !!branding.brandingLoaded?.value &&
+    !branding.brandingLoading?.value
+);
 const feedOptions = computed(() => ({
   locale: locale.value,
   primaryLocale: branding.primaryLocale?.value || "en",
@@ -147,6 +169,14 @@ const rssFeedHref = computed(() => rssHref(feedOptions.value));
 const sitemapFeedHref = computed(() => sitemapHref(feedOptions.value));
 
 onMounted(() => {
-  if (!branding.brandingLoaded.value) fetchBranding();
+  const reveal = () => {
+    creditsUiReady.value = true;
+  };
+  if (branding.brandingLoaded?.value) {
+    reveal();
+  } else {
+    branding.fetchBranding().finally(reveal);
+  }
+  setTimeout(reveal, 4000);
 });
 </script>

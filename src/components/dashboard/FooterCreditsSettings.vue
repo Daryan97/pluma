@@ -103,13 +103,12 @@ import { Icon } from "@iconify/vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import {
   useBranding,
-  updateBranding,
-  fetchBranding,
   DEFAULT_FOOTER_CREDITS,
 } from "@/stores/brandingStore";
 
 const toast = useToast();
 const branding = useBranding();
+const { updateBranding, fetchBranding } = branding;
 const saving = ref(false);
 const error = ref("");
 const showWatermarkPrompt = ref(false);

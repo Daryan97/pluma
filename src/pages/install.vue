@@ -973,6 +973,11 @@ async function markInstallationComplete(silent) {
     });
     if (installInsert.error) throw installInsert.error;
     installCompleted.value = true;
+    try {
+      useAuthCache().setInstallDone(true);
+    } catch {
+      /* outside Nuxt setup */
+    }
     if (!silent) toast.success("Installation marked complete");
     return true;
   } catch (e) {

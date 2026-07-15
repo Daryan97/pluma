@@ -61,21 +61,32 @@ export async function resolveCategoryFilter(supabase, slug, locale) {
  * Categories to show in locale chrome: locale-native rows, plus any
  * categories referenced by published posts in that locale (so chips
  * appear even when only the source-locale category row exists).
+ * Includes a synthetic "uncategorized" entry when published posts have
+ * no category_id.
  */
 export async function loadCategoriesForLocale(supabase, locale) {
-  const [{ data: native }, { data: postCats }] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("id, name, slug, locale, translation_group_id")
-      .eq("locale", locale)
-      .order("name"),
-    supabase
-      .from("posts")
-      .select("category_id, category:categories ( id, name, slug, locale, translation_group_id )")
-      .eq("status", "published")
-      .eq("locale", locale)
-      .not("category_id", "is", null),
-  ]);
+  const [{ data: native }, { data: postCats }, { count: uncategorizedCount }] =
+    await Promise.all([
+      supabase
+        .from("categories")
+        .select("id, name, slug, locale, translation_group_id")
+        .eq("locale", locale)
+        .order("name"),
+      supabase
+        .from("posts")
+        .select(
+          "category_id, category:categories ( id, name, slug, locale, translation_group_id )"
+        )
+        .eq("status", "published")
+        .eq("locale", locale)
+        .not("category_id", "is", null),
+      supabase
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "published")
+        .eq("locale", locale)
+        .is("category_id", null),
+    ]);
 
   const bySlug = new Map();
   for (const c of native || []) {
@@ -90,7 +101,19 @@ export async function loadCategoriesForLocale(supabase, locale) {
     }
   }
 
-  return [...bySlug.values()].sort((a, b) =>
+  const list = [...bySlug.values()].sort((a, b) =>
     String(a.name || "").localeCompare(String(b.name || ""))
   );
+
+  if ((uncategorizedCount || 0) > 0) {
+    list.push({
+      id: null,
+      name: null,
+      slug: "uncategorized",
+      locale,
+      translation_group_id: null,
+    });
+  }
+
+  return list;
 }

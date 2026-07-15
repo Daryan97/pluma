@@ -392,7 +392,7 @@
     "label": "Series · {name}",
     "manage": "Manage Series",
     "newName": "New series name",
-    "add": "Add series",
+    "add": "Add",
     "created": "Series created",
     "updated": "Series updated",
     "removed": "Series removed",
@@ -799,8 +799,24 @@
       "description": "Enable or disable homepage sections and stats below.",
       "featuresTitle": "Homepage Features",
       "statsTitle": "Homepage Stats",
+      "layoutTitle": "Post list layout",
+      "layoutDescription": "Choose how posts appear on the homepage, category, and author pages.",
       "updated": "Homepage settings updated",
       "saveFailed": "Failed to save.",
+      "layouts": {
+        "classic": {
+          "label": "Classic",
+          "desc": "Stacked cards with large cover images."
+        },
+        "magazine": {
+          "label": "Magazine",
+          "desc": "Multi-column grid with a featured lead post."
+        },
+        "compact": {
+          "label": "Compact",
+          "desc": "Dense rows with thumbnail, title, and meta."
+        }
+      },
       "features": {
         "welcome": {
           "label": "Welcome/Latest Post",

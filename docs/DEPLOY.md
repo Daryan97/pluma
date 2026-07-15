@@ -12,14 +12,14 @@ Pluma runs as a **Nuxt 3 / Nitro** Node server (SSR) with live feeds and SEO. Do
 | `VITE_ENV` | `production` or `development` |
 | `VITE_SITE_LOCALE` | Optional default locale code (default `en`) |
 
-Optional: `PORT` / `NITRO_PORT` (Docker defaults to `80`, local `npm start` defaults to `3000`), `FEEDS_CACHE_TTL_MS`, `VITE_TWITTER_SITE`.
+Optional: `PORT` / `NITRO_PORT` (Docker defaults to `80`, local `npm start` defaults to `3000`), `VITE_FEEDS_CACHE_TTL_MS`, `VITE_TWITTER_SITE`.
 
-Docker still accepts the historical `VITE_*` names; the entrypoint also exports matching `NUXT_PUBLIC_*` so SSR runtimeConfig picks them up.
+Set **only** `VITE_*` variables. Do not also set `NUXT_PUBLIC_*` — the Docker entrypoint mirrors `VITE_*` into Nuxt’s runtime overrides internally.
 
-Copy from `example.env`:
+Copy from `.env.example`:
 
 ```bash
-cp example.env .env
+cp .env.example .env
 ```
 
 ## Database
@@ -70,7 +70,7 @@ Configure enabled locales and primary locale under **Dashboard → Branding / lo
 - **Vercel:** keep `vercel.json` minimal (`framework: nuxtjs`). Clear any manual **Output Directory** override (`dist` breaks `/_nuxt` assets).
 - **Netlify:** keep `netlify.toml` minimal (build command only). Do **not** publish `dist` or SPA-redirect `/*` to a document function — same MIME / white-screen failure as the old Vercel setup. Legacy helpers under `api/` and `netlify/functions/` are unused by the SSR path.
 
-Use the same `VITE_*` / `NUXT_PUBLIC_*` env vars as Docker.
+Use the same `VITE_*` env vars as Docker (never duplicate them as `NUXT_PUBLIC_*`).
 
 ## Backup
 

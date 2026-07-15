@@ -3,9 +3,9 @@ import { j as joinRelativeURL, u as useRuntimeConfig, h as encodePath, i as defi
 import { renderToString } from 'vue/server-renderer';
 import { createHead as createHead$1, propsToString, renderSSRHead } from 'unhead/server';
 import { stringify, uneval } from 'devalue';
+import { FlatMetaPlugin, DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin } from 'unhead/plugins';
 import { walkResolver } from 'unhead/utils';
 import { isRef, toValue, hasInjectionContext, inject, ref, watchEffect, getCurrentInstance, onBeforeUnmount, onDeactivated, onActivated } from 'vue';
-import { DeprecationsPlugin, PromisesPlugin, TemplateParamsPlugin, AliasSortingPlugin } from 'unhead/plugins';
 
 const VueResolver = (_, value) => {
   return isRef(value) ? toValue(value) : value;
@@ -63,6 +63,16 @@ function clientUseHead(head, input, options = {}) {
   }
   return entry;
 }
+function useSeoMeta(input = {}, options = {}) {
+  const head = options.head || /* @__PURE__ */ injectHead();
+  head.use(FlatMetaPlugin);
+  const { title, titleTemplate, ...meta } = input;
+  return useHead({
+    title,
+    titleTemplate,
+    _flatMeta: meta
+  }, options);
+}
 
 // @__NO_SIDE_EFFECTS__
 function createHead(options = {}) {
@@ -76,7 +86,7 @@ function createHead(options = {}) {
 
 const NUXT_RUNTIME_PAYLOAD_EXTRACTION = false;
 
-const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"A simple and modern blogging platform built with Nuxt and Supabase."}],"link":[{"rel":"icon","href":"/favicon.png"},{"rel":"alternate","type":"application/rss+xml","title":"Pluma RSS","href":"/rss.xml"},{"rel":"sitemap","type":"application/xml","href":"/sitemap.xml"}],"style":[],"script":[{"key":"pluma-theme-boot","innerHTML":"(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){var m=document.cookie.match(/(?:^|; )pluma_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1])}if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t}catch(e){}})();","tagPosition":"head"}],"noscript":[],"title":"Pluma"};
+const appHead = {"meta":[{"charset":"utf-8"},{"name":"viewport","content":"width=device-width, initial-scale=1"},{"name":"description","content":"A simple and modern blogging platform built with Nuxt and Supabase."}],"link":[{"rel":"icon","href":"/favicon.png"},{"rel":"apple-touch-icon","href":"/apple-touch-icon.png"},{"rel":"alternate","type":"application/rss+xml","title":"Pluma RSS","href":"/rss.xml"},{"rel":"sitemap","type":"application/xml","href":"/sitemap.xml"}],"style":[],"script":[{"key":"pluma-theme-boot","innerHTML":"(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){var m=document.cookie.match(/(?:^|; )pluma_theme=([^;]*)/);if(m)t=decodeURIComponent(m[1])}if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t}catch(e){}})();","tagPosition":"head"}],"noscript":[],"title":"Pluma"};
 
 const appRootTag = "div";
 
@@ -445,5 +455,5 @@ const renderer = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: handler
 }, Symbol.toStringTag, { value: 'Module' }));
 
-export { baseURL as b, headSymbol as h, renderer as r, useHead as u };
+export { useSeoMeta as a, baseURL as b, headSymbol as h, renderer as r, useHead as u };
 //# sourceMappingURL=renderer.mjs.map

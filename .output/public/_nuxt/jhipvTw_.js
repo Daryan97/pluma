@@ -1,0 +1,1 @@
+function e(n){if(!Array.isArray(n)||!n.length)return 0;const o=new Set;for(const t of n)t&&o.add(t.translation_group_id||t.id);return o.size}async function c(n,o){let t=n.from("posts").select("id, translation_group_id");typeof o=="function"&&(t=o(t)||t);const{data:i,error:r}=await t;return r?{count:0,error:r}:{count:e(i),error:null}}export{e as a,c};

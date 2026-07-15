@@ -1,6 +1,7 @@
 /**
  * Client-side DOM SEO helpers — keep in sync with scripts/feeds/seo.js injectMeta.
  */
+import { stripLocalePrefix } from '@/lib/seoPaths'
 
 function ensureMeta(name, attr = 'property') {
   const selector = attr === 'name' ? `meta[name="${name}"]` : `meta[property="${name}"]`
@@ -59,7 +60,8 @@ function setJsonLd(structuredData) {
 }
 
 export function robotsForClientPath(path = '/') {
-  const p = path.replace(/\/+$/, '') || '/'
+  const raw = path.replace(/\/+$/, '') || '/'
+  const p = stripLocalePrefix(raw)
   const noindex = [
     '/dashboard',
     '/profile',
@@ -162,6 +164,31 @@ export function absoluteAssetUrl(url, origin = typeof window !== 'undefined' ? w
   return value.startsWith('/') ? `${origin.replace(/\/$/, '')}${value}` : `${origin.replace(/\/$/, '')}/${value}`
 }
 
+/** Prefer absolute image URL for OG/Twitter (shared with server seo.js). */
+export function resolveSeoImage(preferred, branding, baseUrl) {
+  const base = baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
+  const candidates = [
+    preferred,
+    branding?.ogImageUrl,
+    branding?.lightLogoUrl,
+    branding?.darkLogoUrl,
+    branding?.faviconUrl,
+    base ? `${base}/og-default.png` : '/og-default.png',
+  ].filter(Boolean)
+
+  for (const raw of candidates) {
+    const value = String(raw).trim()
+    if (!value) continue
+    if (/^https?:\/\//i.test(value)) return value
+    if (value.startsWith('//')) return `https:${value}`
+    if (base) {
+      return value.startsWith('/') ? `${base}${value}` : `${base}/${value}`
+    }
+    return value
+  }
+  return null
+}
+
 export function applySeoToDocument(payload = {}) {
   if (typeof document === 'undefined') return
 
@@ -176,7 +203,7 @@ export function applySeoToDocument(payload = {}) {
   const image =
     absoluteAssetUrl(payload.image, origin) ||
     absoluteAssetUrl(payload.fallbackImage, origin) ||
-    absoluteAssetUrl('/favicon.png', origin)
+    absoluteAssetUrl('/og-default.png', origin)
   const publishedTime = payload.publishedTime || null
   const modifiedTime = payload.modifiedTime || null
   const twitterSite = payload.twitterSite || null

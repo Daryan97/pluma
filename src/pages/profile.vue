@@ -374,9 +374,10 @@
 definePageMeta({ requiresAuth: true, ssr: false })
 
 import { ref, onMounted, onBeforeUnmount, computed } from "vue";
-import { supabase } from "@/services/supabase";import { Icon } from "@iconify/vue";
+import { supabase } from "@/services/supabase";
+import { Icon } from "@iconify/vue";
 import { useRoute, useRouter } from "vue-router";
-import { useSettings, fetchSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
+import { useSettings, ALL_PROVIDERS } from "@/stores/settingsStore";
 import { getBrowserOrigin } from "@/lib/utils";
 
 const toast = useToast();
@@ -402,7 +403,7 @@ const emailAuthInput = ref("");
 const savingEmail = ref(false);
 const lastRequestedEmail = ref("");
 
-const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
+const { providersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor, fetchSettings } = useSettings();
 const enabledProviders = computed(() =>
   ALL_PROVIDERS.filter((p) => providersEnabled.value?.[p] === true)
 );

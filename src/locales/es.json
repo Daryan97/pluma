@@ -392,7 +392,7 @@
     "label": "Serie · {name}",
     "manage": "Gestionar series",
     "newName": "Nombre de la nueva serie",
-    "add": "Añadir serie",
+    "add": "Añadir",
     "created": "Serie creada",
     "updated": "Serie actualizada",
     "removed": "Serie eliminada",
@@ -831,6 +831,22 @@
         "authors": {
           "label": "Autores",
           "desc": "Mostrar el total de autores/admins."
+        }
+      },
+      "layoutTitle": "Post list layout",
+      "layoutDescription": "Choose how posts appear on the homepage, category, and author pages.",
+      "layouts": {
+        "classic": {
+          "label": "Classic",
+          "desc": "Stacked cards with large cover images."
+        },
+        "magazine": {
+          "label": "Magazine",
+          "desc": "Multi-column grid with a featured lead post."
+        },
+        "compact": {
+          "label": "Compact",
+          "desc": "Dense rows with thumbnail, title, and meta."
         }
       }
     },

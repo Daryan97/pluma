@@ -445,7 +445,7 @@ definePageMeta({ devOnly: true });
 import { ref, computed, onUnmounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { supabase } from "@/services/supabase";
-import { useBranding, fetchBranding } from "@/stores/brandingStore";
+import { useBranding } from "@/stores/brandingStore";
 import { getBrowserOrigin, getBrowserUrl } from "@/lib/utils";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
@@ -611,7 +611,7 @@ async function createMultiLocalePost() {
     const userId = session?.user?.id;
     if (!userId) throw new Error("No authenticated user in session");
 
-    await fetchBranding(true);
+    await branding.fetchBranding(true);
     const enabled = branding.enabledLocales?.value?.length
       ? branding.enabledLocales.value
       : ["en"];
@@ -1261,7 +1261,7 @@ async function loadSettings() {
 
 async function loadBranding() {
   try {
-    await fetchBranding(true);
+    await branding.fetchBranding(true);
     const { data, error } = await supabase
       .from("settings")
       .select("value")
@@ -1319,7 +1319,7 @@ function askClearLocalStorage() {
 async function loadLocaleDiagnostics() {
   localeDiagLoading.value = true;
   try {
-    await fetchBranding(true);
+    await branding.fetchBranding(true);
     const { data: localeRows } = await supabase.from("posts").select("locale");
     const byLocale = {};
     for (const row of localeRows || []) {
@@ -1429,7 +1429,7 @@ async function runQuickSuite() {
     const { error: pingErr } = await supabase.from("settings").select("key").limit(1);
     push("supabase", !pingErr, pingErr?.message || `${Math.round(performance.now() - t0)}ms`);
 
-    await fetchBranding(true);
+    await branding.fetchBranding(true);
     push(
       "branding",
       !!branding.brandingLoaded?.value,

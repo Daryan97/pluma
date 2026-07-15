@@ -1,9 +1,6 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 py-10">
-    <div v-if="loading" class="flex flex-col items-center justify-center min-h-[60vh]">
-      <Icon icon="mdi:loading" class="animate-spin text-4xl text-blue-500 mb-4" />
-      <p class="text-gray-700 dark:text-gray-300 text-lg">{{ t('dashboard.gathering') }}</p>
-    </div>
+    <DashboardSkeleton v-if="loading" />
     <template v-else>
       <header class="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div class="flex items-center gap-2 min-w-0">
@@ -110,6 +107,8 @@
         </TabsContent>
 
         <TabsContent value="posts" class="space-y-6">
+          <DashboardSkeleton v-if="!postsLoaded" />
+          <template v-else>
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
             <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <CategoriesManagement @changed="fetchCategories" />
@@ -534,6 +533,7 @@
               <Icon icon="mdi:chevron-right" class="text-base" />
             </button>
           </div>
+          </template>
         </TabsContent>
 
         <TabsContent
@@ -541,7 +541,9 @@
           v-if="role === 'admin' || role === 'author'"
           class=""
         >
+          <DashboardSkeleton v-if="!pendingLoaded" />
           <PendingComments
+            v-else
             :comments="pendingComments"
             :page="pendingPage"
             :total-pages="pendingTotalPages"
@@ -564,11 +566,13 @@
         </TabsContent>
 
         <TabsContent value="media" v-if="role === 'admin'" class="space-y-6">
-          <MediaManager v-if="mediaLoaded" />
+          <DashboardSkeleton v-if="!mediaLoaded" />
+          <MediaManager v-else />
         </TabsContent>
 
         <TabsContent value="settings" v-if="role === 'admin'" class="space-y-10">
-          <template v-if="brandingLoaded">
+          <DashboardSkeleton v-if="!brandingLoaded" />
+          <template v-else>
             <div class="grid gap-10 lg:grid-cols-2 items-start">
               <BrandingMetaForm />
               <LogoUpload class="self-stretch" />
@@ -578,18 +582,11 @@
               <LocaleSettingsForm class="self-stretch lg:col-span-2" />
             </div>
           </template>
-          <template v-else>
-            <div class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center">
-              {{ t('dashboard.loadingSettings') }}
-            </div>
-          </template>
         </TabsContent>
 
         <TabsContent value="members" v-if="role === 'admin'" class="space-y-6">
-          <MembersManagement v-if="membersLoaded" />
-          <div v-else class="text-sm text-gray-500 dark:text-gray-400 py-10 text-center">
-            {{ t('dashboard.loadingMembers') }}
-          </div>
+          <DashboardSkeleton v-if="!membersLoaded" />
+          <MembersManagement v-else />
         </TabsContent>
       </TabsRoot>
 
@@ -612,7 +609,7 @@ definePageMeta({ requiresAuth: true, requiresAuthorOrAdmin: true, ssr: false })
 const { t } = useI18n();
 const localePath = useLocalePath();
 const loading = ref(true);
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, defineAsyncComponent } from "vue";
 import { supabase } from "@/services/supabase";
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
@@ -656,19 +653,41 @@ import {
   SelectViewport,
 } from "radix-vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
-import CategoriesManagement from "@/components/dashboard/CategoriesManagement.vue";
-import SeriesManagement from "@/components/dashboard/SeriesManagement.vue";
-import FooterCreditsSettings from "@/components/dashboard/FooterCreditsSettings.vue";
-import LocaleSettingsForm from "@/components/dashboard/LocaleSettingsForm.vue";
-import LogoUpload from "@/components/dashboard/LogoUpload.vue";
-import BrandingMetaForm from "@/components/dashboard/BrandingMetaForm.vue";
-import MembersManagement from "@/components/dashboard/MembersManagement.vue";
-import MediaManager from "@/components/dashboard/MediaManager.vue";
-import { useBranding, updateBranding, fetchBranding } from "@/stores/brandingStore";
+import DashboardSkeleton from "@/components/dashboard/DashboardSkeleton.vue";
+import { useBranding } from "@/stores/brandingStore";
 import { CONTENT_LOCALES } from "@/config/contentLocales";
 import { countLogicalPosts } from "@/lib/postCount";
-import StatsSettingsForm from "@/components/dashboard/StatsSettingsForm.vue";
-import ProviderSettingsForm from "@/components/dashboard/ProviderSettingsForm.vue";
+
+const CategoriesManagement = defineAsyncComponent(
+  () => import("@/components/dashboard/CategoriesManagement.vue")
+);
+const SeriesManagement = defineAsyncComponent(
+  () => import("@/components/dashboard/SeriesManagement.vue")
+);
+const FooterCreditsSettings = defineAsyncComponent(
+  () => import("@/components/dashboard/FooterCreditsSettings.vue")
+);
+const LocaleSettingsForm = defineAsyncComponent(
+  () => import("@/components/dashboard/LocaleSettingsForm.vue")
+);
+const LogoUpload = defineAsyncComponent(
+  () => import("@/components/dashboard/LogoUpload.vue")
+);
+const BrandingMetaForm = defineAsyncComponent(
+  () => import("@/components/dashboard/BrandingMetaForm.vue")
+);
+const MembersManagement = defineAsyncComponent(
+  () => import("@/components/dashboard/MembersManagement.vue")
+);
+const MediaManager = defineAsyncComponent(
+  () => import("@/components/dashboard/MediaManager.vue")
+);
+const StatsSettingsForm = defineAsyncComponent(
+  () => import("@/components/dashboard/StatsSettingsForm.vue")
+);
+const ProviderSettingsForm = defineAsyncComponent(
+  () => import("@/components/dashboard/ProviderSettingsForm.vue")
+);
 
 const showConfirm = ref(false);
 const confirmMessage = ref("");
@@ -1278,6 +1297,10 @@ watch(activeTab, async (val) => {
   try {
     localStorage.setItem(TAB_STORAGE_KEY, val);
   } catch (e) {}
+  await ensureActiveTabData(val);
+});
+
+async function ensureActiveTabData(val = activeTab.value) {
   if (val === "posts" && !postsLoaded.value) {
     await Promise.all([
       fetchAuthors(),
@@ -1294,14 +1317,14 @@ watch(activeTab, async (val) => {
     await fetchPendingComments(true);
     pendingLoaded.value = true;
   } else if (val === "settings" && !brandingLoaded.value && role.value === "admin") {
+    if (!brandingStore.brandingLoaded.value) await brandingStore.fetchBranding(true);
     brandingLoaded.value = true;
-    if (!brandingStore.brandingLoaded.value) await fetchBranding(true);
   } else if (val === "members" && !membersLoaded.value && role.value === "admin") {
     membersLoaded.value = true;
   } else if (val === "media" && !mediaLoaded.value && role.value === "admin") {
     mediaLoaded.value = true;
   }
-});
+}
 
 function isTabAllowed(tab) {
   if (["members", "media", "settings"].includes(tab)) return role.value === "admin";
@@ -1320,10 +1343,15 @@ function restoreActiveTab() {
 
 onMounted(async () => {
   loading.value = true;
-  await fetchCurrentUser();
-  restoreActiveTab();
-  await fetchStats();
-  loading.value = false;
+  try {
+    await fetchCurrentUser();
+    restoreActiveTab();
+    await fetchStats();
+  } finally {
+    // Page chrome (tabs) can render; each tab keeps its own skeleton until data is ready.
+    loading.value = false;
+  }
+  await ensureActiveTabData(activeTab.value);
 });
 </script>
 

@@ -5,8 +5,6 @@ export const DEFAULT_SITE_DESCRIPTION = 'A modern, open-source blogging platform
 const STATIC_ROUTES = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/archive', priority: 0.8, changefreq: 'weekly' },
-  { path: '/login', priority: 0.4, changefreq: 'monthly' },
-  { path: '/signup', priority: 0.6, changefreq: 'monthly' },
 ]
 
 export function normalizeSiteUrl(url) {
@@ -440,6 +438,11 @@ function buildRobots(baseUrl) {
     'Allow: /',
     'Disallow: /dashboard',
     'Disallow: /profile',
+    'Disallow: /login',
+    'Disallow: /signup',
+    'Disallow: /install',
+    'Disallow: /change-password',
+    'Disallow: /test',
     `Sitemap: ${baseUrl}/sitemap.xml`,
   ].join('\n')
 }

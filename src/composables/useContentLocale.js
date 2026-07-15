@@ -1,5 +1,5 @@
 import { CONTENT_LOCALES } from '@/config/contentLocales'
-import { useBranding, isLocaleEnabled } from '@/stores/brandingStore'
+import { useBranding } from '@/stores/brandingStore'
 
 export { CONTENT_LOCALES }
 
@@ -16,7 +16,7 @@ export function useContentLocale() {
 
   const contentLocale = computed(() => {
     const ui = locale.value || 'en'
-    if (isLocaleEnabled(ui)) return ui
+    if (branding.isLocaleEnabled(ui)) return ui
     return branding.primaryLocale?.value || 'en'
   })
 

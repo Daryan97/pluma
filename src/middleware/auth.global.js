@@ -3,6 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { $toast, $i18n } = useNuxtApp()
   const config = useRuntimeConfig()
   const localePath = useLocalePath()
+  const auth = useAuthCache()
   const lp = (path, query) =>
     query ? { path: localePath(path), query } : localePath(path)
 
@@ -13,6 +14,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const devOnly = to.meta.devOnly
   const needsAuthGate =
     requiresAuth || requiresAdmin || requiresAuthorOrAdmin || requireAnonymous
+  const needsRoleCheck = requiresAdmin || requiresAuthorOrAdmin
 
   if (devOnly && config.public.env !== 'development') {
     return navigateTo(lp('/'))
@@ -29,17 +31,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo({ path: '/install', query: to.query, hash: to.hash })
   }
 
-  function normalizeInstallFlag(raw) {
-    if (raw === true || raw === 'true' || raw === 1 || raw === '1') return true
-    if (raw && typeof raw === 'object' && raw !== null) {
-      if (raw.complete === true || raw.complete === 'true') return true
-      if (raw.installed === true || raw.installed === 'true') return true
-    }
-    return false
-  }
-
-  // Install gate — fail open on config/network errors so a bad SSR client
-  // cannot lock everyone into /install forever.
+  // Install gate — cached after first successful read.
   try {
     const url = config.public.supabaseUrl || ''
     const key = config.public.supabaseAnonKey || ''
@@ -52,92 +44,70 @@ export default defineNuxtRouteMiddleware(async (to) => {
     if (credsMissing) {
       console.warn('[install-gate] Supabase credentials missing; skipping gate')
     } else {
-      const { data, error } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'installation')
-        .maybeSingle()
-
-      if (error) {
-        // Missing schema → genuinely not installed
-        if (
-          /relation .* does not exist|Could not find the table|schema cache/i.test(
-            error.message || ''
-          )
-        ) {
-          if (!isInstallRoute) return navigateTo('/install')
-        } else {
-          console.warn('[install-gate] settings read failed:', error.message)
-        }
-      } else {
-        const installDone = !!data && normalizeInstallFlag(data.value)
-
+      try {
+        const installDone = await auth.ensureInstallStatus(supabase)
         if (!installDone && !isInstallRoute) {
           return navigateTo('/install')
         }
         if (installDone && isInstallRoute) {
           return navigateTo(lp('/'))
         }
+      } catch (error) {
+        console.warn('[install-gate] settings read failed:', error?.message || error)
+        // Fail open — do not bounce to /install
       }
     }
   } catch (e) {
     if (e?.message?.includes('JWSError')) {
       if (import.meta.server) return
+      auth.clearAuthCache()
       await supabase.auth.signOut()
       return navigateTo(lp('/login'))
     }
     console.warn('[install-gate] unexpected error:', e?.message || e)
-    // Fail open — do not bounce to /install
   }
 
   // Session is persisted in localStorage — getSession() is empty on SSR.
-  if (import.meta.server && needsAuthGate) {
+  if (import.meta.server) {
+    if (needsAuthGate) return
+    // Install gate already handled; skip session on SSR for public routes.
     return
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  const user = session?.user
+  // Warm session once; later navigations hit useState cache only.
+  const user = await auth.ensureSession(supabase)
+  const userId = user?.id || auth.sessionUserId.value
 
-  if (user && !to.path.includes('/profile')) {
-    const { data: prof, error: profErr } = await supabase
-      .from('profiles')
-      .select('username, display_name, role')
-      .eq('id', user.id)
-      .single()
-    if (!profErr && (!prof?.username || !prof?.display_name)) {
-      if (import.meta.client && $toast) {
-        $toast.error($i18n.t('profile.completeBeforeProceeding'))
-      }
+  if (userId && !to.path.includes('/profile')) {
+    const prof = await auth.ensureProfile(supabase, userId, {
+      force: needsRoleCheck && !auth.profileCache.value?.role,
+    })
+
+    if (!prof?.username || !prof?.display_name) {
+      if ($toast) $toast.error($i18n.t('profile.completeBeforeProceeding'))
       return navigateTo(lp('/profile', { edit: 'true' }))
     }
-    if (!profErr && prof?.role === 'disabled') {
+    if (prof?.role === 'disabled') {
+      auth.clearAuthCache()
       await supabase.auth.signOut()
-      if (import.meta.client && $toast) {
-        $toast.error($i18n.t('profile.accountDisabled'))
-      }
+      if ($toast) $toast.error($i18n.t('profile.accountDisabled'))
       return navigateTo(lp('/login'))
     }
   }
 
-  if (requireAnonymous && user) {
+  if (requireAnonymous && userId) {
     const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : ''
     if (redirect.startsWith('/') && !redirect.startsWith('//')) {
       return navigateTo(redirect)
     }
     return navigateTo(lp('/'))
   }
-  if (requiresAuth && !user) {
+  if (requiresAuth && !userId) {
     return navigateTo(lp('/login', { redirect: to.fullPath }))
   }
 
-  if ((requiresAdmin || requiresAuthorOrAdmin) && user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+  if (needsRoleCheck && userId) {
+    const profile = await auth.ensureProfile(supabase, userId)
     if (!profile?.role) return navigateTo(lp('/'))
     if (requiresAdmin && profile.role !== 'admin') return navigateTo(lp('/'))
     if (requiresAuthorOrAdmin && !['admin', 'author'].includes(profile.role)) {

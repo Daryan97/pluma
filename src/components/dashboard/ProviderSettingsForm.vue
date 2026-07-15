@@ -98,16 +98,17 @@ const localePath = useLocalePath()
 
 
 import { ref, watch, onMounted } from 'vue';
-import { useSettings, fetchSettings } from '@/stores/settingsStore';
-import { Icon } from '@iconify/vue';import { getBrowserOrigin } from '@/lib/utils';
+import { useSettings } from '@/stores/settingsStore';
+import { Icon } from '@iconify/vue';
+import { getBrowserOrigin } from '@/lib/utils';
+
+const { providersEnabled, ALL_PROVIDERS, saveProvidersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor, fetchSettings } = useSettings();
 
 onMounted(async () => {
   await fetchSettings();
 });
 
 const appOrigin = getBrowserOrigin();
-
-const { providersEnabled, ALL_PROVIDERS, saveProvidersEnabled, providerLabel, providerIcon, brandBg, brandBorder, providerGlyphColor } = useSettings();
 const toast = useToast();
 
 const localProviders = ref({});

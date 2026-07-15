@@ -1,13 +1,9 @@
 import { u as useRuntimeConfig } from './nitro.mjs';
 import { createClient } from '@supabase/supabase-js';
 
-const DEFAULT_SITE_NAME = "Pluma";
-const DEFAULT_SITE_DESCRIPTION = "A modern, open-source blogging platform.";
 const STATIC_ROUTES = [
   { path: "/", priority: 1, changefreq: "daily" },
-  { path: "/archive", priority: 0.8, changefreq: "weekly" },
-  { path: "/login", priority: 0.4, changefreq: "monthly" },
-  { path: "/signup", priority: 0.6, changefreq: "monthly" }
+  { path: "/archive", priority: 0.8, changefreq: "weekly" }
 ];
 function normalizeSiteUrl(url) {
   if (!url) return "http://localhost:5173";
@@ -110,10 +106,47 @@ function applyPostFilters(posts, filters = {}) {
 function describeFilters(filters = {}) {
   var _a, _b, _c;
   const chunks = [];
+  if (filters.locale) chunks.push(`locale: ${filters.locale}`);
   if ((_a = filters.categories) == null ? void 0 : _a.length) chunks.push(`categories: ${filters.categories.join(", ")}`);
   if ((_b = filters.authors) == null ? void 0 : _b.length) chunks.push(`authors: ${filters.authors.join(", ")}`);
   if ((_c = filters.tags) == null ? void 0 : _c.length) chunks.push(`tags: ${filters.tags.join(", ")}`);
   return chunks.length ? chunks.join(" | ") : "";
+}
+function buildFeedQuery(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.locale) params.set("locale", filters.locale);
+  for (const value of filters.categories || []) params.append("category", value);
+  for (const value of filters.authors || []) params.append("author", value);
+  for (const value of filters.tags || []) params.append("tag", value);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+function resolveFeedBranding(branding, locale) {
+  var _a;
+  const primary = normalizeFilterValue((branding == null ? void 0 : branding.primaryLocale) || (branding == null ? void 0 : branding.locale) || "en");
+  const code = normalizeFilterValue(locale || "");
+  const primaryName = (branding == null ? void 0 : branding.siteName) || "";
+  const primaryDescription = (branding == null ? void 0 : branding.siteDescription) || "";
+  if (code && code !== primary) {
+    const tr = (_a = branding == null ? void 0 : branding.metaTranslations) == null ? void 0 : _a[code];
+    if (!tr) {
+      return {
+        siteName: primaryName,
+        siteDescription: primaryDescription,
+        language: code
+      };
+    }
+    return {
+      siteName: tr.siteName || "",
+      siteDescription: tr.siteDescription || "",
+      language: code
+    };
+  }
+  return {
+    siteName: primaryName,
+    siteDescription: primaryDescription,
+    language: code || primary || "en"
+  };
 }
 class FeedGenerator {
   constructor(options = {}) {
@@ -202,18 +235,24 @@ class FeedGenerator {
     this.cacheTimestamp = Date.now();
     return this.cache;
   }
-  async generate({ baseUrl, rssFilters } = {}) {
+  async generate({ baseUrl, rssFilters, filters } = {}) {
     const effectiveBase = normalizeSiteUrl(baseUrl || this.defaultBaseUrl);
     const data = await this.getData();
-    const sitemap = buildSitemap(effectiveBase, data);
-    const rss = buildRss(effectiveBase, data, { filters: rssFilters });
+    const effectiveFilters = filters || rssFilters || {};
+    const sitemap = buildSitemap(effectiveBase, data, effectiveFilters);
+    const rss = buildRss(effectiveBase, data, { filters: effectiveFilters });
     const robots = buildRobots(effectiveBase);
     return { sitemap, rss, robots, data, baseUrl: effectiveBase };
   }
 }
-function buildSitemap(baseUrl, data) {
+function buildSitemap(baseUrl, data, filters = {}) {
   const urls = [];
   const now = formatIso(Date.now());
+  const hasLocale = !!filters.locale;
+  const posts = hasLocale ? applyPostFilters(data.posts || [], { locale: filters.locale }) : data.posts || [];
+  const categories = hasLocale ? (data.categories || []).filter(
+    (category) => normalizeFilterValue((category == null ? void 0 : category.locale) || "en") === filters.locale
+  ) : data.categories || [];
   for (const route of STATIC_ROUTES) {
     urls.push({
       loc: `${baseUrl}${route.path}`,
@@ -222,7 +261,7 @@ function buildSitemap(baseUrl, data) {
       lastmod: now
     });
   }
-  for (const category of data.categories || []) {
+  for (const category of categories) {
     if (!(category == null ? void 0 : category.slug)) continue;
     urls.push({
       loc: `${baseUrl}/category/${category.slug}`,
@@ -231,7 +270,7 @@ function buildSitemap(baseUrl, data) {
       lastmod: formatIso(category.updated_at || category.created_at || Date.now())
     });
   }
-  for (const post of data.posts || []) {
+  for (const post of posts) {
     if (!(post == null ? void 0 : post.slug)) continue;
     urls.push({
       loc: `${baseUrl}/posts/${post.slug}`,
@@ -253,15 +292,17 @@ function buildSitemap(baseUrl, data) {
   return xml.join("\n");
 }
 function buildRss(baseUrl, data, options = {}) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
-  const siteName = ((_a = data.branding) == null ? void 0 : _a.siteName) || DEFAULT_SITE_NAME;
-  const siteDescription = ((_b = data.branding) == null ? void 0 : _b.siteDescription) || DEFAULT_SITE_DESCRIPTION;
+  var _a, _b, _c, _d, _e, _f, _g;
   const filters = options.filters || {};
+  const branding = resolveFeedBranding(data.branding, filters.locale);
+  const siteName = branding.siteName;
+  const siteDescription = branding.siteDescription;
   const posts = applyPostFilters(data.posts || [], filters).slice(0, 50);
   const filtersLabel = describeFilters(filters);
-  const faviconUrl = ((_c = data.branding) == null ? void 0 : _c.faviconUrl) || ((_d = data.branding) == null ? void 0 : _d.lightLogoUrl) || ((_e = data.branding) == null ? void 0 : _e.darkLogoUrl);
+  const faviconUrl = ((_a = data.branding) == null ? void 0 : _a.faviconUrl) || ((_b = data.branding) == null ? void 0 : _b.lightLogoUrl) || ((_c = data.branding) == null ? void 0 : _c.darkLogoUrl);
   const mediaNamespace = "http://search.yahoo.com/mrss/";
   const feedDescription = filtersLabel ? `${siteDescription} (Filtered by ${filtersLabel})` : siteDescription;
+  const selfHref = `${baseUrl}/rss.xml${buildFeedQuery(filters)}`;
   const channel = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="${mediaNamespace}">`,
@@ -269,9 +310,9 @@ function buildRss(baseUrl, data, options = {}) {
     `    <title>${escapeXml(siteName)}</title>`,
     `    <link>${escapeXml(baseUrl + "/")}</link>`,
     `    <description>${escapeXml(feedDescription)}</description>`,
-    `    <atom:link href="${escapeXml(baseUrl + "/rss.xml")}" rel="self" type="application/rss+xml" />`,
-    `    <lastBuildDate>${formatRssDate(((_f = posts[0]) == null ? void 0 : _f.updated_at) || Date.now())}</lastBuildDate>`,
-    `    <language>en</language>`
+    `    <atom:link href="${escapeXml(selfHref)}" rel="self" type="application/rss+xml" />`,
+    `    <lastBuildDate>${formatRssDate(((_d = posts[0]) == null ? void 0 : _d.updated_at) || Date.now())}</lastBuildDate>`,
+    `    <language>${escapeXml(branding.language)}</language>`
   ];
   if (faviconUrl) {
     channel.push("    <image>");
@@ -295,7 +336,7 @@ function buildRss(baseUrl, data, options = {}) {
     channel.push(`      <guid isPermaLink="true">${escapeXml(postUrl)}</guid>`);
     channel.push(`      <pubDate>${formatRssDate(post.created_at)}</pubDate>`);
     channel.push(`      <description>${toCData(excerpt)}</description>`);
-    if ((_g = post.category) == null ? void 0 : _g.name) {
+    if ((_e = post.category) == null ? void 0 : _e.name) {
       channel.push(`      <category domain="category">${escapeXml(post.category.name)}</category>`);
     }
     if (post.tags && Array.isArray(post.tags)) {
@@ -304,7 +345,7 @@ function buildRss(baseUrl, data, options = {}) {
         channel.push(`      <category domain="tag">${escapeXml(tag)}</category>`);
       }
     }
-    if (((_h = post.author) == null ? void 0 : _h.display_name) || ((_i = post.author) == null ? void 0 : _i.username)) {
+    if (((_f = post.author) == null ? void 0 : _f.display_name) || ((_g = post.author) == null ? void 0 : _g.username)) {
       channel.push(`      <author>${escapeXml(post.author.display_name || post.author.username)}</author>`);
     }
     if (thumbnailUrl) {
@@ -325,6 +366,11 @@ function buildRobots(baseUrl) {
     "Allow: /",
     "Disallow: /dashboard",
     "Disallow: /profile",
+    "Disallow: /login",
+    "Disallow: /signup",
+    "Disallow: /install",
+    "Disallow: /change-password",
+    "Disallow: /test",
     `Sitemap: ${baseUrl}/sitemap.xml`
   ].join("\n");
 }

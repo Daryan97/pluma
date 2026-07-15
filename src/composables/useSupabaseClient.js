@@ -16,16 +16,8 @@ function resolveUrlKey() {
   }
 
   if ((!url || !key) && import.meta.server) {
-    url =
-      url ||
-      process.env.NUXT_PUBLIC_SUPABASE_URL ||
-      process.env.VITE_SUPABASE_URL ||
-      ''
-    key =
-      key ||
-      process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      ''
+    url = url || process.env.VITE_SUPABASE_URL || ''
+    key = key || process.env.VITE_SUPABASE_ANON_KEY || ''
   }
 
   return { url, key }
@@ -42,7 +34,7 @@ function isPlaceholder(url, key) {
 
 /**
  * Shared Supabase browser/server client.
- * Prefers runtimeConfig (NUXT_PUBLIC_* / Docker-mapped VITE_*); avoids
+ * Prefers runtimeConfig (populated from VITE_*); avoids
  * permanently caching a placeholder client when env appears later.
  */
 export function useSupabaseClient() {

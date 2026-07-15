@@ -60,7 +60,7 @@ import {
   DropdownMenuTrigger,
 } from "radix-vue";
 
-import { useBranding, isLocaleEnabled } from "@/stores/brandingStore";
+import { useBranding } from "@/stores/brandingStore";
 
 const { locale, locales, t, setLocale } = useI18n();
 const branding = useBranding();
@@ -94,7 +94,7 @@ const availableLocales = computed(() => {
 async function switchLocale(code) {
   open.value = false;
   if (!code || code === unref(locale)) return;
-  if (!isLocaleEnabled(code)) return;
+  if (!branding.isLocaleEnabled(code)) return;
   const cookie = useCookie("pluma_locale", { sameSite: "lax", path: "/" });
   cookie.value = code;
   await setLocale(code);

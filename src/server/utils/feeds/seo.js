@@ -4,6 +4,13 @@ import {
   normalizeSiteUrl,
   stripFormatting,
 } from './generator.js'
+import {
+  buildHreflangs,
+  localizePath,
+  stripLocalePrefix,
+} from '../../../lib/seoPaths.js'
+
+export { buildHreflangs, localizePath, stripLocalePrefix }
 
 const DEFAULT_LOCALE = 'en'
 const NOINDEX_PREFIXES = [
@@ -160,7 +167,7 @@ export function resolveSeoImage(preferred, branding, baseUrl) {
     branding?.lightLogoUrl,
     branding?.darkLogoUrl,
     branding?.faviconUrl,
-    baseUrl ? `${normalizeSiteUrl(baseUrl)}/favicon.png` : null,
+    baseUrl ? `${normalizeSiteUrl(baseUrl)}/og-default.png` : null,
   ].filter(Boolean)
 
   for (const raw of candidates) {
@@ -177,19 +184,12 @@ export function resolveSeoImage(preferred, branding, baseUrl) {
 }
 
 export function robotsForPath(pathname = '/') {
-  const path = pathname.replace(/\/+$/, '') || '/'
+  const raw = pathname.replace(/\/+$/, '') || '/'
+  const path = stripLocalePrefix(raw)
   if (NOINDEX_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) {
     return 'noindex, nofollow'
   }
   return 'index, follow'
-}
-
-export function buildHreflangs(canonical, locale = DEFAULT_LOCALE) {
-  if (!canonical) return []
-  return [
-    { lang: locale, href: canonical },
-    { lang: 'x-default', href: canonical },
-  ]
 }
 
 /**
@@ -286,13 +286,18 @@ function withCommon(base, overrides) {
   const locale = overrides.locale || base.locale
   const robots = overrides.robots || robotsForPath(base.path)
   const image = resolveSeoImage(overrides.image, { lightLogoUrl: base.image }, base.baseUrl) || base.image
+  const barePath = stripLocalePrefix(base.path || '/', undefined)
   return {
     siteName: base.siteName,
     locale,
     robots,
     image,
     twitterSite: overrides.twitterSite || base.twitterSite || null,
-    hreflangs: buildHreflangs(canonical, locale),
+    hreflangs: buildHreflangs(canonical, locale, {
+      baseUrl: base.baseUrl,
+      path: barePath,
+      defaultLocale: DEFAULT_LOCALE,
+    }),
     cardType: 'summary_large_image',
     ...overrides,
     image,
@@ -355,14 +360,30 @@ function websiteJsonLd({ siteName, siteDescription, baseUrl }) {
  * Build SEO payload for a request pathname using feed cache data.
  */
 export async function resolveSeoPayload(pathname, { generator, baseUrl } = {}) {
-  const path = (pathname || '/').replace(/\/+/g, '/').replace(/\/+$/, '') || '/'
+  const rawPath = (pathname || '/').replace(/\/+/g, '/').replace(/\/+$/, '') || '/'
+  const path = stripLocalePrefix(rawPath) || '/'
   const data = await generator.getData()
   const { siteName, siteDescription, image, locale, twitterSite, baseUrl: base } = siteDefaults(
     data,
     baseUrl || generator.defaultBaseUrl
   )
-  const canonical = `${base}${path === '/' ? '/' : path}`
-  const common = { siteName, siteDescription, image, locale, twitterSite, path, canonical, baseUrl: base }
+  // Canonical should preserve the request locale prefix when present
+  const requestLocale =
+    rawPath !== path
+      ? rawPath.split('/').filter(Boolean)[0]
+      : locale || DEFAULT_LOCALE
+  const localizedPath = localizePath(path, requestLocale, DEFAULT_LOCALE)
+  const canonical = `${base}${localizedPath === '/' ? '/' : localizedPath}`
+  const common = {
+    siteName,
+    siteDescription,
+    image,
+    locale: requestLocale || locale,
+    twitterSite,
+    path,
+    canonical,
+    baseUrl: base,
+  }
 
   const findPost = (slug, includeArchived = false) => {
     const published = (data.posts || []).find((p) => p.slug === slug)

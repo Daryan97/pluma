@@ -1,9 +1,9 @@
 {
-  "pid": 40912,
-  "startedAt": 1784084406842,
+  "pid": 43340,
+  "startedAt": 1784146782507,
   "command": "dev",
   "cwd": "C:/Projects/Web/Pluma/pluma-frontend",
-  "port": 3999,
+  "port": 3001,
   "hostname": "::1",
-  "url": "http://[::1]:3999"
+  "url": "http://[::1]:3001"
 }

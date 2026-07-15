@@ -1,9 +1,16 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
+
+const publicDir = fileURLToPath(new URL('./src/public', import.meta.url))
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-14',
   srcDir: 'src',
+  dir: {
+    // Keep static assets next to srcDir so Nitro copies them into .output/public
+    public: publicDir,
+  },
   ssr: true,
   devtools: { enabled: false },
 
@@ -38,23 +45,24 @@ export default defineNuxtConfig({
     // Accept-Language (that forced Kurdish browsers onto /ku). Branding
     // primaryLocale is content-only — see middleware/primary-locale.global.js.
     detectBrowserLanguage: false,
-    baseUrl: process.env.NUXT_PUBLIC_SITE_URL || process.env.VITE_SITE_URL || 'http://localhost:3000',
+    baseUrl: process.env.VITE_SITE_URL || 'http://localhost:3000',
     bundle: {
       optimizeTranslationDirective: false,
     },
   },
 
   runtimeConfig: {
-    feedsCacheTtlMs: Number(process.env.FEEDS_CACHE_TTL_MS || 5 * 60 * 1000),
+    feedsCacheTtlMs: Number(process.env.VITE_FEEDS_CACHE_TTL_MS || 5 * 60 * 1000),
     public: {
-      // Overridable at runtime via NUXT_PUBLIC_* (Docker entrypoint maps VITE_* → these).
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-      supabaseAnonKey:
-        process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || process.env.VITE_SITE_URL || '',
-      siteLocale: process.env.NUXT_PUBLIC_SITE_LOCALE || process.env.VITE_SITE_LOCALE || 'en',
-      env: process.env.NUXT_PUBLIC_ENV || process.env.VITE_ENV || 'development',
-      twitterSite: process.env.NUXT_PUBLIC_TWITTER_SITE || process.env.VITE_TWITTER_SITE || '',
+      // Build-time defaults from VITE_*. Docker entrypoint mirrors them to
+      // NUXT_PUBLIC_* so Nuxt can override runtimeConfig at process start —
+      // operators should only set VITE_* in .env / compose.
+      supabaseUrl: process.env.VITE_SUPABASE_URL || '',
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY || '',
+      siteUrl: process.env.VITE_SITE_URL || '',
+      siteLocale: process.env.VITE_SITE_LOCALE || 'en',
+      env: process.env.VITE_ENV || 'development',
+      twitterSite: process.env.VITE_TWITTER_SITE || '',
     },
   },
 
@@ -72,6 +80,13 @@ export default defineNuxtConfig({
 
   nitro: {
     // Feed helpers live in src/server/utils/feeds (auto-imported)
+    publicAssets: [
+      {
+        baseURL: '/',
+        dir: publicDir,
+        maxAge: 60 * 60 * 24 * 7,
+      },
+    ],
   },
 
   app: {
@@ -86,7 +101,6 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: 'icon', href: '/favicon.png' },
         { rel: 'alternate', type: 'application/rss+xml', title: 'Pluma RSS', href: '/rss.xml' },
         { rel: 'sitemap', type: 'application/xml', href: '/sitemap.xml' },
       ],
@@ -104,7 +118,8 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    // feeds live under src/server/utils/feeds (Nitro auto-scan)
+    // Off: enabling caused stuck pending/skeleton states on client hydrate.
+    // Revisit after measuring client-nav payload reuse carefully.
     payloadExtraction: false,
     appManifest: false,
   },

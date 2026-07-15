@@ -181,6 +181,11 @@ function go(path) {
 
 const logout = async () => {
   await supabase.auth.signOut();
+  try {
+    useAuthCache().clearAuthCache();
+  } catch {
+    /* ignore */
+  }
   window.location.href = localePath("/");
 };
 </script>

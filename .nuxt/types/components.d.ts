@@ -22,13 +22,14 @@ interface _GlobalComponents {
   Post: typeof import("../../src/components/Post.vue")['default']
   PostForm: typeof import("../../src/components/PostForm.vue")['default']
   PostLoader: typeof import("../../src/components/PostLoader.vue")['default']
-  RouteLoadingOverlay: typeof import("../../src/components/RouteLoadingOverlay.vue")['default']
+  PostPageSkeleton: typeof import("../../src/components/PostPageSkeleton.vue")['default']
   SeriesNav: typeof import("../../src/components/SeriesNav.vue")['default']
   UserDropdown: typeof import("../../src/components/UserDropdown.vue")['default']
   DashboardAuthProvidersSettingsForm: typeof import("../../src/components/dashboard/AuthProvidersSettingsForm.vue")['default']
   DashboardBrandingMetaForm: typeof import("../../src/components/dashboard/BrandingMetaForm.vue")['default']
   DashboardCategoriesManagement: typeof import("../../src/components/dashboard/CategoriesManagement.vue")['default']
   DashboardCommentsTable: typeof import("../../src/components/dashboard/CommentsTable.vue")['default']
+  DashboardSkeleton: typeof import("../../src/components/dashboard/DashboardSkeleton.vue")['default']
   DashboardFooterCreditsSettings: typeof import("../../src/components/dashboard/FooterCreditsSettings.vue")['default']
   DashboardLocaleSettingsForm: typeof import("../../src/components/dashboard/LocaleSettingsForm.vue")['default']
   DashboardLogoUpload: typeof import("../../src/components/dashboard/LogoUpload.vue")['default']
@@ -79,13 +80,14 @@ interface _GlobalComponents {
   LazyPost: LazyComponent<typeof import("../../src/components/Post.vue")['default']>
   LazyPostForm: LazyComponent<typeof import("../../src/components/PostForm.vue")['default']>
   LazyPostLoader: LazyComponent<typeof import("../../src/components/PostLoader.vue")['default']>
-  LazyRouteLoadingOverlay: LazyComponent<typeof import("../../src/components/RouteLoadingOverlay.vue")['default']>
+  LazyPostPageSkeleton: LazyComponent<typeof import("../../src/components/PostPageSkeleton.vue")['default']>
   LazySeriesNav: LazyComponent<typeof import("../../src/components/SeriesNav.vue")['default']>
   LazyUserDropdown: LazyComponent<typeof import("../../src/components/UserDropdown.vue")['default']>
   LazyDashboardAuthProvidersSettingsForm: LazyComponent<typeof import("../../src/components/dashboard/AuthProvidersSettingsForm.vue")['default']>
   LazyDashboardBrandingMetaForm: LazyComponent<typeof import("../../src/components/dashboard/BrandingMetaForm.vue")['default']>
   LazyDashboardCategoriesManagement: LazyComponent<typeof import("../../src/components/dashboard/CategoriesManagement.vue")['default']>
   LazyDashboardCommentsTable: LazyComponent<typeof import("../../src/components/dashboard/CommentsTable.vue")['default']>
+  LazyDashboardSkeleton: LazyComponent<typeof import("../../src/components/dashboard/DashboardSkeleton.vue")['default']>
   LazyDashboardFooterCreditsSettings: LazyComponent<typeof import("../../src/components/dashboard/FooterCreditsSettings.vue")['default']>
   LazyDashboardLocaleSettingsForm: LazyComponent<typeof import("../../src/components/dashboard/LocaleSettingsForm.vue")['default']>
   LazyDashboardLogoUpload: LazyComponent<typeof import("../../src/components/dashboard/LogoUpload.vue")['default']>

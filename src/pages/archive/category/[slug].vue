@@ -5,7 +5,18 @@
       <div class="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-3xl"></div>
       <div class="absolute -bottom-40 -left-40 w-[32rem] h-[32rem] rounded-full bg-indigo-200/30 dark:bg-indigo-500/10 blur-3xl"></div>
       <div class="max-w-6xl mx-auto px-4 pt-20 pb-14 lg:pt-28 lg:pb-20 relative">
-        <div class="flex flex-col items-center text-center gap-8" v-if="!loading">
+        <div
+          v-if="loading"
+          class="flex flex-col items-center text-center gap-8 animate-pulse"
+          aria-hidden="true"
+        >
+          <div class="inline-flex flex-col items-center gap-5">
+            <div class="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+            <div class="h-9 w-52 rounded bg-gray-200 dark:bg-gray-700" />
+            <div class="h-6 w-24 rounded-md bg-gray-200 dark:bg-gray-700" />
+          </div>
+        </div>
+        <div class="flex flex-col items-center text-center gap-8" v-else>
           <div class="inline-flex flex-col items-center gap-5">
             <div class="w-20 h-20 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center shadow-sm">
               <Icon :icon="isUncategorized ? 'mdi:tag-off' : 'mdi:tag'" class="text-3xl" />
@@ -27,19 +38,47 @@
         </div>
       </div>
     </section>
-    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
+    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="!categoriesLoaded || categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
-        <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
-        </button>
-        <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
-        </button>
+        <template v-if="!categoriesLoaded">
+          <div
+            v-for="n in 4"
+            :key="'arch-cat-chip-sk-' + n"
+            class="animate-pulse h-8 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"
+            aria-hidden="true"
+          />
+        </template>
+        <template v-else>
+          <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
+          </button>
+          <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
+          </button>
+        </template>
       </div>
     </section>
     <main class="relative -mt-4">
       <div class="max-w-6xl mx-auto px-4 py-12">
         <h2 class="sr-only">Archived Category Posts</h2>
+        <div v-if="posts.length === 0 && loading" class="space-y-10">
+          <div v-for="n in 3" :key="n" class="animate-pulse bg-white/90 dark:bg-gray-800/70 border border-gray-200/70 dark:border-gray-700/60 rounded-2xl overflow-hidden shadow-sm backdrop-blur-sm">
+            <div class="h-56 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700"></div>
+            <div class="p-6 space-y-5">
+              <div class="h-5 w-2/3 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              <div class="flex gap-3">
+                <div class="h-4 w-24 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-4 w-20 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-4 w-28 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              </div>
+              <div class="space-y-2">
+                <div class="h-3 w-full bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-3 w-11/12 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                <div class="h-3 w-4/5 bg-gray-200 dark:bg-gray-600 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div v-if="posts.length === 0 && !loading" class="relative text-center py-24 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700/70 bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm">
           <div class="absolute inset-0 -z-10 rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950 opacity-60"></div>
           <Icon icon="mdi:note-remove" class="block mx-auto text-5xl text-gray-400 dark:text-gray-500 mb-4" />
@@ -81,17 +120,22 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { contentLocale } = useContentLocale()
 
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/services/supabase'
 import { countDistinctPosts } from '@/lib/postCount'
+import { loadCategoriesForLocale } from '@/lib/categoryScope'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import NoImage from '@/components/NoImage.vue'
+import { useBranding } from '@/stores/brandingStore'
+import { usePageSeo } from '@/composables/usePageSeo'
+import { projectInfo } from '@/config/projectInfo'
 
+const branding = useBranding()
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug
@@ -106,13 +150,37 @@ function onImageError(id){ imageErrorMap.value = { ...imageErrorMap.value, [id]:
 const isUncategorized = computed(() => slug === 'uncategorized')
 const displayName = computed(() => isUncategorized.value ? 'Uncategorized' : (category.value?.name || slug))
 
+usePageSeo(
+  computed(() => {
+    const siteName =
+      branding.resolveLocalizedSiteName?.(locale.value) ||
+      projectInfo.name ||
+      'Pluma'
+    return {
+      title: `${displayName.value} | ${siteName}`,
+      description: `Explore archived posts in ${displayName.value}.`,
+      type: 'website',
+      collection: true,
+    }
+  })
+)
+
 const categories = ref([])
 const categoriesLoaded = ref(false)
 const categoryActive = ref(slug || 'all')
 const catClass = 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
 const activeCatClass = 'bg-blue-600 text-white dark:bg-blue-500 dark:text-white border-blue-600 dark:border-blue-500 shadow'
 function goToCategory(sl){ if(sl==='all'){ categoryActive.value='all'; router.push(localePath('/archive')); return } categoryActive.value=sl; router.push(localePath(`/archive/category/${sl}`)) }
-async function loadCategories(){ const { data, error } = await supabase.from('categories').select('id,name,slug').order('name'); if(!error && data){ categories.value = data } categoriesLoaded.value = true }
+async function loadCategories(){
+  try {
+    const cats = await loadCategoriesForLocale(supabase, contentLocale.value)
+    categories.value = cats || []
+  } catch {
+    categories.value = []
+  } finally {
+    categoriesLoaded.value = true
+  }
+}
 
 function formatDate(d){ try { return new Date(d).toLocaleDateString() } catch { return '' } }
 

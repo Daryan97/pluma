@@ -412,7 +412,7 @@
     "label": "زنجیرە · {name}",
     "manage": "بەڕێوەبردنی زنجیرەکان",
     "newName": "ناوی زنجیرەی نوێ",
-    "add": "زیادکردنی زنجیرە",
+    "add": "زیادکردن",
     "created": "زنجیرە دروستکرا",
     "updated": "زنجیرە نوێکرایەوە",
     "removed": "زنجیرە لابرا",
@@ -852,6 +852,22 @@
         "authors": {
           "label": "نوسەرەکان",
           "desc": "کۆی نوسەر/بەڕێوەبەران پیشان بدە."
+        }
+      },
+      "layoutTitle": "Post list layout",
+      "layoutDescription": "Choose how posts appear on the homepage, category, and author pages.",
+      "layouts": {
+        "classic": {
+          "label": "Classic",
+          "desc": "Stacked cards with large cover images."
+        },
+        "magazine": {
+          "label": "Magazine",
+          "desc": "Multi-column grid with a featured lead post."
+        },
+        "compact": {
+          "label": "Compact",
+          "desc": "Dense rows with thumbnail, title, and meta."
         }
       }
     },

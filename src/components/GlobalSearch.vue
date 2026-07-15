@@ -400,7 +400,7 @@ async function runSearch(term) {
         id: c.id,
         type: "category",
         label: c.name,
-        icon: "mdi:category",
+        icon: "mdi:shape-outline",
         route: `/category/${c.slug || c.name}`,
         highlightedLabel: highlight(c.name, term),
       }))

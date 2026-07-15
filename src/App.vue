@@ -1,8 +1,5 @@
 <template>
   <div class="relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
-    <ClientOnly>
-      <RouteLoadingOverlay />
-    </ClientOnly>
     <Navbar />
     <main>
       <NuxtPage />
@@ -14,7 +11,6 @@
 <script setup>
 import Navbar from "@/components/layout/Navbar.vue";
 import Footer from "@/components/layout/Footer.vue";
-import RouteLoadingOverlay from "@/components/RouteLoadingOverlay.vue";
 import { useBranding } from "@/stores/brandingStore";
 import { projectInfo } from "@/config/projectInfo";
 import { useThemeStore } from "@/stores/themeStore";
@@ -22,16 +18,35 @@ import { useThemeStore } from "@/stores/themeStore";
 const { locale, locales, setLocale } = useI18n();
 const branding = useBranding();
 
-// Initialize theme store on client so Pinia matches the early boot script
 if (import.meta.client) {
-  useThemeStore();
+  useThemeStore().syncFromClientStorage?.();
 }
+
+await useLazyAsyncData(
+  "site-branding",
+  async () => {
+    await branding.fetchBranding(true);
+    return true;
+  },
+  { server: true }
+);
+
+applyLocalizedBranding();
+
+useHead(() => {
+  const href = branding.faviconUrl?.value;
+  if (!href) return {};
+  return {
+    link: [
+      { rel: "icon", href, key: "site-favicon" },
+      { rel: "apple-touch-icon", href, key: "apple-touch-icon" },
+    ],
+  };
+});
 
 async function clampLocaleToEnabled() {
   const code = unref(locale);
   const enabled = branding.enabledLocales?.value;
-  // Prefer English when the current UI locale was disabled — not branding.primaryLocale
-  // (primary is for content; forcing it made Kurdish the site UI default).
   const fallback =
     Array.isArray(enabled) && enabled.includes("en")
       ? "en"
@@ -48,7 +63,9 @@ async function clampLocaleToEnabled() {
 
 onMounted(async () => {
   try {
-    await branding.fetchBranding(true);
+    if (!branding.brandingLoaded?.value) {
+      await branding.fetchBranding(true);
+    }
     applyLocalizedBranding();
     await clampLocaleToEnabled();
   } catch (e) {

@@ -1,0 +1,1 @@
+import{S as r}from"./PSvlVfzj.js";function i(){const n=r()?.VITE_SITE_URL?.trim();return n?n.replace(/\/+$/,""):typeof window<"u"?window.location.origin:""}function o(){return typeof window<"u"?window.location.href:""}export{o as a,i as g};

@@ -17,10 +17,10 @@ const readyz_get = defineEventHandler(async (event) => {
     return { ok: false, reason: "missing_supabase_env" };
   }
   try {
-    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
+    const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/health`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` }
     });
-    if (!res.ok && res.status !== 200 && res.status !== 404) {
+    if (!res.ok) {
       setResponseStatus(event, 503);
       return { ok: false, reason: "supabase_unreachable", status: res.status };
     }

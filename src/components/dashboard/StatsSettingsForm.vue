@@ -100,6 +100,54 @@
           </div>
         </div>
       </div>
+      <div class="pt-4">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">{{ t('settings.homepage.layoutTitle') }}</h3>
+        <p class="text-[12px] text-gray-500 dark:text-gray-400 mb-3">{{ t('settings.homepage.layoutDescription') }}</p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button
+            v-for="layout in layoutOptions"
+            :key="layout.key"
+            type="button"
+            @click="localLayout = layout.key"
+            :aria-pressed="localLayout === layout.key"
+            :class="[
+              'text-start rounded-xl px-4 py-3 border transition focus:outline-none focus:ring-2 focus:ring-blue-400',
+              localLayout === layout.key
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-400/40'
+                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-700',
+            ]"
+          >
+            <div class="flex items-center gap-2 mb-2">
+              <Icon :icon="layout.icon" class="w-5 h-5 text-blue-500 dark:text-blue-300" />
+              <span class="font-semibold text-sm text-gray-900 dark:text-white">{{ layout.label }}</span>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 leading-snug">{{ layout.desc }}</p>
+            <div class="mt-3 space-y-1.5" aria-hidden="true">
+              <template v-if="layout.key === 'classic'">
+                <div class="h-8 rounded bg-gray-200 dark:bg-gray-700" />
+                <div class="h-8 rounded bg-gray-200 dark:bg-gray-700" />
+              </template>
+              <template v-else-if="layout.key === 'magazine'">
+                <div class="grid grid-cols-2 gap-1.5">
+                  <div class="h-10 rounded bg-gray-200 dark:bg-gray-700 col-span-2" />
+                  <div class="h-6 rounded bg-gray-200 dark:bg-gray-700" />
+                  <div class="h-6 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </template>
+              <template v-else>
+                <div class="flex gap-1.5 items-center">
+                  <div class="h-5 w-8 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
+                  <div class="h-2 flex-1 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div class="flex gap-1.5 items-center">
+                  <div class="h-5 w-8 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
+                  <div class="h-2 flex-1 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </template>
+            </div>
+          </button>
+        </div>
+      </div>
       <div class="flex gap-2 pt-4 items-center justify-end">
         <button
           type="submit"
@@ -116,17 +164,18 @@
 
 <script setup>
 const { t } = useI18n()
-const localePath = useLocalePath()
 
 import { ref, watch, onMounted, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import {
   useStatsSettings,
-  fetchStatsSettings,
 } from "@/stores/statsSettingsStore";
-import { useSettings, fetchSettings } from "@/stores/settingsStore";
-import { Icon } from "@iconify/vue";const { statsEnabled } = useStatsSettings();
-const { featuresEnabled } = useSettings();
+import { useSettings } from "@/stores/settingsStore";
+import { useSiteLayout } from "@/stores/siteLayoutStore";
+import { Icon } from "@iconify/vue";
+const { statsEnabled, fetchStatsSettings } = useStatsSettings();
+const { featuresEnabled, fetchSettings } = useSettings();
+const { postListLayout, fetchSiteLayout, saveSiteLayout } = useSiteLayout();
 const toast = useToast();
 
 const featureOptions = computed(() => [
@@ -182,13 +231,35 @@ const localFeatures = ref({
   siteDescription: true,
   search: true,
 });
+const localLayout = ref("classic");
 const error = ref("");
 
+const layoutOptions = computed(() => [
+  {
+    key: "classic",
+    label: t("settings.homepage.layouts.classic.label"),
+    desc: t("settings.homepage.layouts.classic.desc"),
+    icon: "mdi:view-agenda-outline",
+  },
+  {
+    key: "magazine",
+    label: t("settings.homepage.layouts.magazine.label"),
+    desc: t("settings.homepage.layouts.magazine.desc"),
+    icon: "mdi:view-dashboard-outline",
+  },
+  {
+    key: "compact",
+    label: t("settings.homepage.layouts.compact.label"),
+    desc: t("settings.homepage.layouts.compact.desc"),
+    icon: "mdi:view-list-outline",
+  },
+]);
+
 onMounted(async () => {
-  await fetchStatsSettings();
-  await fetchSettings();
+  await Promise.all([fetchStatsSettings(), fetchSettings(), fetchSiteLayout()]);
   localEnabled.value = { ...statsEnabled.value };
   localFeatures.value = { ...featuresEnabled.value };
+  localLayout.value = postListLayout.value;
 });
 
 watch(statsEnabled, (val) => {
@@ -196,6 +267,9 @@ watch(statsEnabled, (val) => {
 });
 watch(featuresEnabled, (val) => {
   localFeatures.value = { ...val };
+});
+watch(postListLayout, (val) => {
+  localLayout.value = val;
 });
 
 async function save() {
@@ -206,14 +280,24 @@ async function save() {
   const { error: featuresErr } = await supabase
     .from("settings")
     .upsert({ key: "features_home_enabled", value: localFeatures.value });
-  if (statsErr || featuresErr) {
+  let layoutErr = null;
+  try {
+    await saveSiteLayout(localLayout.value);
+  } catch (e) {
+    layoutErr = e;
+  }
+  if (statsErr || featuresErr || layoutErr) {
     error.value =
-      statsErr?.message || featuresErr?.message || t('settings.homepage.saveFailed');
+      statsErr?.message ||
+      featuresErr?.message ||
+      layoutErr?.message ||
+      t("settings.homepage.saveFailed");
     toast.error(error.value);
     return;
   }
   await fetchStatsSettings();
   await fetchSettings();
-  toast.success(t('settings.homepage.updated'));
+  await fetchSiteLayout();
+  toast.success(t("settings.homepage.updated"));
 }
 </script>

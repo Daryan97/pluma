@@ -6,7 +6,19 @@
       <div class="absolute -bottom-40 -left-40 w-[32rem] h-[32rem] rounded-full bg-indigo-200/30 dark:bg-indigo-500/10 blur-3xl"></div>
       <div class="max-w-6xl mx-auto px-4 pt-20 pb-14 lg:pt-28 lg:pb-20 relative">
         <div class="flex flex-col items-center text-center gap-8">
-          <div class="inline-flex flex-col items-center gap-5">
+          <div
+            v-if="headerLoading"
+            class="inline-flex flex-col items-center gap-5 animate-pulse"
+            aria-hidden="true"
+          >
+            <div class="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-gray-700" />
+            <div class="h-9 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <div class="h-6 w-20 rounded-md bg-gray-200 dark:bg-gray-700" />
+              <div class="h-6 w-28 rounded-md bg-gray-200 dark:bg-gray-700" />
+            </div>
+          </div>
+          <div v-else class="inline-flex flex-col items-center gap-5">
             <div class="w-20 h-20 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center shadow-sm">
               <Icon :icon="isUncategorized ? 'mdi:tag-off' : 'mdi:tag'" class="text-3xl" />
             </div>
@@ -20,12 +32,6 @@
                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
                 >
                   <Icon icon="mdi:book-open-page-variant" class="text-sm" /> {{ postCount }} {{ postCount === 1 ? t('posts.post') : t('posts.posts') }}
-                </span>
-                <span
-                  v-else-if="countLoading"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50/60 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 animate-pulse"
-                >
-                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> …
                 </span>
                 <span v-if="isUncategorized" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-400">
                   <Icon icon="mdi:alert-circle-outline" class="text-sm" /> {{ t('category.noCategory') }}
@@ -43,7 +49,7 @@
               </div>
             </div>
           </div>
-          <div v-if="featuresEnabled.search" class="w-full max-w-xl">
+          <div v-if="featuresSettingsLoaded && featuresEnabled.search" class="w-full max-w-xl">
             <div
               role="button"
               tabindex="0"
@@ -66,14 +72,24 @@
         </div>
       </div>
     </section>
-    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
+    <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="!categoriesLoaded || categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
-        <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
-        </button>
-        <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
-        </button>
+        <template v-if="!categoriesLoaded">
+          <div
+            v-for="n in 4"
+            :key="'cat-chip-sk-' + n"
+            class="animate-pulse h-8 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"
+            aria-hidden="true"
+          />
+        </template>
+        <template v-else>
+          <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
+          </button>
+          <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
+            <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
+          </button>
+        </template>
       </div>
     </section>
     <main class="relative -mt-4">
@@ -86,7 +102,7 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { contentLocale } = useContentLocale()
 
@@ -103,12 +119,15 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSettings } from '@/stores/settingsStore'
 import { useBranding } from '@/stores/brandingStore'
+import { usePageSeo } from '@/composables/usePageSeo'
+import { projectInfo } from '@/config/projectInfo'
 
 const route = useRoute()
 const router = useRouter()
 const branding = useBranding()
 const category = ref(null)
-const countLoading = ref(false)
+const countLoading = ref(true)
+const headerLoading = ref(true)
 const postCount = ref(null)
 let fetchSeq = 0
 
@@ -123,7 +142,7 @@ function openGlobalSearch(){
   window.dispatchEvent(evt)
 }
 
-const { featuresEnabled } = useSettings();
+const { featuresEnabled, featuresSettingsLoaded } = useSettings();
 const isUncategorized = computed(() => route.params.slug === 'uncategorized')
 const displayName = computed(() => {
   if (isUncategorized.value) return t('common.uncategorized')
@@ -153,6 +172,7 @@ async function fetchCategory() {
   const seq = ++fetchSeq
   const slug = route.params.slug
   countLoading.value = true
+  headerLoading.value = true
   postCount.value = null
   applyKnownCategory(slug)
 
@@ -190,6 +210,7 @@ async function fetchCategory() {
     postCount.value = typeof count === 'number' ? count : 0
   }
   countLoading.value = false
+  headerLoading.value = false
 }
 
 async function loadCategories(){
@@ -213,4 +234,20 @@ watch(contentLocale, () => {
   loadCategories()
   fetchCategory()
 })
+
+const siteName = computed(
+  () =>
+    branding.resolveLocalizedSiteName?.(locale.value) ||
+    projectInfo.name ||
+    'Pluma'
+)
+
+usePageSeo(
+  computed(() => ({
+    title: `${displayName.value} | ${siteName.value}`,
+    description: `Explore posts in ${displayName.value}.`,
+    type: 'website',
+    collection: true,
+  }))
+)
 </script>

@@ -165,14 +165,13 @@ import { Icon } from "@iconify/vue";
 import { CONTENT_LOCALES } from "@/config/contentLocales";
 import {
   useBranding,
-  updateBranding,
-  fetchBranding,
   normalizeLocaleSettings,
 } from "@/stores/brandingStore";
 
 const { t, locales } = useI18n();
 const toast = useToast();
 const branding = useBranding();
+const { updateBranding, fetchBranding } = branding;
 const saving = ref(false);
 const error = ref("");
 const validationError = ref("");

@@ -30,7 +30,7 @@ export function refreshDocumentSeo() {
     branding.lightLogoUrl?.value ||
     branding.darkLogoUrl?.value ||
     branding.faviconUrl?.value ||
-    '/favicon.png'
+    '/og-default.png'
   const image = absoluteAssetUrl(
     (isArticle && post?.cover_image_url) || fallbackImage,
     window.location.origin
@@ -42,7 +42,7 @@ export function refreshDocumentSeo() {
   })
 
   let ld = null
-  if (pathName === '/' || pathName.match(/^\/(ar|es|fr|de)\/?$/)) {
+  if (pathName === '/' || pathName.match(/^\/(ku|ar|es|fr|de)\/?$/)) {
     ld = {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
@@ -73,7 +73,7 @@ export function refreshDocumentSeo() {
     canonical: canonicalHref,
     robots: robotsForClientPath(pathName),
     locale: document.documentElement.lang || 'en',
-    ogType: isArticle ? 'article' : 'website',
+    type: isArticle ? 'article' : 'website',
     image,
     twitterSite,
     publishedTime: isArticle ? post?.created_at : null,

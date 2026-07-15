@@ -49,17 +49,19 @@
     </div>
     <div v-if="loading" class="mt-10 mb-12 flex flex-col items-center animate-pulse">
       <div class="w-28 h-28 rounded-2xl bg-gray-200 dark:bg-gray-700 mb-4" />
-      <div class="h-7 w-48 rounded bg-gray-200 dark:bg-gray-700 mb-3" />
-      <div class="flex gap-2">
-        <div class="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-        <div class="h-5 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+      <div class="h-8 w-48 rounded bg-gray-200 dark:bg-gray-700 mb-4" />
+      <div class="flex flex-wrap justify-center gap-2">
+        <div class="h-6 w-24 rounded-md bg-gray-200 dark:bg-gray-700" />
+        <div class="h-6 w-20 rounded-md bg-gray-200 dark:bg-gray-700" />
+        <div class="h-6 w-16 rounded-md bg-gray-200 dark:bg-gray-700" />
+        <div class="h-6 w-28 rounded-md bg-gray-200 dark:bg-gray-700" />
       </div>
     </div>
     <div v-if="!loading && !author" class="text-center my-24">
       <Icon icon="mdi:account-off" class="text-5xl text-gray-400 mb-4" />
       <p class="text-sm text-gray-600 dark:text-gray-400">{{ t('author.notFound') }}</p>
     </div>
-    <div v-if="featuresEnabled.search && author" class="w-full max-w-xl mx-auto mb-8">
+    <div v-if="featuresSettingsLoaded && featuresEnabled.search && author" class="w-full max-w-xl mx-auto mb-8">
       <div
         role="button"
         tabindex="0"
@@ -84,7 +86,7 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { contentLocale } = useContentLocale()
 
@@ -93,11 +95,13 @@ import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
 import { countLogicalPosts } from '@/lib/postCount'
 import { rssHref as buildRssHref } from '@/lib/feedUrls'
-import { ref, onMounted, watch, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSettings } from '@/stores/settingsStore'
 import { useBranding } from '@/stores/brandingStore'
-const { featuresEnabled } = useSettings();
+import { usePageSeo } from '@/composables/usePageSeo'
+import { projectInfo } from '@/config/projectInfo'
+const { featuresEnabled, featuresSettingsLoaded } = useSettings();
 const branding = useBranding()
 
 function openGlobalSearch() {
@@ -106,9 +110,38 @@ function openGlobalSearch() {
 }
 
 const route = useRoute()
-const author = ref(null)
-const loading = ref(false)
-const postCount = ref(null)
+const username = computed(() => route.params.username)
+
+const { data: authorPayload, pending: authorPending } = await useLazyAsyncData(
+  () => `author-${username.value}-${contentLocale.value}`,
+  async () => {
+    const name = username.value
+    if (!name) return { author: null, postCount: null }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, role')
+      .eq('username', name)
+      .single()
+    if (error || !data) return { author: null, postCount: null }
+    const { count } = await countLogicalPosts(supabase, (q) =>
+      q
+        .eq('status', 'published')
+        .eq('locale', contentLocale.value)
+        .eq('author_id', data.id)
+    )
+    return {
+      author: data,
+      postCount: typeof count === 'number' ? count : 0,
+    }
+  },
+  { watch: [username, contentLocale], server: true }
+)
+
+const author = computed(() => authorPayload.value?.author || null)
+const postCount = computed(() =>
+  authorPayload.value ? authorPayload.value.postCount : null
+)
+const loading = computed(() => authorPending.value)
 
 function roleLabel(role) {
   const key = `roles.${role}`
@@ -118,46 +151,38 @@ function roleLabel(role) {
 
 const rssHref = computed(() => {
   if (typeof window === 'undefined') return ''
-  const username = author.value?.username
-  if (!username) return ''
+  const name = author.value?.username
+  if (!name) return ''
   const path = buildRssHref({
     locale: contentLocale.value,
     primaryLocale: branding.primaryLocale?.value || 'en',
-    author: username,
+    author: name,
   })
   return `${window.location.origin}${path}`
 })
 
-async function fetchAuthor() {
-  loading.value = true
-  author.value = null
-  postCount.value = null
-  const username = route.params.username
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_url, role')
-    .eq('username', username)
-    .single()
-  if (!error && data) {
-    author.value = data
-    const { count } = await countLogicalPosts(supabase, (q) =>
-      q
-        .eq('status', 'published')
-        .eq('locale', contentLocale.value)
-        .eq('author_id', data.id)
-    )
-    postCount.value = typeof count === 'number' ? count : 0
-  }
-  loading.value = false
-}
-
 function onAvatarError(e) {
-  if (author.value) author.value.avatar_url = null
+  if (authorPayload.value?.author) {
+    authorPayload.value.author.avatar_url = null
+  }
 }
 
-onMounted(fetchAuthor)
-watch(() => route.params.username, fetchAuthor)
-watch(contentLocale, () => {
-  if (author.value) fetchAuthor()
-})
+const siteName = computed(
+  () =>
+    branding.resolveLocalizedSiteName?.(locale.value) ||
+    projectInfo.name ||
+    'Pluma'
+)
+const displayName = computed(
+  () => author.value?.display_name || author.value?.username || route.params.username
+)
+
+usePageSeo(
+  computed(() => ({
+    title: `${displayName.value} | ${siteName.value}`,
+    description: `View posts by ${displayName.value}.`,
+    type: 'website',
+    collection: true,
+  }))
+)
 </script>

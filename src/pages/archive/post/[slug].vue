@@ -1,8 +1,6 @@
 <template>
   <div class="max-w-5xl mx-auto px-4 md:px-6 lg:px-8 py-10">
-    <div v-if="loading" class="flex justify-center items-center py-32">
-      <div class="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-    </div>
+    <PostPageSkeleton v-if="pending" />
     <div v-else-if="!post" class="text-center py-32">
       <Icon icon="mdi:alert-circle-outline" class="text-5xl text-gray-300 dark:text-gray-600 mb-6" />
       <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('posts.notFound') }}</p>
@@ -24,32 +22,98 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
-const localePath = useLocalePath()
+const { t, locale } = useI18n()
 const { contentLocale } = useContentLocale()
 
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { Icon } from "@iconify/vue";
 import { useRoute } from "vue-router";
 import { supabase } from "@/services/supabase";
 import Post from "@/components/Post.vue";
 import Comments from "@/components/Comments.vue";
+import PostPageSkeleton from "@/components/PostPageSkeleton.vue";
 import { projectInfo } from "@/config/projectInfo";
+import { useBranding } from "@/stores/brandingStore";
+import { usePageSeo, articleSeoFromPost } from "@/composables/usePageSeo";
 
 const route = useRoute();
-const post = ref(null);
-const loading = ref(true);
+const branding = useBranding();
 const user = ref(null);
 
-const slug = ref(route.params.slug);
+const POST_SELECT = `
+  id,
+  title,
+  content,
+  locale,
+  category:categories (
+    id,
+    name,
+    locale
+  ),
+  tags,
+  slug,
+  comments_disabled,
+  cover_image_url,
+  created_at,
+  status,
+  updated_at,
+  author:profiles (
+    id,
+    username,
+    display_name
+  )
+`;
+
+const slug = computed(() => route.params.slug);
+
+const { data: post, pending } = await useLazyAsyncData(
+  () => `archive-post-${slug.value}-${contentLocale.value}`,
+  async () => {
+    if (!slug.value) return null;
+    const { data, error } = await supabase
+      .from("posts")
+      .select(POST_SELECT)
+      .eq("slug", slug.value)
+      .eq("locale", contentLocale.value)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data;
+  },
+  { watch: [slug, contentLocale], server: true }
+);
 
 watch(
-  () => [route.params.slug, contentLocale.value],
-  ([newSlug]) => {
-    slug.value = newSlug;
-    fetchPost();
+  post,
+  (data) => {
+    if (import.meta.client && data) {
+      window.__PLUMA_CURRENT_POST = data;
+    }
   },
   { immediate: true }
+);
+
+const siteName = computed(
+  () =>
+    branding.resolveLocalizedSiteName?.(locale.value) ||
+    projectInfo.name ||
+    "Pluma"
+);
+
+usePageSeo(
+  computed(() => {
+    if (post.value) {
+      return articleSeoFromPost(post.value, siteName.value);
+    }
+    if (!pending.value) {
+      return {
+        title: `${t("posts.notFoundTitle")} | ${siteName.value}`,
+        description: t("posts.notFoundMeta"),
+        type: "website",
+        robots: "noindex, follow",
+      };
+    }
+    return { title: siteName.value, type: "website" };
+  })
 );
 
 async function getUser() {
@@ -67,88 +131,7 @@ async function getUser() {
   }
 }
 
-async function fetchPost() {
-  if (!slug.value) {
-    post.value = null;
-    loading.value = false;
-    return;
-  }
-
-  loading.value = true;
-
-  const { data, error } = await supabase
-    .from("posts")
-    .select(
-      `
-      id,
-      title,
-      content,
-      locale,
-      category:categories (
-        id,
-        name,
-        locale
-      ),
-      tags,
-      slug,
-      comments_disabled,
-      cover_image_url,
-      created_at,
-      status,
-      updated_at,
-      author:profiles (
-        id,
-        username,
-        display_name
-      )
-    `
-    )
-    .eq("slug", slug.value)
-    .eq("locale", contentLocale.value)
-    .maybeSingle();
-
-  if (error) {
-    post.value = null;
-  } else if (!data) {
-    post.value = null;
-  } else {
-    post.value = data;
-    if (import.meta.client) window.__PLUMA_CURRENT_POST = data;
-  }
-
-  loading.value = false;
+if (import.meta.client) {
+  getUser();
 }
-
-watch(
-  post,
-  (newPost) => {
-    if (!import.meta.client) return;
-    if (newPost !== null) {
-      document.title = `${newPost.title} | ${projectInfo.name}`;
-      const metaDescription = document.querySelector(
-        'meta[name="description"]'
-      );
-      if (metaDescription) {
-        metaDescription.setAttribute(
-          "content",
-          (newPost.content || "").slice(0, 150) + "..."
-        );
-      }
-    } else {
-      document.title = `${t('posts.notFoundTitle')} | ${projectInfo.name}`;
-      const metaDescription = document.querySelector(
-        'meta[name="description"]'
-      );
-      if (metaDescription) {
-        metaDescription.setAttribute(
-          "content",
-          t('posts.notFoundMeta')
-        );
-      }
-    }
-  },
-  { immediate: true }
-);
-
-getUser();
 </script>

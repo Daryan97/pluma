@@ -15,9 +15,18 @@
       >
         <div class="flex flex-col items-center text-center gap-8">
           <div class="space-y-5 max-w-3xl">
-            <div v-if="showWelcome" class="w-full flex justify-center">
+            <div v-if="showWelcomeBlock" class="w-full flex justify-center">
+              <div
+                v-if="welcomePending"
+                class="animate-pulse flex items-center gap-2 px-4 py-2 w-full max-w-lg sm:w-72 h-9 rounded-full bg-blue-100/70 dark:bg-blue-900/20 border border-blue-200/60 dark:border-blue-800/40"
+                aria-hidden="true"
+              >
+                <div class="h-4 w-4 rounded bg-blue-200 dark:bg-blue-800/60 shrink-0" />
+                <div class="h-3 flex-1 rounded bg-blue-200 dark:bg-blue-800/60" />
+                <div class="h-3 w-3 rounded bg-blue-200 dark:bg-blue-800/60 shrink-0" />
+              </div>
               <button
-                v-if="latestPost"
+                v-else-if="latestPost?.title"
                 type="button"
                 @click="openLatestPost"
                 @keydown.enter.prevent="openLatestPost"
@@ -52,8 +61,14 @@
               {{ localizedSiteDescription }}
             </p>
           </div>
-          <div v-if="showSearch" class="w-full max-w-xl">
+          <div v-if="showSearchBlock" class="w-full max-w-xl">
             <div
+              v-if="searchPending"
+              class="animate-pulse h-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100/80 dark:bg-gray-800/60"
+              aria-hidden="true"
+            />
+            <div
+              v-else
               role="button"
               tabindex="0"
               :aria-label="t('nav.search')"
@@ -84,9 +99,24 @@
           </div>
           <div
             class="max-w-2xl w-full pt-4"
-            v-if="statsLoaded && enabledStats.length > 0"
+            v-if="showStatsSection"
           >
-            <div class="grid gap-6" :style="statsGridStyle">
+            <div
+              v-if="showStatsSkeleton"
+              class="grid gap-6 animate-pulse"
+              :style="statsGridStyle"
+              aria-hidden="true"
+            >
+              <div
+                v-for="s in statsSkeletonKeys"
+                :key="'sk-' + s.key"
+                class="text-center space-y-2"
+              >
+                <div class="mx-auto h-7 w-10 rounded bg-gray-200 dark:bg-gray-700" />
+                <div class="mx-auto h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+            </div>
+            <div v-else class="grid gap-6" :style="statsGridStyle">
               <div v-for="s in enabledStats" :key="s.key" class="text-center">
                 <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {{ s.value }}
@@ -104,32 +134,42 @@
     </section>
     <section
       class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20"
-      v-if="categoriesLoaded && categories.length"
+      v-if="showCategoryChips"
     >
       <div
         class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent"
       >
-        <button
-          @click="goToCategory('all')"
-          :class="categoryActive === 'all' ? activeCatClass : catClass"
-          class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium"
-        >
-          <Icon icon="mdi:infinity" class="text-sm" /> {{ t("common.all") }}
-        </button>
-        <button
-          v-for="c in categories"
-          :key="c.slug || 'null-' + c.id"
-          @click="goToCategory(c.slug || 'uncategorized')"
-          :class="
-            categoryActive === (c.slug || 'uncategorized')
-              ? activeCatClass
-              : catClass
-          "
-          class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium"
-        >
-          <Icon icon="mdi:folder" class="text-sm" />
-          {{ c.name || t("common.uncategorized") }}
-        </button>
+        <template v-if="chipsPending">
+          <div
+            v-for="n in 4"
+            :key="'chip-sk-' + n"
+            class="animate-pulse h-8 w-20 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0"
+            aria-hidden="true"
+          />
+        </template>
+        <template v-else>
+          <button
+            @click="goToCategory('all')"
+            :class="categoryActive === 'all' ? activeCatClass : catClass"
+            class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium"
+          >
+            <Icon icon="mdi:infinity" class="text-sm" /> {{ t("common.all") }}
+          </button>
+          <button
+            v-for="c in categories"
+            :key="c.slug || 'null-' + c.id"
+            @click="goToCategory(c.slug || 'uncategorized')"
+            :class="
+              categoryActive === (c.slug || 'uncategorized')
+                ? activeCatClass
+                : catClass
+            "
+            class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium"
+          >
+            <Icon icon="mdi:folder" class="text-sm" />
+            {{ c.name || t("common.uncategorized") }}
+          </button>
+        </template>
       </div>
     </section>
     <main class="relative -mt-4">
@@ -149,21 +189,47 @@ import { countLogicalPosts } from "@/lib/postCount";
 import { loadCategoriesForLocale } from "@/lib/categoryScope";
 import PostLoader from "@/components/PostLoader.vue";
 import { Icon } from "@iconify/vue";
-import { useStatsSettings, fetchStatsSettings } from '@/stores/statsSettingsStore';
-import { useSettings, fetchSettings } from '@/stores/settingsStore';
+import { useStatsSettings } from '@/stores/statsSettingsStore';
+import { useSettings } from '@/stores/settingsStore';
 import { useBranding } from "@/stores/brandingStore";
+import { usePageSeo } from "@/composables/usePageSeo";
+import { projectInfo } from "@/config/projectInfo";
 
 const { t, locale } = useI18n();
 const localePath = useLocalePath();
 const { contentLocale } = useContentLocale();
 const branding = useBranding();
-const localizedSiteName = computed(
-  () => branding.resolveLocalizedSiteName(locale.value) || ""
-);
-const localizedSiteDescription = computed(
-  () => branding.resolveLocalizedSiteDescription(locale.value) || ""
-);
+const localizedSiteName = computed(() => {
+  const fromBranding = branding.resolveLocalizedSiteName?.(locale.value);
+  if (fromBranding) return fromBranding;
+  // Avoid flashing the default "Pluma" label before branding resolves.
+  if (!branding.brandingLoaded?.value) {
+    return branding.siteName?.value || "";
+  }
+  return (
+    branding.siteName?.value ||
+    projectInfo.name ||
+    "Pluma"
+  );
+});
+const localizedSiteDescription = computed(() => {
+  const fromBranding = branding.resolveLocalizedSiteDescription?.(locale.value);
+  if (fromBranding) return fromBranding;
+  if (!branding.brandingLoaded?.value) {
+    return branding.siteDescription?.value || "";
+  }
+  return branding.siteDescription?.value || projectInfo.description || "";
+});
 const router = useRouter();
+
+usePageSeo(
+  computed(() => ({
+    title: localizedSiteName.value,
+    description: localizedSiteDescription.value || undefined,
+    type: "website",
+  }))
+);
+
 function openGlobalSearch() {
   const evt = new CustomEvent("pluma:open-global-search", {
     detail: { query: "" },
@@ -174,18 +240,129 @@ function openGlobalSearch() {
 const categories = ref([]);
 const categoriesLoaded = ref(false);
 const categoryActive = ref("all");
+const latestPost = ref(null);
+
 const catClass =
   "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700";
 const activeCatClass =
   "bg-blue-600 text-white dark:bg-blue-500 dark:text-white border-blue-600 dark:border-blue-500 shadow";
 
-async function loadCategories() {
-  categories.value = await loadCategoriesForLocale(
-    supabase,
-    contentLocale.value
+const { statsEnabled, statsSettingsLoaded, fetchStatsSettings } = useStatsSettings();
+const { featuresEnabled, featuresSettingsLoaded, fetchSettings } = useSettings();
+
+const { data: homeBootstrap, pending: homeBootstrapPending, status: homeBootstrapStatus } =
+  await useLazyAsyncData(
+    () => `home-bootstrap-${contentLocale.value}`,
+    async () => {
+      await Promise.all([fetchSettings(), fetchStatsSettings()]);
+      const cats = await loadCategoriesForLocale(supabase, contentLocale.value);
+      const { data: latest } = await supabase
+        .from("posts")
+        .select("title, slug, created_at")
+        .eq("status", "published")
+        .eq("locale", contentLocale.value)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return {
+        categories: cats || [],
+        latestPost: latest || null,
+        featuresEnabled: { ...featuresEnabled.value },
+        statsEnabled: { ...statsEnabled.value },
+      };
+    },
+    { watch: [contentLocale], server: true }
   );
-  categoriesLoaded.value = true;
-}
+
+watch(
+  homeBootstrap,
+  (boot) => {
+    if (!boot) return;
+    categories.value = boot.categories || [];
+    categoriesLoaded.value = true;
+    latestPost.value = boot.latestPost || null;
+    if (boot.featuresEnabled) {
+      featuresEnabled.value = { ...boot.featuresEnabled };
+      featuresSettingsLoaded.value = true;
+    }
+    if (boot.statsEnabled) {
+      statsEnabled.value = { ...boot.statsEnabled };
+      statsSettingsLoaded.value = true;
+    }
+  },
+  { immediate: true }
+);
+
+const stats = ref([
+  { key: "posts", label: t("home.stats.posts"), value: "—" },
+  { key: "categories", label: t("home.stats.categories"), value: "—" },
+  { key: "authors", label: t("home.stats.authors"), value: "—" },
+]);
+const statsLoaded = ref(false);
+const statsGridStyle = computed(() => ({
+  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+}));
+
+const showWelcome = computed(() => featuresEnabled.value.welcome !== false);
+const showSiteName = computed(
+  () =>
+    !featuresSettingsLoaded.value || featuresEnabled.value.siteName !== false
+);
+const showSiteDescription = computed(
+  () =>
+    !featuresSettingsLoaded.value ||
+    featuresEnabled.value.siteDescription !== false
+);
+const showSearch = computed(() => featuresEnabled.value.search !== false);
+
+const showWelcomeBlock = computed(
+  () => !featuresSettingsLoaded.value || showWelcome.value
+);
+const showSearchBlock = computed(
+  () => !featuresSettingsLoaded.value || showSearch.value
+);
+const showCategoryChips = computed(
+  () => !categoriesLoaded.value || categories.value.length > 0
+);
+
+const welcomePending = computed(() => {
+  if (!showWelcomeBlock.value) return false;
+  if (!featuresSettingsLoaded.value) return true;
+  if (homeBootstrap.value) return false;
+  if (homeBootstrapPending.value || homeBootstrapStatus.value === "pending") {
+    return true;
+  }
+  return (
+    homeBootstrapStatus.value !== "success" &&
+    homeBootstrapStatus.value !== "error"
+  );
+});
+
+const searchPending = computed(() => !featuresSettingsLoaded.value);
+const chipsPending = computed(() => !categoriesLoaded.value);
+
+const enabledStats = computed(() =>
+  stats.value.filter((s) => statsEnabled.value[s.key])
+);
+const showStatsSkeleton = computed(() => {
+  // Only skeleton while settings themselves are unknown — once we know which
+  // stats are enabled, show the row (with "—" until counts arrive).
+  if (statsSettingsLoaded.value) return false;
+  return !statsLoaded.value;
+});
+const showStatsSection = computed(() => {
+  if (!statsSettingsLoaded.value) return true; // skeleton placeholder
+  return enabledStats.value.length > 0;
+});
+const statsSkeletonKeys = computed(() => {
+  if (enabledStats.value.length) return enabledStats.value;
+  return [
+    { key: "posts" },
+    { key: "categories" },
+    { key: "authors" },
+  ];
+});
+
 function goToCategory(slug) {
   if (slug === "all") {
     categoryActive.value = "all";
@@ -196,21 +373,16 @@ function goToCategory(slug) {
   router.push(localePath(`/category/${slug}`));
 }
 
-const stats = ref([
-  { key: "posts", label: t("home.stats.posts"), value: "—" },
-  { key: "categories", label: t("home.stats.categories"), value: "—" },
-  { key: "authors", label: t("home.stats.authors"), value: "—" },
-]);
-const statsLoaded = ref(false);
-const { statsEnabled } = useStatsSettings();
-const { featuresEnabled } = useSettings();
-const enabledStats = computed(() => stats.value.filter(s => statsEnabled.value[s.key]));
-const statsGridStyle = computed(() => ({
-  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-}));
-
 async function loadStats() {
   await fetchStatsSettings();
+  if (
+    !statsEnabled.value.posts &&
+    !statsEnabled.value.categories &&
+    !statsEnabled.value.authors
+  ) {
+    statsLoaded.value = true;
+    return;
+  }
   const [{ count: postsCount }, { count: catCount }, { count: authorCount }] =
     await Promise.all([
       statsEnabled.value.posts
@@ -240,40 +412,20 @@ async function loadStats() {
 }
 
 onMounted(() => {
-  loadCategories();
   loadStats();
-  fetchLatestPost();
-  fetchSettings();
+  // Fail-safe: never leave stats on "—" forever if a request hangs.
+  setTimeout(() => {
+    if (!statsLoaded.value) statsLoaded.value = true;
+  }, 8000);
 });
 
 watch(contentLocale, () => {
-  loadCategories();
-  fetchLatestPost();
   loadStats();
 });
 
-const latestPost = ref(null);
-async function fetchLatestPost() {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("title, slug, created_at")
-    .eq("status", "published")
-    .eq("locale", contentLocale.value)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!error && data) {
-    latestPost.value = data;
-  }
-}
 function openLatestPost() {
   if (latestPost.value?.slug) {
     router.push(localePath(`/posts/${latestPost.value.slug}`));
   }
 }
-
-const showWelcome = computed(() => featuresEnabled.value.welcome !== false);
-const showSiteName = computed(() => featuresEnabled.value.siteName !== false);
-const showSiteDescription = computed(() => featuresEnabled.value.siteDescription !== false);
-const showSearch = computed(() => featuresEnabled.value.search !== false);
 </script>

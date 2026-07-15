@@ -506,10 +506,9 @@ import { ref, computed, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import {
   useBranding,
-  updateBranding,
-  fetchBranding,
-  removeBrandingVariant,
-} from "@/stores/brandingStore";const branding = useBranding();
+} from "@/stores/brandingStore";
+const branding = useBranding();
+const { updateBranding, fetchBranding, removeBrandingVariant } = branding;
 const toast = useToast();
 
 const lightInput = ref(null);

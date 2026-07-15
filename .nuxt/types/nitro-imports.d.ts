@@ -91,6 +91,7 @@ declare global {
   const isStream: typeof import('../../node_modules/h3').isStream
   const isWebResponse: typeof import('../../node_modules/h3').isWebResponse
   const lazyEventHandler: typeof import('../../node_modules/h3').lazyEventHandler
+  const localizePath: typeof import('../../src/server/utils/feeds/seo').localizePath
   const nitroPlugin: typeof import('../../node_modules/nitropack/dist/runtime/internal/plugin').nitroPlugin
   const normalizeSiteUrl: typeof import('../../src/server/utils/feeds/generator').normalizeSiteUrl
   const parseCookies: typeof import('../../node_modules/h3').parseCookies
@@ -127,6 +128,7 @@ declare global {
   const setResponseStatus: typeof import('../../node_modules/h3').setResponseStatus
   const splitCookiesString: typeof import('../../node_modules/h3').splitCookiesString
   const stripFormatting: typeof import('../../src/server/utils/feeds/generator').stripFormatting
+  const stripLocalePrefix: typeof import('../../src/server/utils/feeds/seo').stripLocalePrefix
   const toEventHandler: typeof import('../../node_modules/h3').toEventHandler
   const toNodeListener: typeof import('../../node_modules/h3').toNodeListener
   const toPlainHandler: typeof import('../../node_modules/h3').toPlainHandler
@@ -170,4 +172,4 @@ export { defineAppConfig } from 'C:/Projects/Web/Pluma/pluma-frontend/node_modul
 export { defineI18nLocale, defineI18nConfig } from 'C:/Projects/Web/Pluma/pluma-frontend/node_modules/@nuxtjs/i18n/dist/runtime/composables/shared';
 export { createFeedGenerator } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/createFeedGenerator';
 export { DEFAULT_SITE_NAME, DEFAULT_SITE_DESCRIPTION, normalizeSiteUrl, escapeXml, stripFormatting, parseFeedFilters, getOriginFromRequest, FeedGenerator } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/feeds/generator';
-export { twitterSiteFromBranding, resolveSeoImage, robotsForPath, buildHreflangs, injectMeta, resolveSeoPayload } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/feeds/seo';
+export { twitterSiteFromBranding, resolveSeoImage, robotsForPath, injectMeta, resolveSeoPayload, buildHreflangs, localizePath, stripLocalePrefix } from 'C:/Projects/Web/Pluma/pluma-frontend/src/server/utils/feeds/seo';

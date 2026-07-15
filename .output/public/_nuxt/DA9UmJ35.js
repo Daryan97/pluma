@@ -1,1 +1,0 @@
-import{_ as o}from"./Cy7X5NxC.js";import{o as e,p as r}from"./CVl9Nd-T.js";import"./DtO4Aoao.js";import"./B2PBQ2Bn.js";const n={__name:"new-post",setup(t){return(a,p)=>(e(),r(o,{mode:"create"}))}};export{n as default};

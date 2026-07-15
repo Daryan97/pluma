@@ -52,26 +52,45 @@
         class="hidden md:flex items-center gap-2 text-gray-700 dark:text-gray-300"
         id="nav-links"
       >
-        <NuxtLink :to="localePath('/')" class="nav-pill">
-          <Icon icon="mdi:home-outline" class="text-lg" />
-          {{ t("nav.home") }}
-        </NuxtLink>
-        <CategoriesDropdown v-if="categories.length" :categories="categories" />
-        <NuxtLink :to="localePath('/archive')" class="nav-pill">
-          <Icon icon="mdi:archive-outline" class="text-lg" />
-          {{ t("nav.archive") }}
-        </NuxtLink>
-        <NuxtLink
-          v-if="role === 'admin' || role === 'author'"
-          :to="localePath('/dashboard')"
-          class="nav-pill"
-        >
-          <Icon icon="mdi:view-dashboard-outline" class="text-lg" />
-          {{ t("nav.dashboard") }}
-        </NuxtLink>
+        <div
+          v-if="!navMenuReady"
+          class="h-9 w-[22rem] max-w-[50vw] rounded-md bg-gray-200/70 dark:bg-gray-700/50 animate-pulse"
+          aria-hidden="true"
+        />
+        <template v-else>
+          <NuxtLink :to="localePath('/')" class="nav-pill">
+            <Icon icon="mdi:home-outline" class="text-lg" />
+            {{ t("nav.home") }}
+          </NuxtLink>
+          <CategoriesDropdown
+            v-if="categories.length"
+            :categories="categories"
+          />
+          <NuxtLink
+            v-if="hasArchivePosts"
+            :to="localePath('/archive')"
+            class="nav-pill"
+          >
+            <Icon icon="mdi:archive-outline" class="text-lg" />
+            {{ t("nav.archive") }}
+          </NuxtLink>
+          <NuxtLink
+            v-if="role === 'admin' || role === 'author'"
+            :to="localePath('/dashboard')"
+            class="nav-pill"
+          >
+            <Icon icon="mdi:view-dashboard-outline" class="text-lg" />
+            {{ t("nav.dashboard") }}
+          </NuxtLink>
+        </template>
       </div>
       <div class="hidden md:flex items-center gap-3 relative">
-        <LocaleSwitcher v-if="!isInstallPage" />
+        <div
+          v-if="!navUtilsReady"
+          class="h-9 w-16 rounded-md bg-gray-200/70 dark:bg-gray-700/50 animate-pulse"
+          aria-hidden="true"
+        />
+        <LocaleSwitcher v-else-if="showLocaleSwitcher" />
         <button
           @click="showSearch = true"
           class="nav-pill bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
@@ -89,12 +108,12 @@
             {{ t("nav.toSearch") }}
           </span>
         </button>
-        <UserDropdown v-if="authReady" :user="user" :avatar-url="avatar_url" />
         <div
-          v-else
+          v-if="!authReady"
           class="h-9 w-28 rounded-md bg-gray-200/70 dark:bg-gray-700/50 animate-pulse"
           aria-hidden="true"
         />
+        <UserDropdown v-else :user="user" :avatar-url="avatar_url" />
         <button
           @click="theme.toggleTheme()"
           class="nav-pill gap-1 bg-gray-100 dark:bg-gray-700/40 hover:bg-gray-200 dark:hover:bg-gray-700/60"
@@ -247,6 +266,7 @@
         </div>
 
         <NuxtLink
+          v-if="hasArchivePosts"
           :to="localePath('/archive')"
           class="flex items-center gap-2 h-10 px-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700/60 no-underline text-gray-700 dark:text-gray-300"
           @click="go('/archive')"
@@ -359,14 +379,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import { supabase } from "@/services/supabase";
 import { useThemeStore } from "@/stores/themeStore";
 import { Icon } from "@iconify/vue";
 import UserDropdown from "@/components/UserDropdown.vue";
 import CategoriesDropdown from "../CategoriesDropdown.vue";
 import LocaleSwitcher from "@/components/layout/LocaleSwitcher.vue";
-import { useBranding, fetchBranding } from "@/stores/brandingStore";
+import { useBranding } from "@/stores/brandingStore";
 import GlobalSearch from "@/components/GlobalSearch.vue";
 import { useRouter } from "vue-router";
 
@@ -383,6 +403,7 @@ const mobileMenuOpen = ref(false);
 const displayName = ref("");
 const role = ref("");
 const categories = ref([]);
+const categoriesLoaded = ref(false);
 const avatar_url = ref(null);
 const mobileCategoriesOpen = ref(false);
 const mobileLocalesOpen = ref(false);
@@ -392,6 +413,27 @@ const localizedSiteName = computed(
   () => branding.resolveLocalizedSiteName(locale.value) || ""
 );
 
+/**
+ * Delay revealing the language control until client mount so the skeleton
+ * is visible on first paint (SSR branding otherwise hydrates instantly).
+ */
+const localeUiReady = ref(false);
+/** Fail-safe: reveal nav chrome if auth/archive/branding stall. */
+const navFailsafeReady = ref(false);
+
+const navUtilsReady = computed(
+  () =>
+    localeUiReady.value &&
+    (!!branding.brandingLoaded?.value || navFailsafeReady.value)
+);
+/** One skeleton bar for the whole link group until categories + auth + archive check settle. */
+const navMenuReady = computed(
+  () =>
+    categoriesLoaded.value &&
+    authReady.value &&
+    (archiveChecked.value || navFailsafeReady.value)
+);
+
 const toast = useToast();
 const router = useRouter();
 const route = useRoute();
@@ -399,6 +441,13 @@ const route = useRoute();
 const isInstallPage = computed(() => {
   const p = route.path || "";
   return p === "/install" || p.endsWith("/install") || /(^|\/)install(\/|$)/.test(p);
+});
+
+/** Show language control only after branding says multiple locales are enabled. */
+const showLocaleSwitcher = computed(() => {
+  if (isInstallPage.value || !navUtilsReady.value) return false;
+  const enabled = branding.enabledLocales?.value;
+  return Array.isArray(enabled) && enabled.length > 1;
 });
 
 const mobileLocales = computed(() => {
@@ -432,37 +481,118 @@ async function switchMobileLocale(code) {
 }
 
 async function getCategories() {
-  const { data: categoriesData, error } = await supabase
-    .from("categories")
-    .select("id, name, slug, locale")
-    .eq("locale", contentLocale.value);
-  if (error) {
-    categories.value = [];
-  } else {
-    categories.value = categoriesData.map((cat) => ({
+  try {
+    const { data: categoriesData, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, locale")
+      .eq("locale", contentLocale.value);
+    if (error) {
+      categories.value = [];
+    } else {
+      categories.value = (categoriesData || []).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+      }));
+    }
+  } finally {
+    categoriesLoaded.value = true;
+  }
+}
+
+const { data: navCategories } = await useAsyncData(
+  () => `nav-categories-${contentLocale.value}`,
+  async () => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, locale")
+      .eq("locale", contentLocale.value);
+    if (error) return [];
+    return (data || []).map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
     }));
-  }
-}
+  },
+  { watch: [contentLocale], server: true }
+);
+
+watch(
+  navCategories,
+  (rows) => {
+    if (!rows) return;
+    categories.value = rows;
+    categoriesLoaded.value = true;
+  },
+  { immediate: true }
+);
+
+const {
+  data: archivePresence,
+  pending: archivePending,
+  status: archiveStatus,
+} = await useAsyncData(
+  () => `nav-archive-${contentLocale.value}`,
+  async () => {
+    const { count, error } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "archived")
+      .eq("locale", contentLocale.value);
+    if (error) return false;
+    return (count || 0) > 0;
+  },
+  { watch: [contentLocale], server: true }
+);
+
+const archiveChecked = computed(
+  () =>
+    archivePresence.value != null ||
+    archiveStatus.value === "success" ||
+    archiveStatus.value === "error" ||
+    !archivePending.value
+);
+const hasArchivePosts = computed(() => !!archivePresence.value);
 
 async function getUser() {
   try {
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
+    const auth = useAuthCache();
+    // Prefer cached session to avoid another auth lock round-trip.
+    let userId = auth.sessionUserId.value;
+    if (!auth.sessionChecked.value) {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      userId = session?.user?.id || null;
+      auth.sessionUserId.value = userId;
+      auth.sessionChecked.value = true;
+    }
 
-    if (currentUser) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username, display_name, role, avatar_url")
-        .eq("id", currentUser.id)
-        .single();
-      user.value = profile || { username: currentUser.email };
-      displayName.value = user.value.display_name || user.value.username;
-      role.value = user.value.role || "reader";
-      avatar_url.value = user.value.avatar_url || null;
+    if (userId) {
+      let profile = auth.profileCache.value;
+      if (!profile || profile.id !== userId) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("username, display_name, role, avatar_url")
+          .eq("id", userId)
+          .single();
+        profile = data
+          ? {
+              id: userId,
+              username: data.username || null,
+              display_name: data.display_name || null,
+              role: data.role || null,
+              avatar_url: data.avatar_url || null,
+            }
+          : { id: userId, username: null, display_name: null, role: null };
+        auth.profileCache.value = profile;
+      }
+      user.value = profile.username
+        ? profile
+        : { username: profile.username || "user" };
+      displayName.value = profile.display_name || profile.username || "";
+      role.value = profile.role || "reader";
+      avatar_url.value = profile.avatar_url || null;
     } else {
       user.value = null;
       displayName.value = "";
@@ -496,16 +626,40 @@ function handleOpenGlobalSearch(e) {
 }
 
 onMounted(() => {
-  getUser();
-  getCategories();
-  fetchBranding();
+  const revealLocale = () => {
+    localeUiReady.value = true;
+  };
+  if (branding.brandingLoaded?.value) {
+    revealLocale();
+  } else {
+    branding.fetchBranding().finally(revealLocale);
+  }
+
+  // Never leave nav chrome on skeleton if branding/archive stall.
+  setTimeout(() => {
+    localeUiReady.value = true;
+    navFailsafeReady.value = true;
+    if (!authReady.value) authReady.value = true;
+    if (!categoriesLoaded.value) categoriesLoaded.value = true;
+  }, 4000);
+
+  // Defer auth work so we don't contend with middleware getSession.
+  setTimeout(() => {
+    getUser();
+  }, 0);
+  if (!categoriesLoaded.value) getCategories();
+  branding.fetchBranding();
   supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) getUser();
-    else {
-      user.value = null;
-      displayName.value = "";
-      role.value = "";
-    }
+    // Do not await — schedule to avoid auth lock deadlocks.
+    setTimeout(() => {
+      if (session?.user) getUser();
+      else {
+        user.value = null;
+        displayName.value = "";
+        role.value = "";
+        authReady.value = true;
+      }
+    }, 0);
   });
   window.addEventListener("keydown", (e) => {
     const isEditable = (el) => {
