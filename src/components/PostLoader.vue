@@ -42,7 +42,10 @@
       </p>
     </div>
 
-    <div class="space-y-12">
+    <div
+      class="space-y-12 transition-opacity duration-200"
+      :class="{ 'opacity-50 pointer-events-none': refreshing && posts.length > 0 }"
+    >
       <article
         v-for="post in posts"
         :key="post.id"
@@ -143,11 +146,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
-import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
 import { Icon } from "@iconify/vue";
 import Markdown from "vue3-markdown-it";
-import { projectInfo } from "@/config/projectInfo";import NoImage from "./NoImage.vue";
+import { projectInfo } from "@/config/projectInfo";
+import { resolveCategoryFilter } from "@/lib/categoryScope";
+import NoImage from "./NoImage.vue";
 
 const { t } = useI18n();
 const localePath = useLocalePath();
@@ -159,9 +163,12 @@ function onImageError(id) {
   imageErrorMap.value = { ...imageErrorMap.value, [id]: true };
 }
 const loading = ref(false);
+/** Soft reload: keep previous posts visible while the new filter loads. */
+const refreshing = ref(false);
 const noMorePosts = ref(false);
 const pageSize = 5;
 let offset = 0;
+let loadSeq = 0;
 
 const loadMoreTrigger = ref(null);
 
@@ -208,39 +215,52 @@ function getExcerptMarkdown(content, maxLength = 200) {
   return excerpt;
 }
 
-async function loadPosts() {
-  if (loading.value || noMorePosts.value) return;
+async function loadPosts({ reset = false } = {}) {
+  if (!reset && (loading.value || noMorePosts.value)) return;
+
+  const seq = ++loadSeq;
+  if (reset) {
+    offset = 0;
+    noMorePosts.value = false;
+    refreshing.value = posts.value.length > 0;
+  }
 
   loading.value = true;
 
-  var cat_id = null;
+  var cat_ids = null;
   var author_id = null;
 
   if (props.filterBy === "category" && props.filterValue) {
     if (props.filterValue.toLowerCase() === "uncategorized") {
-      cat_id = null;
+      cat_ids = null;
     } else {
-      const { data: cat, error: catErr } = await supabase
-        .from("categories")
-        .select("id")
-        .eq("slug", props.filterValue)
-        .eq("locale", contentLocale.value)
-        .single();
-      if (catErr) {
+      const { categoryIds, error: catErr } = await resolveCategoryFilter(
+        supabase,
+        props.filterValue,
+        contentLocale.value
+      );
+      if (seq !== loadSeq) return;
+      if (catErr || !categoryIds?.length) {
+        if (reset) posts.value = [];
+        noMorePosts.value = true;
         loading.value = false;
+        refreshing.value = false;
         return;
       }
-      cat_id = cat ? cat.id : null;
+      cat_ids = categoryIds;
     }
   } else if (props.filterBy === "author" && props.filterValue) {
     const { data: author, error: authorErr } = await supabase
       .from("profiles")
       .select("id")
       .eq("username", props.filterValue)
-      .single();
+      .maybeSingle();
+    if (seq !== loadSeq) return;
     if (authorErr || !author) {
+      if (reset) posts.value = [];
       noMorePosts.value = true;
       loading.value = false;
+      refreshing.value = false;
       return;
     }
     author_id = author.id;
@@ -270,22 +290,24 @@ async function loadPosts() {
   if (
     props.filterBy === "category" &&
     props.filterValue &&
-    props.filterValue.toLowerCase() !== "uncategorized" &&
-    cat_id !== null
+    props.filterValue.toLowerCase() !== "uncategorized"
   ) {
-    query.eq("category_id", cat_id);
+    if (cat_ids?.length) {
+      query = query.in("category_id", cat_ids);
+    }
   } else if (props.filterBy === "author") {
     if (author_id) {
-      query.eq("author_id", author_id);
+      query = query.eq("author_id", author_id);
     }
   } else if (
     props.filterBy === "category" &&
-    (props.filterValue.toLowerCase() === "uncategorized" || cat_id === null)
+    props.filterValue.toLowerCase() === "uncategorized"
   ) {
-    query.is("category_id", null);
+    query = query.is("category_id", null);
   }
 
   const { data, error } = await query;
+  if (seq !== loadSeq) return;
 
   if (error) {
     toast.error(
@@ -293,17 +315,25 @@ async function loadPosts() {
         ? t('posts.loadFailed', { message: error.message })
         : t('posts.loadError')
     );
+    if (reset) posts.value = [];
     loading.value = false;
+    refreshing.value = false;
     return;
-  } else {
-    if (data.length < pageSize) {
-      noMorePosts.value = true;
-    }
-    posts.value.push(...data);
-    offset += pageSize;
   }
 
+  const rows = data || [];
+  if (rows.length < pageSize) {
+    noMorePosts.value = true;
+  }
+  if (reset) {
+    posts.value = rows;
+  } else {
+    posts.value.push(...rows);
+  }
+  offset += pageSize;
+
   loading.value = false;
+  refreshing.value = false;
 }
 
 function handleIntersect(entries) {
@@ -315,7 +345,7 @@ function handleIntersect(entries) {
 let observer = null;
 
 onMounted(async () => {
-  await loadPosts();
+  await loadPosts({ reset: true });
 
   observer = new IntersectionObserver(handleIntersect, {
     root: null,
@@ -336,10 +366,7 @@ onUnmounted(() => {
 watch(
   [() => props.filterBy, () => props.filterValue, contentLocale],
   () => {
-    posts.value = [];
-    offset = 0;
-    noMorePosts.value = false;
-    loadPosts();
+    loadPosts({ reset: true });
   }
 );
 

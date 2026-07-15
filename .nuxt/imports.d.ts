@@ -34,7 +34,7 @@ export { useContentLocale, CONTENT_LOCALES } from '../src/composables/useContent
 export { useSupabaseClient } from '../src/composables/useSupabaseClient';
 export { useToast } from '../src/composables/useToast';
 export { refreshDocumentSeo } from '../src/utils/refreshDocumentSeo';
-export { DEFAULT_FOOTER_CREDITS, allConfiguredLocales, normalizeLocaleSettings, isLocaleEnabled, fetchBranding, updateBranding, removeBrandingVariant, useBranding } from '../src/stores/brandingStore';
+export { DEFAULT_FOOTER_CREDITS, allConfiguredLocales, normalizeMetaTranslations, resolveLocalizedSiteName, resolveLocalizedSiteDescription, normalizeLocaleSettings, isLocaleEnabled, fetchBranding, updateBranding, removeBrandingVariant, useBranding } from '../src/stores/brandingStore';
 export { useRouteLoadingStore } from '../src/stores/routeLoadingStore';
 export { ALL_PROVIDERS, fetchSettings, saveProvidersEnabled, useSettings } from '../src/stores/settingsStore';
 export { fetchStatsSettings, useStatsSettings } from '../src/stores/statsSettingsStore';

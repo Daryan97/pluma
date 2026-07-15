@@ -16,7 +16,7 @@
               </h1>
               <div class="flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium">
                 <span v-if="postCount !== null" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> {{ postCount }} {{ postCount === 1 ? 'Post' : 'Posts' }}
+                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> {{ postCount }} {{ postCount === 1 ? t('posts.post') : t('posts.posts') }}
                 </span>
                 <span v-if="isUncategorized" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-400">
                   <Icon icon="mdi:alert-circle-outline" class="text-sm" /> {{ t('category.noCategory') }}
@@ -30,7 +30,7 @@
     <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
         <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:infinity" class="text-sm" /> All
+          <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
         </button>
         <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
           <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
@@ -83,9 +83,11 @@
 <script setup>
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { contentLocale } = useContentLocale()
 
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '@/services/supabase'
+import { countDistinctPosts } from '@/lib/postCount'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import NoImage from '@/components/NoImage.vue'
@@ -129,15 +131,17 @@ async function fetchCategory(){
 async function fetchPosts(cat){
   let query = supabase
     .from('posts')
-    .select('id, title, slug, created_at, cover_image_url')
+    .select('id, title, slug, locale, translation_group_id, created_at, cover_image_url')
     .eq('status', 'archived')
+    .eq('locale', contentLocale.value)
     .order('created_at', { ascending: false })
   if (isUncategorized.value) { query.is('category_id', null) }
   else if (cat?.id) { query.eq('category_id', cat.id) }
-  const { data, error } = await query
-  if (error) { error.value = 'Failed to load archive' }
-  posts.value = data || []
-  postCount.value = posts.value.length
+  const { data, error: fetchErr } = await query
+  if (fetchErr) { error.value = 'Failed to load archive' }
+  const rows = data || []
+  posts.value = rows
+  postCount.value = countDistinctPosts(rows)
 }
 
 onMounted(async () => {

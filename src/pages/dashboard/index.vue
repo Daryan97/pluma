@@ -148,7 +148,6 @@
             v-model:selected="selected"
             :current-user="currentUser"
             :role="role"
-            @toggleAll="toggleAll"
             @delete="(id) => askConfirmation(t('posts.deleteConfirm'), () => deletePost(id))"
             @edit="editPost"
           >
@@ -655,7 +654,8 @@ import {
   SelectTrigger,
   SelectValue,
   SelectViewport,
-} from "radix-vue";import ConfirmDialog from "@/components/ConfirmDialog.vue";
+} from "radix-vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import CategoriesManagement from "@/components/dashboard/CategoriesManagement.vue";
 import SeriesManagement from "@/components/dashboard/SeriesManagement.vue";
 import FooterCreditsSettings from "@/components/dashboard/FooterCreditsSettings.vue";
@@ -666,6 +666,7 @@ import MembersManagement from "@/components/dashboard/MembersManagement.vue";
 import MediaManager from "@/components/dashboard/MediaManager.vue";
 import { useBranding, updateBranding, fetchBranding } from "@/stores/brandingStore";
 import { CONTENT_LOCALES } from "@/config/contentLocales";
+import { countLogicalPosts } from "@/lib/postCount";
 import StatsSettingsForm from "@/components/dashboard/StatsSettingsForm.vue";
 import ProviderSettingsForm from "@/components/dashboard/ProviderSettingsForm.vue";
 
@@ -723,31 +724,96 @@ async function enrichPostsWithLocales(rows) {
   const groupIds = [
     ...new Set(rows.map((p) => p.translation_group_id).filter(Boolean)),
   ];
-  const byGroup = Object.create(null);
+  const localesByGroup = Object.create(null);
+  const versionsByGroup = Object.create(null);
   if (groupIds.length) {
     const { data: siblings, error } = await supabase
       .from("posts")
-      .select("locale, translation_group_id")
+      .select("id, title, slug, locale, status, translation_group_id")
       .in("translation_group_id", groupIds);
     if (!error && siblings) {
       for (const s of siblings) {
         if (!s.translation_group_id || !s.locale) continue;
-        if (!byGroup[s.translation_group_id]) byGroup[s.translation_group_id] = [];
-        if (!byGroup[s.translation_group_id].includes(s.locale)) {
-          byGroup[s.translation_group_id].push(s.locale);
+        if (!localesByGroup[s.translation_group_id]) {
+          localesByGroup[s.translation_group_id] = [];
         }
+        if (!localesByGroup[s.translation_group_id].includes(s.locale)) {
+          localesByGroup[s.translation_group_id].push(s.locale);
+        }
+        if (!versionsByGroup[s.translation_group_id]) {
+          versionsByGroup[s.translation_group_id] = Object.create(null);
+        }
+        versionsByGroup[s.translation_group_id][s.locale] = {
+          id: s.id,
+          title: s.title,
+          slug: s.slug,
+          status: s.status,
+          locale: s.locale,
+        };
       }
-      for (const id of Object.keys(byGroup)) {
-        byGroup[id].sort();
+      for (const id of Object.keys(localesByGroup)) {
+        localesByGroup[id].sort();
       }
     }
   }
-  return rows.map((p) => ({
-    ...p,
-    locales:
-      (p.translation_group_id && byGroup[p.translation_group_id]) ||
-      (p.locale ? [p.locale] : []),
-  }));
+  return rows.map((p) => {
+    const translations =
+      (p.translation_group_id && versionsByGroup[p.translation_group_id]) ||
+      (p.locale
+        ? {
+            [p.locale]: {
+              id: p.id,
+              title: p.title,
+              slug: p.slug,
+              status: p.status,
+              locale: p.locale,
+            },
+          }
+        : {});
+    return {
+      ...p,
+      locales:
+        (p.translation_group_id && localesByGroup[p.translation_group_id]) ||
+        (p.locale ? [p.locale] : []),
+      translations,
+    };
+  });
+}
+
+/** One table row per translation group; prefer site primary locale as the editable row. */
+function collapseTranslationGroups(rows) {
+  const { primaryLocale } = useBranding();
+  const preferred = primaryLocale.value || "en";
+  const singles = [];
+  const byGroup = new Map();
+
+  for (const p of rows) {
+    const gid = p.translation_group_id;
+    if (!gid) {
+      singles.push(p);
+      continue;
+    }
+    const cur = byGroup.get(gid);
+    if (!cur) {
+      byGroup.set(gid, p);
+      continue;
+    }
+    const curPreferred = cur.locale === preferred;
+    const nextPreferred = p.locale === preferred;
+    if (nextPreferred && !curPreferred) {
+      byGroup.set(gid, p);
+      continue;
+    }
+    if (curPreferred && !nextPreferred) continue;
+    // Same preference tier: keep the oldest (usually the original).
+    if (new Date(p.created_at) < new Date(cur.created_at)) {
+      byGroup.set(gid, p);
+    }
+  }
+
+  return [...byGroup.values(), ...singles].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
 }
 
 const filterTriggerClass =
@@ -802,14 +868,6 @@ const currentUser = ref(null);
 const role = ref("reader");
 const currentUserId = ref(null);
 
-const allSelected = computed(
-  () => selected.value.length === posts.value.length && posts.value.length > 0
-);
-
-const toggleAll = () => {
-  selected.value = allSelected.value ? [] : posts.value.map((post) => post.id);
-};
-
 const currentPage = ref(1);
 const pageSize = 10;
 const totalPostsCount = ref(0);
@@ -835,6 +893,10 @@ function clearSearch() {
 }
 
 const fetchDashboard = async () => {
+  // When showing all locales, collapse translation siblings into one row.
+  // Skip server-side range so pagination counts logical posts, not versions.
+  const collapseGroups = !localeFilter.value || localeFilter.value === "all";
+
   let query = supabase
     .from("posts")
     .select(
@@ -859,11 +921,17 @@ const fetchDashboard = async () => {
     `,
       { count: "exact" }
     )
-    .order("created_at", { ascending: false })
-    .range((currentPage.value - 1) * pageSize, currentPage.value * pageSize - 1);
+    .order("created_at", { ascending: false });
+
+  if (!collapseGroups) {
+    query = query.range(
+      (currentPage.value - 1) * pageSize,
+      currentPage.value * pageSize - 1
+    );
+  }
 
   if (searchQuery.value.trim() !== "") {
-    query = query.ilike("title", `%${searchQuery.value}%`);
+    query = query.ilike("title", `%${searchQuery.value.trim()}%`);
   }
 
   if (categoryFilter.value && categoryFilter.value !== "all") {
@@ -899,14 +967,17 @@ const fetchDashboard = async () => {
     posts.value = [];
     totalPostsCount.value = 0;
   } else {
-    posts.value = await enrichPostsWithLocales(data || []);
-    totalPostsCount.value = count || 0;
+    let rows = await enrichPostsWithLocales(data || []);
+    if (collapseGroups) {
+      rows = collapseTranslationGroups(rows);
+      totalPostsCount.value = rows.length;
+      const start = (currentPage.value - 1) * pageSize;
+      posts.value = rows.slice(start, start + pageSize);
+    } else {
+      posts.value = rows;
+      totalPostsCount.value = count || 0;
+    }
   }
-
-  const { count: total } = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true });
-  stats.value.totalPosts = total || 0;
 
   const { count: pending } = await supabase
     .from("comments")
@@ -1163,21 +1234,17 @@ async function deletePendingComment(id) {
 }
 
 async function fetchStats() {
-  const { count: total } = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true });
+  const { count: total } = await countLogicalPosts(supabase);
   stats.value.totalPosts = total || 0;
 
-  const { count: published } = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "published");
+  const { count: published } = await countLogicalPosts(supabase, (q) =>
+    q.eq("status", "published")
+  );
   stats.value.publishedPosts = published || 0;
 
-  const { count: drafts } = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "draft");
+  const { count: drafts } = await countLogicalPosts(supabase, (q) =>
+    q.eq("status", "draft")
+  );
   stats.value.draftPosts = drafts || 0;
 
   if (role.value === "admin" || role.value === "author") {

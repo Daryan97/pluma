@@ -49,8 +49,8 @@ export async function buildFeedResponse(req, type) {
   const baseUrl = baseUrlFromReq(req)
   const host = req.headers?.host || 'localhost'
   const url = new URL(req.url || '/', `https://${host}`)
-  const rssFilters = type === 'rss' ? parseFeedFilters(url.searchParams) : undefined
-  const { sitemap, rss, robots } = await gen.generate({ baseUrl, rssFilters })
+  const feedFilters = parseFeedFilters(url.searchParams)
+  const { sitemap, rss, robots } = await gen.generate({ baseUrl, rssFilters: feedFilters })
   if (type === 'sitemap') {
     return { body: sitemap, contentType: 'application/xml; charset=utf-8' }
   }

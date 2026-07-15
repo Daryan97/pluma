@@ -38,6 +38,7 @@
 <script setup>
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { contentLocale } = useContentLocale()
 
 import { ref, watch, computed } from "vue";
 import { Icon } from "@iconify/vue";
@@ -59,7 +60,7 @@ const isPreview = computed(() => Boolean(route.query.preview));
 const seriesMeta = computed(() => post.value?.series || null);
 
 watch(
-  () => [route.params.slug, route.query.preview],
+  () => [route.params.slug, route.query.preview, contentLocale.value],
   ([newSlug]) => {
     slug.value = newSlug;
     fetchPost();
@@ -89,9 +90,10 @@ async function loadSeriesPosts(seriesId) {
   }
   const { data } = await supabase
     .from("posts")
-    .select("id, title, slug, series_order")
+    .select("id, title, slug, series_order, locale")
     .eq("series_id", seriesId)
     .eq("status", "published")
+    .eq("locale", contentLocale.value)
     .order("series_order", { ascending: true, nullsFirst: false });
   seriesPosts.value = data || [];
 }
@@ -123,6 +125,8 @@ async function fetchPost() {
     return;
   }
 
+  // Unique key is (locale, slug) — filtering by locale avoids .single() failing
+  // when a translation shares the same slug.
   const { data, error } = await supabase
     .from("posts")
     .select(
@@ -130,10 +134,12 @@ async function fetchPost() {
       id,
       title,
       content,
+      locale,
       category:categories (
         id,
         name,
-        slug
+        slug,
+        locale
       ),
       series_id,
       series_order,
@@ -152,7 +158,8 @@ async function fetchPost() {
     `
     )
     .eq("slug", slug.value)
-    .single();
+    .eq("locale", contentLocale.value)
+    .maybeSingle();
 
   if (error || !data) {
     post.value = null;

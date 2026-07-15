@@ -43,16 +43,13 @@
               v-if="showSiteName"
               class="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-white"
             >
-              {{ projectInfo.name }}
+              {{ localizedSiteName }}
             </h1>
             <p
               v-if="showSiteDescription"
               class="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed"
             >
-              {{
-                projectInfo.description ||
-                t("home.defaultDescription")
-              }}
+              {{ localizedSiteDescription }}
             </p>
           </div>
           <div v-if="showSearch" class="w-full max-w-xl">
@@ -145,17 +142,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { supabase } from "@/services/supabase";
+import { countLogicalPosts } from "@/lib/postCount";
+import { loadCategoriesForLocale } from "@/lib/categoryScope";
 import PostLoader from "@/components/PostLoader.vue";
-import { projectInfo } from "@/config/projectInfo";
 import { Icon } from "@iconify/vue";
 import { useStatsSettings, fetchStatsSettings } from '@/stores/statsSettingsStore';
 import { useSettings, fetchSettings } from '@/stores/settingsStore';
+import { useBranding } from "@/stores/brandingStore";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const localePath = useLocalePath();
+const { contentLocale } = useContentLocale();
+const branding = useBranding();
+const localizedSiteName = computed(
+  () => branding.resolveLocalizedSiteName(locale.value) || ""
+);
+const localizedSiteDescription = computed(
+  () => branding.resolveLocalizedSiteDescription(locale.value) || ""
+);
 const router = useRouter();
 function openGlobalSearch() {
   const evt = new CustomEvent("pluma:open-global-search", {
@@ -173,13 +180,10 @@ const activeCatClass =
   "bg-blue-600 text-white dark:bg-blue-500 dark:text-white border-blue-600 dark:border-blue-500 shadow";
 
 async function loadCategories() {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id, name, slug")
-    .order("name");
-  if (!error && data) {
-    categories.value = data;
-  }
+  categories.value = await loadCategoriesForLocale(
+    supabase,
+    contentLocale.value
+  );
   categoriesLoaded.value = true;
 }
 function goToCategory(slug) {
@@ -210,13 +214,15 @@ async function loadStats() {
   const [{ count: postsCount }, { count: catCount }, { count: authorCount }] =
     await Promise.all([
       statsEnabled.value.posts
-        ? supabase
-            .from("posts")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "published")
+        ? countLogicalPosts(supabase, (q) =>
+            q.eq("status", "published").eq("locale", contentLocale.value)
+          )
         : Promise.resolve({ count: null }),
       statsEnabled.value.categories
-        ? supabase.from("categories").select("id", { count: "exact", head: true })
+        ? supabase
+            .from("categories")
+            .select("id", { count: "exact", head: true })
+            .eq("locale", contentLocale.value)
         : Promise.resolve({ count: null }),
       statsEnabled.value.authors
         ? supabase
@@ -240,12 +246,19 @@ onMounted(() => {
   fetchSettings();
 });
 
+watch(contentLocale, () => {
+  loadCategories();
+  fetchLatestPost();
+  loadStats();
+});
+
 const latestPost = ref(null);
 async function fetchLatestPost() {
   const { data, error } = await supabase
     .from("posts")
     .select("title, slug, created_at")
     .eq("status", "published")
+    .eq("locale", contentLocale.value)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

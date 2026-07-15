@@ -132,10 +132,8 @@ async function serveFeed(req, res, pathname) {
     getOriginFromRequest(req, generator.defaultBaseUrl || process.env.VITE_SITE_URL)
   )
   const fullUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
-  const rssFilters = pathname.startsWith('/rss')
-    ? parseFeedFilters(fullUrl.searchParams)
-    : undefined
-  const { sitemap, rss, robots } = await generator.generate({ baseUrl, rssFilters })
+  const feedFilters = parseFeedFilters(fullUrl.searchParams)
+  const { sitemap, rss, robots } = await generator.generate({ baseUrl, rssFilters: feedFilters })
 
   if (pathname.startsWith('/sitemap')) {
     send(res, 200, sitemap, {

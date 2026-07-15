@@ -20,23 +20,65 @@
       </div>
     </div>
     <form @submit.prevent="save" class="space-y-5">
+      <div v-if="enabledLocalesList.length > 1" class="space-y-2">
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="code in enabledLocalesList"
+            :key="code"
+            type="button"
+            class="inline-flex items-center gap-1 h-8 px-2.5 rounded-full text-[11px] font-medium uppercase tracking-wide transition"
+            :class="
+              manageLocale === code
+                ? 'bg-blue-600 text-white'
+                : hasMetaLocale(code)
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+                  : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600'
+            "
+            :title="
+              hasMetaLocale(code)
+                ? t('settings.siteMeta.editLocale', { locale: code })
+                : t('settings.siteMeta.addTranslationFor', { locale: code })
+            "
+            @click="switchManageLocale(code)"
+          >
+            <Icon
+              :icon="hasMetaLocale(code) ? 'mdi:check' : 'mdi:plus'"
+              class="text-sm"
+            />
+            {{ code }}
+            <span
+              v-if="code === primaryLocaleCode"
+              class="text-[9px] font-semibold opacity-80 normal-case tracking-normal"
+            >({{ t('settings.siteMeta.primary') }})</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-gray-500 dark:text-gray-400">
+          {{ t('settings.siteMeta.manageLocaleHint') }}
+        </p>
+      </div>
       <div>
         <label
           class="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1"
-          >{{ t('settings.siteMeta.siteName') }}</label
+          >{{ t('settings.siteMeta.siteName') }}
+          <span v-if="enabledLocalesList.length > 1" class="font-normal normal-case tracking-normal text-gray-400"
+            >({{ manageLocale }})</span
+          ></label
         >
         <input
           v-model.trim="siteName"
           type="text"
           class="w-full h-11 rounded-md px-3 bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           :placeholder="t('settings.siteMeta.siteNamePlaceholder')"
-          required
+          :required="manageLocale === primaryLocaleCode"
         />
       </div>
       <div>
         <label
           class="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-1"
-          >{{ t('settings.siteMeta.siteDescription') }}</label
+          >{{ t('settings.siteMeta.siteDescription') }}
+          <span v-if="enabledLocalesList.length > 1" class="font-normal normal-case tracking-normal text-gray-400"
+            >({{ manageLocale }})</span
+          ></label
         >
         <textarea
           v-model.trim="siteDescription"
@@ -44,6 +86,20 @@
           class="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-900/40 border border-gray-300 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           :placeholder="t('settings.siteMeta.siteDescriptionPlaceholder')"
         ></textarea>
+      </div>
+      <div
+        v-if="manageLocale !== primaryLocaleCode && hasMetaLocale(manageLocale)"
+        class="flex justify-end"
+      >
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 h-8 px-3 rounded-md text-[11px] font-medium bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60"
+          :disabled="saving"
+          @click="removeCurrentTranslation"
+        >
+          <Icon icon="mdi:delete-outline" class="text-sm" />
+          {{ t('settings.siteMeta.deleteTranslation') }}
+        </button>
       </div>
       <div>
         <label
@@ -257,8 +313,7 @@
 </template>
 
 <script setup>
-const { t } = useI18n()
-const localePath = useLocalePath()
+const { t, locale } = useI18n()
 
 import {
   ref,
@@ -270,7 +325,8 @@ import {
 } from "vue";
 import { Icon } from "@iconify/vue";
 import { useBranding, updateBranding } from "@/stores/brandingStore";
-import { projectInfo } from "@/config/projectInfo";const branding = useBranding();
+import { projectInfo } from "@/config/projectInfo";
+const branding = useBranding();
 const toast = useToast();
 
 const siteName = ref("");
@@ -283,11 +339,45 @@ const message = ref("");
 const error = ref(false);
 const pendingAdds = ref(0);
 const openIconIndex = ref(null);
+const manageLocale = ref("en");
 const pickerCoords = ref({ top: 0, left: 0 });
 const pickerStyle = computed(() => ({
   top: pickerCoords.value.top + "px",
   left: pickerCoords.value.left + "px",
 }));
+
+const enabledLocalesList = computed(() => branding.enabledLocales.value || []);
+const primaryLocaleCode = computed(() => branding.primaryLocale.value || "en");
+
+function hasMetaLocale(code) {
+  if (code === primaryLocaleCode.value) {
+    return !!(branding.siteName.value || branding.siteDescription.value);
+  }
+  const tr = branding.metaTranslations.value?.[code];
+  return !!(tr?.siteName || tr?.siteDescription);
+}
+
+function loadLocaleFields(code) {
+  if (code === primaryLocaleCode.value) {
+    siteName.value = branding.siteName.value || "";
+    siteDescription.value = branding.siteDescription.value || "";
+    return;
+  }
+  const tr = branding.metaTranslations.value?.[code];
+  if (tr?.siteName || tr?.siteDescription) {
+    siteName.value = tr.siteName || "";
+    siteDescription.value = tr.siteDescription || "";
+  } else {
+    // Prefill new translation from primary
+    siteName.value = branding.siteName.value || "";
+    siteDescription.value = branding.siteDescription.value || "";
+  }
+}
+
+function switchManageLocale(code) {
+  manageLocale.value = code;
+  loadLocaleFields(code);
+}
 const iconSearch = ref("");
 const iconGroupDefs = [
   { key: 'social', icons: ['mdi:facebook','mdi:facebook-messenger','mdi:instagram','mdi:twitter','mdi:reddit','mdi:pinterest','mdi:tumblr','mdi:snapchat','mdi:mastodon','mdi:vk','mdi:wechat','mdi:sina-weibo','ic:baseline-tiktok'] },
@@ -402,8 +492,8 @@ function safeId() {
 }
 
 function init() {
-  siteName.value = branding.siteName.value || "";
-  siteDescription.value = branding.siteDescription.value || "";
+  manageLocale.value = primaryLocaleCode.value;
+  loadLocaleFields(manageLocale.value);
   twitterHandle.value = (branding.twitterHandle.value || "").replace(/^@/, "");
   links.value = (branding.socialLinks.value || []).map((l) => ({
     id: safeId(),
@@ -426,6 +516,17 @@ watch(
     }
   },
   { immediate: true }
+);
+
+watch(
+  () => [branding.primaryLocale.value, branding.enabledLocales.value?.join(",")],
+  () => {
+    if (!branding.brandingLoaded.value) return;
+    if (!enabledLocalesList.value.includes(manageLocale.value)) {
+      manageLocale.value = primaryLocaleCode.value;
+    }
+    loadLocaleFields(manageLocale.value);
+  }
 );
 
 function internalAdd() {
@@ -482,21 +583,48 @@ async function save() {
         icon: l.icon.trim() || "mdi:link-variant",
       }))
       .filter((l) => l.label && l.url);
-    await updateBranding({
+
+    const translations = {
+      ...(branding.metaTranslations.value || {}),
+    };
+    const payload = {
       lightFile: null,
       darkFile: null,
       faviconFile: null,
-      siteName: siteName.value,
-      siteDescription: siteDescription.value,
       twitterHandle: twitterHandle.value,
       socialLinks: cleaned,
-    });
+    };
+
+    if (manageLocale.value === primaryLocaleCode.value) {
+      if (!siteName.value.trim()) {
+        toast.error(t("settings.siteMeta.siteNameRequired"));
+        return;
+      }
+      payload.siteName = siteName.value;
+      payload.siteDescription = siteDescription.value;
+      delete translations[manageLocale.value];
+      payload.metaTranslations = translations;
+    } else {
+      const name = siteName.value.trim();
+      const desc = siteDescription.value.trim();
+      if (!name && !desc) {
+        toast.error(t("settings.siteMeta.translationEmpty"));
+        return;
+      }
+      translations[manageLocale.value] = {
+        siteName: name || null,
+        siteDescription: desc || null,
+      };
+      payload.metaTranslations = translations;
+    }
+
+    await updateBranding(payload);
     projectInfo.applyBranding({
-      siteName: siteName.value,
-      siteDescription: siteDescription.value,
+      siteName: branding.resolveLocalizedSiteName(locale.value),
+      siteDescription: branding.resolveLocalizedSiteDescription(locale.value),
       socialLinks: cleaned,
     });
-    toast.success(t('settings.siteMeta.updated'));
+    toast.success(t("settings.siteMeta.updated"));
     try {
       const { refreshDocumentSeo } = await import("@/utils/refreshDocumentSeo");
       refreshDocumentSeo?.();
@@ -504,8 +632,30 @@ async function save() {
     error.value = false;
   } catch (e) {
     console.error(e);
-    toast.error(t('settings.siteMeta.saveFailed'));
+    toast.error(t("settings.siteMeta.saveFailed"));
     error.value = true;
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function removeCurrentTranslation() {
+  if (manageLocale.value === primaryLocaleCode.value || saving.value) return;
+  saving.value = true;
+  try {
+    const translations = { ...(branding.metaTranslations.value || {}) };
+    delete translations[manageLocale.value];
+    await updateBranding({
+      lightFile: null,
+      darkFile: null,
+      faviconFile: null,
+      metaTranslations: translations,
+    });
+    loadLocaleFields(manageLocale.value);
+    toast.success(t("settings.siteMeta.translationDeleted"));
+  } catch (e) {
+    console.error(e);
+    toast.error(t("settings.siteMeta.saveFailed"));
   } finally {
     saving.value = false;
   }

@@ -536,18 +536,34 @@ function toggleTheme() {
 async function seedCategories() {
   setDevResult("Seeding...");
   try {
-    const loc = branding.primaryLocale?.value || unref(locale) || "en";
-    const defaults = [
-      { name: "Announcements", slug: "announcements", locale: loc },
-      { name: "Tutorials", slug: "tutorials", locale: loc },
-      { name: "Guides", slug: "guides", locale: loc },
+    const enabled = branding.enabledLocales?.value;
+    const locales =
+      Array.isArray(enabled) && enabled.length
+        ? enabled
+        : [branding.primaryLocale?.value || unref(locale) || "en"];
+    const names = [
+      { name: "Announcements", slug: "announcements" },
+      { name: "Tutorials", slug: "tutorials" },
+      { name: "Guides", slug: "guides" },
     ];
+    const rows = [];
+    for (const item of names) {
+      const groupId = crypto.randomUUID();
+      for (const loc of locales) {
+        rows.push({
+          name: item.name,
+          slug: item.slug,
+          locale: loc,
+          translation_group_id: groupId,
+        });
+      }
+    }
     const { data, error } = await supabase
       .from("categories")
-      .upsert(defaults, { onConflict: "locale,slug" })
+      .upsert(rows, { onConflict: "locale,slug" })
       .select("*");
     if (error) throw error;
-    setDevResult(data);
+    setDevResult({ seeded: data?.length || 0, locales, rows: data });
   } catch (e) {
     setDevResult("ERROR: " + (e.message || String(e)));
   }
@@ -556,15 +572,11 @@ async function seedCategories() {
 async function createDummyPost() {
   setDevResult("Creating...");
   try {
-    const title = "Test Post " + Date.now();
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const userId = session?.user?.id || null;
+    const stamp = Date.now();
+    const title = `Test Post ${stamp}`;
+    const slug = `test-post-${stamp}`;
+    const sessionResult = await supabase.auth.getSession();
+    const userId = sessionResult?.data?.session?.user?.id || null;
     if (!userId) throw new Error("No authenticated user in session");
 
     const payload = {

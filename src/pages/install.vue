@@ -13,7 +13,7 @@
           Installation Wizard
         </h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          Guided setup for {{ projectInfo.name }}
+          Guided setup for {{ projectInfo.name || 'Pluma' }}
         </p>
       </div>
     </header>
@@ -25,14 +25,16 @@
         v-for="s in steps"
         :key="s.step"
         type="button"
-        :disabled="(s.disabled as any) && s.step > activeStep"
+        :disabled="isStepLocked(s.step)"
         @click="s.step < activeStep ? goToStep(s.step) : null"
         class="group flex items-center gap-3 pl-0 pr-5 rounded-full border transition-colors"
         :class="[
           activeStep === s.step
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
             : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-blue-300 hover:text-blue-600 dark:hover:text-blue-300',
-          ((s.disabled as any) && s.step > activeStep) ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+          isStepLocked(s.step)
+            ? 'opacity-40 cursor-not-allowed'
+            : 'cursor-pointer',
         ]"
       >
         <span
@@ -94,7 +96,10 @@
         <label
           class="flex items-center gap-2.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer select-none pt-2"
         >
-          <Checkbox v-model="provisionConfirmed" aria-label="Confirm SQL was run" />
+          <Checkbox
+            v-model="provisionConfirmed"
+            aria-label="Confirm SQL was run"
+          />
           I ran the SQL successfully
         </label>
         <div class="flex items-center gap-3 pt-2">
@@ -176,10 +181,7 @@
           >
             Loading runtime credentials…
           </p>
-          <p
-            v-else
-            class="text-[11px] text-gray-500 dark:text-gray-400"
-          >
+          <p v-else class="text-[11px] text-gray-500 dark:text-gray-400">
             To override, set container env vars and restart the server.
           </p>
         </div>
@@ -233,8 +235,8 @@
                   t.status === 'ok'
                     ? 'text-green-600 dark:text-green-300'
                     : t.status === 'fail'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-500 dark:text-gray-400'
                 "
                 class="flex items-center gap-1"
               >
@@ -243,8 +245,8 @@
                     t.status === 'ok'
                       ? 'mdi:check-circle'
                       : t.status === 'fail'
-                      ? 'mdi:alert-circle'
-                      : 'mdi:clock-outline'
+                        ? 'mdi:alert-circle'
+                        : 'mdi:clock-outline'
                   "
                   class="text-xs"
                 />
@@ -264,8 +266,8 @@
                   f.status === 'ok'
                     ? 'text-green-600 dark:text-green-300'
                     : f.status === 'fail'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-500 dark:text-gray-400'
                 "
                 class="flex items-center gap-1"
               >
@@ -274,8 +276,8 @@
                     f.status === 'ok'
                       ? 'mdi:check-circle'
                       : f.status === 'fail'
-                      ? 'mdi:alert-circle'
-                      : 'mdi:clock-outline'
+                        ? 'mdi:alert-circle'
+                        : 'mdi:clock-outline'
                   "
                   class="text-xs"
                 />
@@ -295,8 +297,8 @@
                   b.status === 'ok'
                     ? 'text-green-600 dark:text-green-300'
                     : b.status === 'fail'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-500 dark:text-gray-400'
                 "
                 class="flex flex-col"
               >
@@ -306,8 +308,8 @@
                       b.status === 'ok'
                         ? 'mdi:check-circle'
                         : b.status === 'fail'
-                        ? 'mdi:alert-circle'
-                        : 'mdi:clock-outline'
+                          ? 'mdi:alert-circle'
+                          : 'mdi:clock-outline'
                     "
                     class="text-xs"
                   />
@@ -334,8 +336,8 @@
                   p.status === 'ok'
                     ? 'text-green-600 dark:text-green-300'
                     : p.status === 'fail'
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-gray-500 dark:text-gray-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-500 dark:text-gray-400'
                 "
                 class="flex items-center gap-1"
               >
@@ -344,8 +346,8 @@
                     p.status === 'ok'
                       ? 'mdi:check-circle'
                       : p.status === 'fail'
-                      ? 'mdi:alert-circle'
-                      : 'mdi:clock-outline'
+                        ? 'mdi:alert-circle'
+                        : 'mdi:clock-outline'
                   "
                   class="text-xs"
                 />
@@ -646,23 +648,32 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 definePageMeta({
   // Install wizard is English-only — no /ku/install, /ar/install, etc.
   i18n: false,
 });
 defineI18nRoute(false);
 
-import { ref, computed, reactive, onMounted } from "vue";
+import { ref, computed, reactive, onMounted, unref } from "vue";
 import { useRouter } from "vue-router";
 import { Icon } from "@iconify/vue";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { getRuntimeEnvSync, loadRuntimeEnv } from "@/lib/runtimeEnv";
 import Checkbox from "@/components/ui/Checkbox.vue";
-
-// @ts-ignore - .sql raw import
 import migrationSqlRaw from "../install/pluma_initial.sql?raw";
 import { projectInfo } from "@/config/projectInfo";
+import {
+  createTableChecks,
+  createFunctionChecks,
+  createBucketChecks,
+  createPolicyChecks,
+  runInstallChecks,
+  bucketFailureHint,
+  validateUsernameValue,
+  scorePassword,
+  passwordStrengthMeta,
+} from "@/lib/installChecks";
 
 const toast = useToast();
 const router = useRouter();
@@ -672,26 +683,7 @@ useHead({
   htmlAttrs: { lang: "en", dir: "ltr" },
 });
 
-async function forceEnglishUi() {
-  try {
-    if (unref(locale) !== "en") {
-      await setLocale("en");
-    }
-  } catch {
-    /* ignore */
-  }
-}
-
-await forceEnglishUi();
-
-interface StepDef {
-  step: number;
-  title: string;
-  description: string;
-  icon: string;
-  disabled?: boolean;
-}
-const steps: StepDef[] = [
+const steps = [
   {
     step: 1,
     title: "SQL",
@@ -703,21 +695,18 @@ const steps: StepDef[] = [
     title: "Verify",
     description: "Check schema & storage",
     icon: "mdi:check-decagram",
-    disabled: computed(() => !provisionConfirmed.value) as any,
   },
   {
     step: 3,
     title: "Branding",
     description: "Set site name",
     icon: "mdi:brush",
-    disabled: computed(() => !allVerified.value) as any,
   },
   {
     step: 4,
     title: "Admin",
     description: "Create admin account",
     icon: "mdi:account-star",
-    disabled: computed(() => !allVerified.value || !brandingSaved.value) as any,
   },
 ];
 
@@ -725,76 +714,19 @@ const siteName = ref("");
 const siteDescription = ref("");
 const brandingSubmitting = ref(false);
 const brandingSaved = ref(false);
-const activeStep = ref<number>(1);
-const url = ref<string>("");
-const anonKey = ref<string>("");
+const activeStep = ref(1);
+const url = ref("");
+const anonKey = ref("");
 const envLoading = ref(true);
-const urlError = ref<string>("");
-const keyError = ref<string>("");
-let tempClient: SupabaseClient | null = null;
+const urlError = ref("");
+const keyError = ref("");
+let tempClient = null;
 const usingEnvCreds = computed(() => !!url.value && !!anonKey.value);
 
-function applyRuntimeEnv(env: Record<string, string | undefined>) {
-  url.value = env.VITE_SUPABASE_URL || "";
-  anonKey.value = env.VITE_SUPABASE_ANON_KEY || "";
-}
-
-applyRuntimeEnv(getRuntimeEnvSync());
-
-onMounted(async () => {
-  try {
-    applyRuntimeEnv(await loadRuntimeEnv());
-  } finally {
-    envLoading.value = false;
-  }
-});
-const maskedAnonKey = computed(() =>
-  anonKey.value
-    ? anonKey.value.slice(0, 16) + "..." + anonKey.value.slice(-8)
-    : ""
-);
-
-type CheckItem = {
-  name: string;
-  type: "table" | "function" | "bucket" | "policy";
-  status: "pending" | "ok" | "fail";
-  detail?: string;
-  expectedPublic?: boolean;
-};
-const tableChecks = ref<CheckItem[]>([
-  { name: "categories", type: "table", status: "pending" },
-  { name: "profiles", type: "table", status: "pending" },
-  { name: "posts", type: "table", status: "pending" },
-  { name: "comments", type: "table", status: "pending" },
-  { name: "settings", type: "table", status: "pending" },
-  { name: "series", type: "table", status: "pending" },
-]);
-const functionChecks = ref<CheckItem[]>([
-  { name: "is_admin", type: "function", status: "pending" },
-  { name: "is_author", type: "function", status: "pending" },
-  { name: "handle_new_user", type: "function", status: "pending" },
-  { name: "touch_updated_at", type: "function", status: "pending" },
-  { name: "publish_due_posts", type: "function", status: "pending" },
-  { name: "get_post_by_preview_token", type: "function", status: "pending" },
-]);
-const bucketChecks = ref<CheckItem[]>([
-  {
-    name: "post-thumbnails",
-    type: "bucket",
-    status: "pending",
-    expectedPublic: true,
-  },
-  {
-    name: "profile-avatar",
-    type: "bucket",
-    status: "pending",
-    expectedPublic: true,
-  },
-  { name: "branding", type: "bucket", status: "pending", expectedPublic: true },
-]);
-const policyChecks = ref<CheckItem[]>([
-  { name: "RLS enabled", type: "policy", status: "pending" },
-]);
+const tableChecks = ref(createTableChecks());
+const functionChecks = ref(createFunctionChecks());
+const bucketChecks = ref(createBucketChecks());
+const policyChecks = ref(createPolicyChecks());
 const verifying = ref(false);
 const verificationRan = ref(false);
 const allVerified = computed(() =>
@@ -803,8 +735,7 @@ const allVerified = computed(() =>
   )
 );
 
-const provisionConfirmed = ref<boolean>(false);
-
+const provisionConfirmed = ref(false);
 const email = ref("");
 const password = ref("");
 const username = ref("");
@@ -821,8 +752,46 @@ const creatingAdmin = ref(false);
 const adminCreated = ref(false);
 const installCompleted = ref(false);
 const adminExists = ref(false);
+const migrationSql = String(migrationSqlRaw);
 
-const migrationSql: string = migrationSqlRaw as string;
+function applyRuntimeEnv(env) {
+  url.value = (env && env.VITE_SUPABASE_URL) || "";
+  anonKey.value = (env && env.VITE_SUPABASE_ANON_KEY) || "";
+}
+
+applyRuntimeEnv(getRuntimeEnvSync());
+
+async function forceEnglishUi() {
+  try {
+    if (unref(locale) !== "en") {
+      await setLocale("en");
+    }
+  } catch (_e) {
+    /* ignore */
+  }
+}
+
+onMounted(async () => {
+  await forceEnglishUi();
+  try {
+    applyRuntimeEnv(await loadRuntimeEnv());
+  } finally {
+    envLoading.value = false;
+  }
+});
+
+const maskedAnonKey = computed(() => {
+  if (!anonKey.value) return "";
+  return anonKey.value.slice(0, 16) + "..." + anonKey.value.slice(-8);
+});
+
+function isStepLocked(step) {
+  if (step <= activeStep.value) return false;
+  if (step >= 2 && !provisionConfirmed.value) return true;
+  if (step >= 3 && !allVerified.value) return true;
+  if (step >= 4 && (!allVerified.value || !brandingSaved.value)) return true;
+  return false;
+}
 
 function validate() {
   urlError.value = "";
@@ -843,19 +812,18 @@ async function saveInitialBranding() {
     tempClient = createClient(url.value, anonKey.value, {
       auth: { persistSession: false },
     });
-    const { error } = await tempClient
-      .from("settings")
-      .insert({
-        key: "branding",
-        value: {
-          siteName: siteName.value.trim(),
-          siteDescription: siteDescription.value.trim(),
-          socialLinks: [],
-        },
-      });
-    if (error && error.code !== "42501") throw error;
+    const brandingInsert = await tempClient.from("settings").insert({
+      key: "branding",
+      value: {
+        siteName: siteName.value.trim(),
+        siteDescription: siteDescription.value.trim(),
+        socialLinks: [],
+      },
+    });
+    const brandingError = brandingInsert.error;
+    if (brandingError && brandingError.code !== "42501") throw brandingError;
     brandingSaved.value = true;
-    if (error && error.code === "42501") {
+    if (brandingError && brandingError.code === "42501") {
       toast.info(
         "Branding already exists (skipped). You can update it later in the dashboard."
       );
@@ -863,7 +831,7 @@ async function saveInitialBranding() {
       toast.success("Branding saved");
     }
     activeStep.value = 4;
-  } catch (e: any) {
+  } catch (e) {
     toast.error(e.message || "Failed to save branding");
   } finally {
     brandingSubmitting.value = false;
@@ -875,141 +843,19 @@ async function verifyEnvironment() {
   verifying.value = true;
   verificationRan.value = true;
   tempClient = null;
-  [
-    ...tableChecks.value,
-    ...functionChecks.value,
-    ...bucketChecks.value,
-    ...policyChecks.value,
-  ].forEach((c) => {
-    c.status = "pending";
-    c.detail = "";
-  });
   try {
     tempClient = createClient(url.value, anonKey.value, {
       auth: { persistSession: false },
     });
-    for (const t of tableChecks.value) {
-      try {
-        const col = t.name === "settings" ? "key" : "id";
-        const { error } = await tempClient.from(t.name).select(col).limit(1);
-        if (error) throw error;
-        t.status = "ok";
-      } catch (e: any) {
-        t.status = "fail";
-        t.detail = e.message;
-      }
-    }
-    for (const f of functionChecks.value) {
-      try {
-        if (["is_admin", "is_author"].includes(f.name)) {
-          const { error } = await tempClient.rpc(f.name);
-          if (error) throw error;
-          f.status = "ok";
-        } else if (f.name === "handle_new_user") {
-          const { error } = await tempClient
-            .from("profiles")
-            .select("id")
-            .limit(1);
-          if (error) throw error;
-          f.status = "ok";
-        } else if (f.name === "touch_updated_at") {
-          const { error } = await tempClient
-            .from("categories")
-            .select("id")
-            .limit(1);
-          if (error) throw error;
-          f.status = "ok";
-        } else if (f.name === "publish_due_posts") {
-          const { error } = await tempClient.rpc(f.name);
-          if (
-            error &&
-            /could not find|does not exist|PGRST202|schema cache/i.test(
-              error.message || ""
-            )
-          ) {
-            throw error;
-          }
-          f.status = "ok";
-        } else if (f.name === "get_post_by_preview_token") {
-          const { error } = await tempClient.rpc(f.name, {
-            p_token: "00000000-0000-0000-0000-000000000000",
-          });
-          if (
-            error &&
-            /could not find|does not exist|PGRST202|schema cache/i.test(
-              error.message || ""
-            )
-          ) {
-            throw error;
-          }
-          f.status = "ok";
-        } else {
-          f.status = "fail";
-          f.detail = "No verification path for this function";
-        }
-      } catch (e: any) {
-        f.status = "fail";
-        f.detail = e.message;
-      }
-    }
-    for (const b of bucketChecks.value) {
-      try {
-        const { data, error } = await (
-          tempClient as SupabaseClient
-        ).storage.getBucket(b.name);
-        if (error || !data) {
-          if (b.name.endsWith("s")) {
-            const singular = b.name.slice(0, -1);
-            try {
-              const { data: altData, error: altErr } = await (
-                tempClient as SupabaseClient
-              ).storage.getBucket(singular);
-              if (altData && !altErr) {
-                b.status = "fail";
-                b.detail = `Found '${singular}' but expected '${b.name}' (rename bucket)`;
-                continue;
-              }
-            } catch {
-            }
-          }
-          b.status = "fail";
-          b.detail = error ? error.message : "Bucket not found";
-          continue;
-        }
-        const isPublic = (data as any).public === true;
-        if (b.expectedPublic) {
-          if (isPublic) b.status = "ok";
-          else {
-            b.status = "fail";
-            b.detail = "Exists but not public";
-          }
-        } else {
-          if (isPublic) {
-            b.status = "fail";
-            b.detail = "Public but expected private";
-          } else {
-            b.status = "ok";
-          }
-        }
-      } catch (e: any) {
-        b.status = "fail";
-        b.detail = e.message || "Error verifying bucket";
-      }
-    }
-    try {
-      const { error } = await tempClient
-        .from("categories")
-        .select("id")
-        .limit(1);
-      if (error) throw error;
-      policyChecks.value[0].status = "ok";
-    } catch (e: any) {
-      policyChecks.value[0].status = "fail";
-      policyChecks.value[0].detail = e.message;
-    }
-    if (allVerified.value) toast.success("All checks passed");
+    const ok = await runInstallChecks(tempClient, {
+      tableChecks: tableChecks.value,
+      functionChecks: functionChecks.value,
+      bucketChecks: bucketChecks.value,
+      policyChecks: policyChecks.value,
+    });
+    if (ok) toast.success("All checks passed");
     else toast.info("Verification finished (review results)");
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
     toast.error("Verification failed");
   } finally {
@@ -1018,75 +864,32 @@ async function verifyEnvironment() {
 }
 
 function validateUsername() {
-  const val = username.value.trim();
-  if (!val) usernameError.value = "Required";
-  else if (!/^[A-Za-z0-9_-]{3,20}$/.test(val))
-    usernameError.value = "3-20 chars: letters, numbers, - _";
-  else usernameError.value = "";
+  usernameError.value = validateUsernameValue(username.value);
 }
 
-function scorePassword(pass: string) {
-  let score = 0;
-  if (pass.length >= 8) score += 30;
-  else return 10;
-  if (/[A-Z]/.test(pass)) score += 15;
-  if (/[a-z]/.test(pass)) score += 15;
-  if (/[0-9]/.test(pass)) score += 15;
-  if (/[^A-Za-z0-9]/.test(pass)) score += 15;
-  if (pass.length >= 12) score += 10;
-  return Math.min(score, 100);
-}
-
-function updatePasswordStrength() {
-  const pct = scorePassword(password.value);
-  passwordStrength.percent = pct;
-  if (pct < 30) {
-    passwordStrength.label = "Weak";
-    passwordStrength.barClass = "bg-red-400 dark:bg-red-500";
-    passwordStrength.textClass = "text-red-500 dark:text-red-400";
-  } else if (pct < 60) {
-    passwordStrength.label = "Fair";
-    passwordStrength.barClass = "bg-yellow-400 dark:bg-yellow-500";
-    passwordStrength.textClass = "text-yellow-600 dark:text-yellow-400";
-  } else if (pct < 85) {
-    passwordStrength.label = "Good";
-    passwordStrength.barClass = "bg-blue-400 dark:bg-blue-500";
-    passwordStrength.textClass = "text-blue-600 dark:text-blue-400";
-  } else {
-    passwordStrength.label = "Strong";
-    passwordStrength.barClass = "bg-green-500 dark:bg-green-500";
-    passwordStrength.textClass = "text-green-600 dark:text-green-400";
-  }
-}
 function validatePassword() {
-  updatePasswordStrength();
-}
-
-function bucketFailureHint(b: { name: string; detail?: string }) {
-  if (!b.detail) return "Unknown failure";
-  if (/not found/i.test(b.detail))
-    return "Bucket not found. Create it in Storage with Public enabled and correct MIME types.";
-  if (/not public|exists but not public/i.test(b.detail))
-    return "Bucket exists but is private. Edit bucket -> toggle Public.";
-  if (/rename bucket/i.test(b.detail))
-    return b.detail + " Update policy names or bucket to match expected id.";
-  if (/public but expected private/i.test(b.detail))
-    return "Bucket is public but expected private per configuration.";
-  return b.detail;
+  const pct = scorePassword(password.value);
+  const meta = passwordStrengthMeta(pct);
+  passwordStrength.percent = pct;
+  passwordStrength.label = meta.label;
+  passwordStrength.barClass = meta.barClass;
+  passwordStrength.textClass = meta.textClass;
 }
 
 function nextStep() {
   if (activeStep.value < 4) {
     activeStep.value++;
     if (activeStep.value === 4) {
-     checkExistingAdmin();
+      checkExistingAdmin();
     }
   }
 }
+
 function prevStep() {
   if (activeStep.value > 1) activeStep.value--;
 }
-function goToStep(step: number) {
+
+function goToStep(step) {
   if (step < activeStep.value) activeStep.value = step;
 }
 
@@ -1094,7 +897,7 @@ async function copySql() {
   try {
     await navigator.clipboard.writeText(migrationSql);
     toast.success("SQL copied");
-  } catch {
+  } catch (_e) {
     toast.error("Copy failed");
   }
 }
@@ -1105,7 +908,7 @@ async function createAdmin() {
     return;
   }
   validateUsername();
-  updatePasswordStrength();
+  validatePassword();
   if (usernameError.value || passwordStrength.percent < 25) {
     toast.error("Fix validation issues");
     return;
@@ -1118,20 +921,20 @@ async function createAdmin() {
       toast.error("Cannot set installation flag; aborting admin creation");
       return;
     }
-    const { error } = await tempClient.auth.signUp({
+    const signUpRes = await tempClient.auth.signUp({
       email: email.value,
       password: password.value,
       options: {
         data: { username: username.value, display_name: displayName.value },
       },
     });
-    if (error) throw error;
+    if (signUpRes.error) throw signUpRes.error;
     adminCreated.value = true;
     toast.success("Admin user created (confirm email if required)");
     setTimeout(() => {
       router.push({ name: "Login", query: { installed: "1" } });
     }, 600);
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
     toast.error(e.message || "Failed");
   } finally {
@@ -1139,16 +942,19 @@ async function createAdmin() {
   }
 }
 
-async function markInstallationComplete(silent = false): Promise<boolean> {
+async function markInstallationComplete(silent) {
+  if (silent === undefined) silent = false;
   if (!tempClient) return false;
   try {
-    const { data: existing, error: selErr } = await tempClient
+    const installLookup = await tempClient
       .from("settings")
       .select("value")
       .eq("key", "installation")
       .maybeSingle();
+    const existing = installLookup.data;
+    const selErr = installLookup.error;
     if (!selErr && existing) {
-      const val = existing.value as any;
+      const val = existing.value;
       if (val && typeof val === "object" && val.complete === true) {
         installCompleted.value = true;
         return true;
@@ -1158,21 +964,22 @@ async function markInstallationComplete(silent = false): Promise<boolean> {
       );
       return false;
     }
-    const { error } = await tempClient.from("settings").insert({
+    const installInsert = await tempClient.from("settings").insert({
       key: "installation",
       value: {
         complete: true,
         completed_at: new Date().toISOString(),
       },
     });
-    if (error) throw error;
+    if (installInsert.error) throw installInsert.error;
     installCompleted.value = true;
     if (!silent) toast.success("Installation marked complete");
     return true;
-  } catch (e: any) {
+  } catch (e) {
     console.warn("Failed to mark installation complete", e);
-    if (!silent)
+    if (!silent) {
       toast.error("Could not flag installation complete (set manually later)");
+    }
     return false;
   }
 }
@@ -1180,12 +987,14 @@ async function markInstallationComplete(silent = false): Promise<boolean> {
 async function checkExistingAdmin() {
   if (!tempClient) return;
   try {
-    const { data, error } = await tempClient
+    const adminLookup = await tempClient
       .from("profiles")
       .select("id")
       .eq("role", "admin")
       .limit(1);
-    if (!error && data && data.length > 0) {
+    const adminRows = adminLookup.data;
+    const adminLookupError = adminLookup.error;
+    if (!adminLookupError && adminRows && adminRows.length > 0) {
       adminExists.value = true;
       toast.info("Admin already exists – skipping creation");
       if (!installCompleted.value) {

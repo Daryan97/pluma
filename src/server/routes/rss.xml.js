@@ -2,9 +2,7 @@ import { createFeedGenerator } from '../utils/createFeedGenerator.js'
 import { parseFeedFilters } from '../utils/feeds/generator.js'
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const filters = parseFeedFilters(query)
-  if (typeof query.locale === 'string') filters.locale = query.locale
+  const filters = parseFeedFilters(getQuery(event))
 
   const generator = createFeedGenerator(event)
   const { rss } = await generator.generate({ rssFilters: filters })

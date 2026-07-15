@@ -127,10 +127,49 @@ function applyPostFilters(posts, filters = {}) {
 
 function describeFilters(filters = {}) {
   const chunks = []
+  if (filters.locale) chunks.push(`locale: ${filters.locale}`)
   if (filters.categories?.length) chunks.push(`categories: ${filters.categories.join(', ')}`)
   if (filters.authors?.length) chunks.push(`authors: ${filters.authors.join(', ')}`)
   if (filters.tags?.length) chunks.push(`tags: ${filters.tags.join(', ')}`)
   return chunks.length ? chunks.join(' | ') : ''
+}
+
+function buildFeedQuery(filters = {}) {
+  const params = new URLSearchParams()
+  if (filters.locale) params.set('locale', filters.locale)
+  for (const value of filters.categories || []) params.append('category', value)
+  for (const value of filters.authors || []) params.append('author', value)
+  for (const value of filters.tags || []) params.append('tag', value)
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
+function resolveFeedBranding(branding, locale) {
+  const primary = normalizeFilterValue(branding?.primaryLocale || branding?.locale || 'en')
+  const code = normalizeFilterValue(locale || '')
+  const primaryName = branding?.siteName || ''
+  const primaryDescription = branding?.siteDescription || ''
+  if (code && code !== primary) {
+    const tr = branding?.metaTranslations?.[code]
+    // Untranslated locales inherit primary; translated empties stay empty.
+    if (!tr) {
+      return {
+        siteName: primaryName,
+        siteDescription: primaryDescription,
+        language: code,
+      }
+    }
+    return {
+      siteName: tr.siteName || '',
+      siteDescription: tr.siteDescription || '',
+      language: code,
+    }
+  }
+  return {
+    siteName: primaryName,
+    siteDescription: primaryDescription,
+    language: code || primary || 'en',
+  }
 }
 
 export function getOriginFromRequest(req, fallback) {
@@ -255,19 +294,27 @@ export class FeedGenerator {
     return this.cache
   }
 
-  async generate({ baseUrl, rssFilters } = {}) {
+  async generate({ baseUrl, rssFilters, filters } = {}) {
     const effectiveBase = normalizeSiteUrl(baseUrl || this.defaultBaseUrl)
     const data = await this.getData()
-    const sitemap = buildSitemap(effectiveBase, data)
-    const rss = buildRss(effectiveBase, data, { filters: rssFilters })
+    const effectiveFilters = filters || rssFilters || {}
+    const sitemap = buildSitemap(effectiveBase, data, effectiveFilters)
+    const rss = buildRss(effectiveBase, data, { filters: effectiveFilters })
     const robots = buildRobots(effectiveBase)
     return { sitemap, rss, robots, data, baseUrl: effectiveBase }
   }
 }
 
-function buildSitemap(baseUrl, data) {
+function buildSitemap(baseUrl, data, filters = {}) {
   const urls = []
   const now = formatIso(Date.now())
+  const hasLocale = !!filters.locale
+  const posts = hasLocale ? applyPostFilters(data.posts || [], { locale: filters.locale }) : data.posts || []
+  const categories = hasLocale
+    ? (data.categories || []).filter(
+        (category) => normalizeFilterValue(category?.locale || 'en') === filters.locale
+      )
+    : data.categories || []
 
   for (const route of STATIC_ROUTES) {
     urls.push({
@@ -278,7 +325,7 @@ function buildSitemap(baseUrl, data) {
     })
   }
 
-  for (const category of data.categories || []) {
+  for (const category of categories) {
     if (!category?.slug) continue
     urls.push({
       loc: `${baseUrl}/category/${category.slug}`,
@@ -288,7 +335,7 @@ function buildSitemap(baseUrl, data) {
     })
   }
 
-  for (const post of data.posts || []) {
+  for (const post of posts) {
     if (!post?.slug) continue
     urls.push({
       loc: `${baseUrl}/posts/${post.slug}`,
@@ -312,9 +359,10 @@ function buildSitemap(baseUrl, data) {
 }
 
 function buildRss(baseUrl, data, options = {}) {
-  const siteName = data.branding?.siteName || DEFAULT_SITE_NAME
-  const siteDescription = data.branding?.siteDescription || DEFAULT_SITE_DESCRIPTION
   const filters = options.filters || {}
+  const branding = resolveFeedBranding(data.branding, filters.locale)
+  const siteName = branding.siteName
+  const siteDescription = branding.siteDescription
   const posts = applyPostFilters(data.posts || [], filters).slice(0, 50)
   const filtersLabel = describeFilters(filters)
   const faviconUrl = data.branding?.faviconUrl || data.branding?.lightLogoUrl || data.branding?.darkLogoUrl
@@ -322,6 +370,7 @@ function buildRss(baseUrl, data, options = {}) {
   const feedDescription = filtersLabel
     ? `${siteDescription} (Filtered by ${filtersLabel})`
     : siteDescription
+  const selfHref = `${baseUrl}/rss.xml${buildFeedQuery(filters)}`
 
   const channel = [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -330,9 +379,9 @@ function buildRss(baseUrl, data, options = {}) {
     `    <title>${escapeXml(siteName)}</title>`,
     `    <link>${escapeXml(baseUrl + '/')}</link>`,
     `    <description>${escapeXml(feedDescription)}</description>`,
-    `    <atom:link href="${escapeXml(baseUrl + '/rss.xml')}" rel="self" type="application/rss+xml" />`,
+    `    <atom:link href="${escapeXml(selfHref)}" rel="self" type="application/rss+xml" />`,
     `    <lastBuildDate>${formatRssDate(posts[0]?.updated_at || Date.now())}</lastBuildDate>`,
-    `    <language>en</language>`,
+    `    <language>${escapeXml(branding.language)}</language>`,
   ]
 
   if (faviconUrl) {

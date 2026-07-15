@@ -60,29 +60,29 @@
     <ul v-else class="divide-y divide-gray-100 dark:divide-gray-700/80">
       <li
         v-for="post in posts"
-        :key="post.id"
+        :key="rowKey(post)"
         class="group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-5 sm:px-6 py-4 hover:bg-gray-50/80 dark:hover:bg-gray-900/40 transition-colors"
       >
         <div class="flex items-start gap-3 min-w-0 flex-1">
           <input
             type="checkbox"
-            :value="post.id"
+            :value="viewed(post).id"
             v-model="selectedProxy"
             class="mt-1"
-            :aria-label="`Select ${post.title}`"
+            :aria-label="`Select ${viewed(post).title}`"
           />
           <div class="min-w-0 flex-1">
             <router-link
-              :to="`/posts/${post.slug}`"
+              :to="localePath(`/posts/${viewed(post).slug}`, viewed(post).locale)"
               class="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 line-clamp-2 transition-colors"
             >
-              {{ post.title }}
+              {{ viewed(post).title }}
             </router-link>
             <div
               class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400"
             >
               <router-link
-                :to="`/category/${post.category?.slug || 'uncategorized'}`"
+                :to="localePath(`/category/${post.category?.slug || 'uncategorized'}`)"
                 class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 <Icon icon="mdi:folder-outline" class="text-sm" />
@@ -91,7 +91,7 @@
               <span class="text-gray-300 dark:text-gray-600">·</span>
               <router-link
                 v-if="post.author?.username"
-                :to="`/author/${post.author.username}`"
+                :to="localePath(`/author/${post.author.username}`)"
                 class="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400"
               >
                 <span
@@ -115,22 +115,30 @@
             v-if="postLocales(post).length"
             class="flex flex-wrap items-center gap-1"
           >
-            <span
+            <button
               v-for="code in postLocales(post)"
-              :key="`${post.id}-${code}`"
-              class="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-medium uppercase tracking-wide bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              :key="`${rowKey(post)}-${code}`"
+              type="button"
+              class="inline-flex items-center gap-1 h-7 px-2.5 rounded-full text-[11px] font-medium uppercase tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              :class="
+                activeLocale(post) === code
+                  ? 'bg-blue-600 text-white dark:bg-blue-500'
+                  : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+              "
               :title="localeLabel(code)"
+              :aria-pressed="activeLocale(post) === code"
+              @click="selectLocale(post, code)"
             >
               <Icon icon="mdi:translate" class="text-sm" />
               {{ code }}
-            </span>
+            </button>
           </div>
           <span
             class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium capitalize"
-            :class="statusClasses(post.status)"
+            :class="statusClasses(viewed(post).status)"
           >
-            <span class="w-1.5 h-1.5 rounded-full" :class="dotClasses(post.status)" />
-            {{ t(`posts.status.${post.status}`, post.status) }}
+            <span class="w-1.5 h-1.5 rounded-full" :class="dotClasses(viewed(post).status)" />
+            {{ t(`posts.status.${viewed(post).status}`, viewed(post).status) }}
           </span>
           <div
             v-if="canManage(post)"
@@ -140,7 +148,7 @@
               type="button"
               class="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               :title="t('common.edit')"
-              @click="emitEdit(post.id)"
+              @click="emitEdit(viewed(post).id)"
             >
               <Icon icon="mdi:pencil-outline" class="text-lg" />
             </button>
@@ -148,7 +156,7 @@
               type="button"
               class="inline-flex items-center justify-center h-8 w-8 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
               :title="t('common.remove')"
-              @click="emitDelete(post.id)"
+              @click="emitDelete(viewed(post).id)"
             >
               <Icon icon="mdi:delete-outline" class="text-lg" />
             </button>
@@ -161,34 +169,103 @@
 
 <script setup>
 import { Icon } from "@iconify/vue";
-import { computed } from "vue";
+import { computed, reactive, watch } from "vue";
 import Checkbox from "@/components/ui/Checkbox.vue";
 
 const { t, locales } = useI18n();
+const localePath = useLocalePath();
 const props = defineProps({
   posts: { type: Array, required: true },
   selected: { type: Array, required: true },
   currentUser: String,
   role: String,
 });
-const emit = defineEmits(["toggleAll", "delete", "edit", "update:selected"]);
+const emit = defineEmits(["delete", "edit", "update:selected"]);
+
+/** Active locale per row key (translation_group_id or post id). */
+const activeLocales = reactive(Object.create(null));
 
 const selectedProxy = computed({
   get: () => props.selected,
   set: (val) => emit("update:selected", val),
 });
+
+const pageIds = computed(() => props.posts.map((p) => viewed(p).id));
+
 const allSelected = computed(
-  () => selectedProxy.value.length === props.posts.length && props.posts.length > 0
+  () => pageIds.value.length > 0 && pageIds.value.every((id) => selectedProxy.value.includes(id))
 );
 const someSelected = computed(
-  () => selectedProxy.value.length > 0 && !allSelected.value
+  () =>
+    pageIds.value.some((id) => selectedProxy.value.includes(id)) && !allSelected.value
+);
+
+function rowKey(post) {
+  return post.translation_group_id || post.id;
+}
+
+function postLocales(post) {
+  if (Array.isArray(post?.locales) && post.locales.length) {
+    return post.locales;
+  }
+  return post?.locale ? [post.locale] : [];
+}
+
+function activeLocale(post) {
+  const key = rowKey(post);
+  return activeLocales[key] || post.locale || postLocales(post)[0];
+}
+
+function viewed(post) {
+  const code = activeLocale(post);
+  const version = post.translations?.[code];
+  if (!version) {
+    return {
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+      status: post.status,
+      locale: post.locale,
+    };
+  }
+  return version;
+}
+
+function selectLocale(post, code) {
+  if (!post.translations?.[code]) return;
+  const key = rowKey(post);
+  const prev = viewed(post);
+  activeLocales[key] = code;
+  // Keep selection in sync when switching the visible version.
+  const sel = selectedProxy.value;
+  if (sel.includes(prev.id)) {
+    selectedProxy.value = sel.map((id) => (id === prev.id ? post.translations[code].id : id));
+  }
+}
+
+watch(
+  () => props.posts,
+  (list) => {
+    for (const post of list || []) {
+      const key = rowKey(post);
+      const codes = postLocales(post);
+      if (!activeLocales[key] || !codes.includes(activeLocales[key])) {
+        activeLocales[key] = post.locale || codes[0];
+      }
+    }
+  },
+  { immediate: true }
 );
 
 function canManage(post) {
   return post.author?.username === props.currentUser || props.role === "admin";
 }
 function emitToggleAll() {
-  emit("toggleAll");
+  if (allSelected.value) {
+    selectedProxy.value = selectedProxy.value.filter((id) => !pageIds.value.includes(id));
+  } else {
+    selectedProxy.value = [...new Set([...selectedProxy.value, ...pageIds.value])];
+  }
 }
 function emitDelete(id) {
   emit("delete", id);
@@ -212,12 +289,6 @@ function localeLabel(code) {
   const list = unref(locales) || [];
   const hit = list.find((l) => l.code === code);
   return hit?.name || code;
-}
-function postLocales(post) {
-  if (Array.isArray(post?.locales) && post.locales.length) {
-    return post.locales;
-  }
-  return post?.locale ? [post.locale] : [];
 }
 function statusClasses(status) {
   return (

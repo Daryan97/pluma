@@ -123,12 +123,6 @@ const options = computed(() => [
     desc: t('settings.footerCredits.options.plumaWatermark.desc'),
   },
   {
-    key: "poweredByStack",
-    label: t('settings.footerCredits.options.poweredByStack.label'),
-    icon: "mdi:layers-outline",
-    desc: t('settings.footerCredits.options.poweredByStack.desc'),
-  },
-  {
     key: "rss",
     label: t('settings.footerCredits.options.rss.label'),
     icon: "mdi:rss",

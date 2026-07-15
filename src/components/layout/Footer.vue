@@ -23,7 +23,7 @@
             <Icon icon="mdi:feather" class="text-blue-500" /> {{ siteTitle }}
           </h2>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-sm">
-            {{ branding.siteDescription.value || projectInfo.description }}
+            {{ localizedDescription }}
           </p>
         </div>
         <div
@@ -73,66 +73,39 @@
       </div>
       <div
         v-if="showCreditsRow"
-        class="mt-3 flex flex-wrap items-center justify-between gap-3 text-[11px] font-medium"
+        class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[11px]"
       >
-        <div v-if="showPoweredBy" class="flex flex-wrap items-center gap-2">
-          <span class="text-gray-500 dark:text-gray-400"> {{ t("footer.poweredBy") }} </span>
+        <p
+          v-if="credits.plumaWatermark"
+          class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-gray-500 dark:text-gray-500"
+        >
+          <span>{{ t("footer.poweredBy") }}</span>
           <a
-            v-if="credits.plumaWatermark"
             href="https://github.com/Daryan97/pluma"
             target="_blank"
             rel="noopener"
-            class="px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700/60"
-            >Pluma</a
+            class="font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
           >
-          <template v-if="credits.poweredByStack">
-            <a
-              href="https://nuxt.com"
-              target="_blank"
-              rel="noopener"
-              class="px-2 py-1 rounded-md bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 hover:bg-lime-200 dark:hover:bg-lime-900/50"
-              >Nuxt</a
-            >
-            <a
-              href="https://vuejs.org"
-              target="_blank"
-              rel="noopener"
-              class="px-2 py-1 rounded-md bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
-              >Vue</a
-            >
-            <a
-              href="https://supabase.com"
-              target="_blank"
-              rel="noopener"
-              class="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/50"
-              >Supabase</a
-            >
-            <a
-              href="https://tailwindcss.com"
-              target="_blank"
-              rel="noopener"
-              class="px-2 py-1 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 hover:bg-sky-200 dark:hover:bg-sky-900/50"
-              >Tailwind</a
-            >
-          </template>
-        </div>
-        <div v-if="credits.rss || credits.sitemap" class="flex items-center gap-2 ml-auto">
+            Pluma
+          </a>
+        </p>
+        <div v-if="credits.rss || credits.sitemap" class="flex items-center gap-3 ms-auto">
           <a
             v-if="credits.rss"
-            href="/rss.xml"
+            :href="rssFeedHref"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[11px] font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/50 transition"
+            class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-500 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
           >
             <Icon icon="mdi:rss" class="text-sm" />
             {{ t("footer.rss") }}
           </a>
           <a
             v-if="credits.sitemap"
-            href="/sitemap.xml"
+            :href="sitemapFeedHref"
             target="_blank"
             rel="noopener"
-            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[11px] font-semibold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
+            class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           >
             <Icon icon="mdi:map-outline" class="text-sm" />
             {{ t("footer.sitemap") }}
@@ -147,21 +120,31 @@
 import { Icon } from "@iconify/vue";
 import { projectInfo } from "@/config/projectInfo";
 import { useBranding, fetchBranding, DEFAULT_FOOTER_CREDITS } from "@/stores/brandingStore";
+import { rssHref, sitemapHref } from "@/lib/feedUrls";
 import { computed, onMounted } from "vue";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const branding = useBranding();
-const siteTitle = computed(() => branding.siteName.value || projectInfo.name);
+const siteTitle = computed(
+  () => branding.resolveLocalizedSiteName(locale.value) || ""
+);
+const localizedDescription = computed(
+  () => branding.resolveLocalizedSiteDescription(locale.value) || ""
+);
 const credits = computed(() => ({
   ...DEFAULT_FOOTER_CREDITS,
   ...(branding.footerCredits?.value || {}),
 }));
-const showPoweredBy = computed(
-  () => credits.value.plumaWatermark || credits.value.poweredByStack
-);
 const showCreditsRow = computed(
-  () => showPoweredBy.value || credits.value.rss || credits.value.sitemap
+  () =>
+    credits.value.plumaWatermark || credits.value.rss || credits.value.sitemap
 );
+const feedOptions = computed(() => ({
+  locale: locale.value,
+  primaryLocale: branding.primaryLocale?.value || "en",
+}));
+const rssFeedHref = computed(() => rssHref(feedOptions.value));
+const sitemapFeedHref = computed(() => sitemapHref(feedOptions.value));
 
 onMounted(() => {
   if (!branding.brandingLoaded.value) fetchBranding();

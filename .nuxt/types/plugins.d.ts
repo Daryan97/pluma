@@ -26,6 +26,7 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
   InjectionType<typeof import("../../src/plugins/locale-aware-router.js")> &
   InjectionType<typeof import("../../src/plugins/toast.client.js")> &
+  InjectionType<typeof import("../../src/plugins/unregister-sw.client.js")> &
   InjectionType<typeof import("../../node_modules/@nuxtjs/i18n/dist/runtime/plugins/ssg-detect.js")> &
   InjectionType<typeof import("../../src/plugins/theme-sync.client.js")>
 

@@ -902,8 +902,8 @@ const _inlineRuntimeConfig = {
     }
   },
   "public": {
-    "supabaseUrl": "https://callback.daryandev.com",
-    "supabaseAnonKey": "sb_publishable_pn_DqyaTaieNgXsGeVaOvz_YJWZOwOk",
+    "supabaseUrl": "https://fzsazbuqdwwcoavibjiy.supabase.co",
+    "supabaseAnonKey": "sb_publishable_ouXo2hj0agfnUUySksEY5A_Yq3TJr0L",
     "siteUrl": "http://localhost:5173",
     "siteLocale": "en",
     "env": "development",
@@ -2514,7 +2514,22 @@ const plugins = [
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {};
+const assets = {
+  "/index.mjs": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"222d2-rf3opSGWz1t/5TygkHC878NFoy4\"",
+    "mtime": "2026-07-15T02:24:27.071Z",
+    "size": 139986,
+    "path": "index.mjs"
+  },
+  "/index.mjs.map": {
+    "type": "application/json",
+    "etag": "\"872c3-U3uVlRuoivAuJc24ZKW3Eq1FVjs\"",
+    "mtime": "2026-07-15T02:24:27.071Z",
+    "size": 553667,
+    "path": "index.mjs.map"
+  }
+};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -3051,6 +3066,7 @@ const _lazy_IxOjtj = () => Promise.resolve().then(function () { return readyz_ge
 const _lazy_whpQtW = () => Promise.resolve().then(function () { return robots_txt$1; });
 const _lazy_voRbEM = () => Promise.resolve().then(function () { return rss_xml$1; });
 const _lazy_KXBJXw = () => Promise.resolve().then(function () { return sitemap_xml$1; });
+const _lazy_E4CcdR = () => Promise.resolve().then(function () { return sw_js$1; });
 const _lazy_po5C12 = () => Promise.resolve().then(function () { return renderer; });
 
 const handlers = [
@@ -3061,6 +3077,7 @@ const handlers = [
   { route: '/robots.txt', handler: _lazy_whpQtW, lazy: true, middleware: false, method: undefined },
   { route: '/rss.xml', handler: _lazy_voRbEM, lazy: true, middleware: false, method: undefined },
   { route: '/sitemap.xml', handler: _lazy_KXBJXw, lazy: true, middleware: false, method: undefined },
+  { route: '/sw.js', handler: _lazy_E4CcdR, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_error', handler: _lazy_po5C12, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: handler$1, lazy: false, middleware: false, method: undefined },
   { route: '/**', handler: _lazy_po5C12, lazy: true, middleware: false, method: undefined }
@@ -3471,8 +3488,6 @@ const readyz_get$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProper
   default: readyz_get
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const DEFAULT_SITE_NAME = "Pluma";
-const DEFAULT_SITE_DESCRIPTION = "A modern, open-source blogging platform.";
 const STATIC_ROUTES = [
   { path: "/", priority: 1, changefreq: "daily" },
   { path: "/archive", priority: 0.8, changefreq: "weekly" },
@@ -3580,10 +3595,47 @@ function applyPostFilters(posts, filters = {}) {
 function describeFilters(filters = {}) {
   var _a, _b, _c;
   const chunks = [];
+  if (filters.locale) chunks.push(`locale: ${filters.locale}`);
   if ((_a = filters.categories) == null ? void 0 : _a.length) chunks.push(`categories: ${filters.categories.join(", ")}`);
   if ((_b = filters.authors) == null ? void 0 : _b.length) chunks.push(`authors: ${filters.authors.join(", ")}`);
   if ((_c = filters.tags) == null ? void 0 : _c.length) chunks.push(`tags: ${filters.tags.join(", ")}`);
   return chunks.length ? chunks.join(" | ") : "";
+}
+function buildFeedQuery(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.locale) params.set("locale", filters.locale);
+  for (const value of filters.categories || []) params.append("category", value);
+  for (const value of filters.authors || []) params.append("author", value);
+  for (const value of filters.tags || []) params.append("tag", value);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+function resolveFeedBranding(branding, locale) {
+  var _a;
+  const primary = normalizeFilterValue((branding == null ? void 0 : branding.primaryLocale) || (branding == null ? void 0 : branding.locale) || "en");
+  const code = normalizeFilterValue(locale || "");
+  const primaryName = (branding == null ? void 0 : branding.siteName) || "";
+  const primaryDescription = (branding == null ? void 0 : branding.siteDescription) || "";
+  if (code && code !== primary) {
+    const tr = (_a = branding == null ? void 0 : branding.metaTranslations) == null ? void 0 : _a[code];
+    if (!tr) {
+      return {
+        siteName: primaryName,
+        siteDescription: primaryDescription,
+        language: code
+      };
+    }
+    return {
+      siteName: tr.siteName || "",
+      siteDescription: tr.siteDescription || "",
+      language: code
+    };
+  }
+  return {
+    siteName: primaryName,
+    siteDescription: primaryDescription,
+    language: code || primary || "en"
+  };
 }
 class FeedGenerator {
   constructor(options = {}) {
@@ -3672,18 +3724,24 @@ class FeedGenerator {
     this.cacheTimestamp = Date.now();
     return this.cache;
   }
-  async generate({ baseUrl, rssFilters } = {}) {
+  async generate({ baseUrl, rssFilters, filters } = {}) {
     const effectiveBase = normalizeSiteUrl(baseUrl || this.defaultBaseUrl);
     const data = await this.getData();
-    const sitemap = buildSitemap(effectiveBase, data);
-    const rss = buildRss(effectiveBase, data, { filters: rssFilters });
+    const effectiveFilters = filters || rssFilters || {};
+    const sitemap = buildSitemap(effectiveBase, data, effectiveFilters);
+    const rss = buildRss(effectiveBase, data, { filters: effectiveFilters });
     const robots = buildRobots(effectiveBase);
     return { sitemap, rss, robots, data, baseUrl: effectiveBase };
   }
 }
-function buildSitemap(baseUrl, data) {
+function buildSitemap(baseUrl, data, filters = {}) {
   const urls = [];
   const now = formatIso(Date.now());
+  const hasLocale = !!filters.locale;
+  const posts = hasLocale ? applyPostFilters(data.posts || [], { locale: filters.locale }) : data.posts || [];
+  const categories = hasLocale ? (data.categories || []).filter(
+    (category) => normalizeFilterValue((category == null ? void 0 : category.locale) || "en") === filters.locale
+  ) : data.categories || [];
   for (const route of STATIC_ROUTES) {
     urls.push({
       loc: `${baseUrl}${route.path}`,
@@ -3692,7 +3750,7 @@ function buildSitemap(baseUrl, data) {
       lastmod: now
     });
   }
-  for (const category of data.categories || []) {
+  for (const category of categories) {
     if (!(category == null ? void 0 : category.slug)) continue;
     urls.push({
       loc: `${baseUrl}/category/${category.slug}`,
@@ -3701,7 +3759,7 @@ function buildSitemap(baseUrl, data) {
       lastmod: formatIso(category.updated_at || category.created_at || Date.now())
     });
   }
-  for (const post of data.posts || []) {
+  for (const post of posts) {
     if (!(post == null ? void 0 : post.slug)) continue;
     urls.push({
       loc: `${baseUrl}/posts/${post.slug}`,
@@ -3723,15 +3781,17 @@ function buildSitemap(baseUrl, data) {
   return xml.join("\n");
 }
 function buildRss(baseUrl, data, options = {}) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _i;
-  const siteName = ((_a = data.branding) == null ? void 0 : _a.siteName) || DEFAULT_SITE_NAME;
-  const siteDescription = ((_b = data.branding) == null ? void 0 : _b.siteDescription) || DEFAULT_SITE_DESCRIPTION;
+  var _a, _b, _c, _d, _e, _f, _g;
   const filters = options.filters || {};
+  const branding = resolveFeedBranding(data.branding, filters.locale);
+  const siteName = branding.siteName;
+  const siteDescription = branding.siteDescription;
   const posts = applyPostFilters(data.posts || [], filters).slice(0, 50);
   const filtersLabel = describeFilters(filters);
-  const faviconUrl = ((_c = data.branding) == null ? void 0 : _c.faviconUrl) || ((_d = data.branding) == null ? void 0 : _d.lightLogoUrl) || ((_e = data.branding) == null ? void 0 : _e.darkLogoUrl);
+  const faviconUrl = ((_a = data.branding) == null ? void 0 : _a.faviconUrl) || ((_b = data.branding) == null ? void 0 : _b.lightLogoUrl) || ((_c = data.branding) == null ? void 0 : _c.darkLogoUrl);
   const mediaNamespace = "http://search.yahoo.com/mrss/";
   const feedDescription = filtersLabel ? `${siteDescription} (Filtered by ${filtersLabel})` : siteDescription;
+  const selfHref = `${baseUrl}/rss.xml${buildFeedQuery(filters)}`;
   const channel = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     `<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="${mediaNamespace}">`,
@@ -3739,9 +3799,9 @@ function buildRss(baseUrl, data, options = {}) {
     `    <title>${escapeXml(siteName)}</title>`,
     `    <link>${escapeXml(baseUrl + "/")}</link>`,
     `    <description>${escapeXml(feedDescription)}</description>`,
-    `    <atom:link href="${escapeXml(baseUrl + "/rss.xml")}" rel="self" type="application/rss+xml" />`,
-    `    <lastBuildDate>${formatRssDate(((_f = posts[0]) == null ? void 0 : _f.updated_at) || Date.now())}</lastBuildDate>`,
-    `    <language>en</language>`
+    `    <atom:link href="${escapeXml(selfHref)}" rel="self" type="application/rss+xml" />`,
+    `    <lastBuildDate>${formatRssDate(((_d = posts[0]) == null ? void 0 : _d.updated_at) || Date.now())}</lastBuildDate>`,
+    `    <language>${escapeXml(branding.language)}</language>`
   ];
   if (faviconUrl) {
     channel.push("    <image>");
@@ -3765,7 +3825,7 @@ function buildRss(baseUrl, data, options = {}) {
     channel.push(`      <guid isPermaLink="true">${escapeXml(postUrl)}</guid>`);
     channel.push(`      <pubDate>${formatRssDate(post.created_at)}</pubDate>`);
     channel.push(`      <description>${toCData(excerpt)}</description>`);
-    if ((_g = post.category) == null ? void 0 : _g.name) {
+    if ((_e = post.category) == null ? void 0 : _e.name) {
       channel.push(`      <category domain="category">${escapeXml(post.category.name)}</category>`);
     }
     if (post.tags && Array.isArray(post.tags)) {
@@ -3774,7 +3834,7 @@ function buildRss(baseUrl, data, options = {}) {
         channel.push(`      <category domain="tag">${escapeXml(tag)}</category>`);
       }
     }
-    if (((_h = post.author) == null ? void 0 : _h.display_name) || ((_i = post.author) == null ? void 0 : _i.username)) {
+    if (((_f = post.author) == null ? void 0 : _f.display_name) || ((_g = post.author) == null ? void 0 : _g.username)) {
       channel.push(`      <author>${escapeXml(post.author.display_name || post.author.username)}</author>`);
     }
     if (thumbnailUrl) {
@@ -3822,9 +3882,7 @@ const robots_txt$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProper
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const rss_xml = defineEventHandler(async (event) => {
-  const query = getQuery$1(event);
-  const filters = parseFeedFilters(query);
-  if (typeof query.locale === "string") filters.locale = query.locale;
+  const filters = parseFeedFilters(getQuery$1(event));
   const generator = createFeedGenerator(event);
   const { rss } = await generator.generate({ rssFilters: filters });
   setHeader(event, "Content-Type", "application/rss+xml; charset=utf-8");
@@ -3838,9 +3896,7 @@ const rss_xml$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty(
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const sitemap_xml = defineEventHandler(async (event) => {
-  const query = getQuery$1(event);
-  const filters = parseFeedFilters(query);
-  if (typeof query.locale === "string") filters.locale = query.locale;
+  const filters = parseFeedFilters(getQuery$1(event));
   const generator = createFeedGenerator(event);
   const { sitemap } = await generator.generate({ rssFilters: filters });
   setHeader(event, "Content-Type", "application/xml; charset=utf-8");
@@ -3851,6 +3907,35 @@ const sitemap_xml = defineEventHandler(async (event) => {
 const sitemap_xml$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: sitemap_xml
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const sw_js = defineEventHandler((event) => {
+  setHeader(event, "Content-Type", "application/javascript; charset=utf-8");
+  setHeader(event, "Cache-Control", "no-cache, no-store, must-revalidate");
+  setHeader(event, "Service-Worker-Allowed", "/");
+  return `/* Pluma: no app service worker. Unregister any previous SW. */
+self.addEventListener("install", function () {
+  self.skipWaiting();
+});
+self.addEventListener("activate", function (event) {
+  event.waitUntil(
+    (async function () {
+      try {
+        var keys = await caches.keys();
+        await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+      } catch (e) {}
+      try {
+        await self.registration.unregister();
+      } catch (e) {}
+    })()
+  );
+});
+`;
+});
+
+const sw_js$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: sw_js
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function renderPayloadResponse(ssrContext) {

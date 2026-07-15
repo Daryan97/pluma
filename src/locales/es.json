@@ -20,7 +20,7 @@
   "footer": {
     "follow": "Seguir",
     "rights": "Todos los derechos reservados.",
-    "poweredBy": "Desarrollado por:",
+    "poweredBy": "Desarrollado por",
     "rss": "RSS",
     "sitemap": "Mapa del sitio"
   },
@@ -79,6 +79,27 @@
     "upload": "Subir",
     "done": "Hecho",
     "generate": "Generar"
+  },
+  "error": {
+    "403": {
+      "title": "Acceso denegado",
+      "description": "No tienes permiso para ver esta página."
+    },
+    "404": {
+      "title": "Página no encontrada",
+      "description": "La página que buscas no existe o puede haber sido movida."
+    },
+    "500": {
+      "title": "Algo salió mal",
+      "description": "Ocurrió un error inesperado. Inténtalo de nuevo en un momento."
+    },
+    "goHome": "Volver al inicio",
+    "goBack": "Volver",
+    "tryAgain": "Reintentar",
+    "generic": {
+      "title": "Error inesperado",
+      "description": "Algo falló al cargar esta página."
+    }
   },
   "home": {
     "welcome": "Bienvenido",
@@ -373,7 +394,26 @@
     "newName": "Nombre de la nueva serie",
     "add": "Añadir serie",
     "created": "Serie creada",
+    "updated": "Serie actualizada",
     "removed": "Serie eliminada",
+    "deletedAll": "Serie eliminada en todos los idiomas.",
+    "exists": "La serie ya existe.",
+    "empty": "Aún no hay series. Añade una arriba.",
+    "searchPlaceholder": "Buscar series…",
+    "manageLocaleHint": "Idioma de edición — añade traducciones con los chips de idioma.",
+    "addTranslation": "Añadir traducción",
+    "addTranslationFor": "Añadir traducción {locale}",
+    "translationName": "Nombre en {locale}",
+    "translationAdded": "Traducción de serie añadida.",
+    "translationFailed": "No se pudo añadir la traducción.",
+    "deleteLocale": "Eliminar este idioma",
+    "deleteLocaleTitle": "¿Eliminar este idioma?",
+    "deleteLocaleDescription": "Eliminar «{name}» solo para {locale}. Los demás idiomas se mantienen.",
+    "deleteLocaleBody": "Las publicaciones vinculadas a esta serie en este idioma perderán el enlace.",
+    "deleteAllLanguages": "Eliminar todos los idiomas",
+    "deleteAllTitle": "¿Eliminar la serie en todas partes?",
+    "deleteAllDescription": "Se eliminará permanentemente «{name}» en todos los idiomas.",
+    "deleteAllBody": "Las publicaciones con esta serie perderán el enlace. No se puede deshacer.",
     "installHint": "Las series vienen en pluma_initial.sql. En una BD antigua, ejecuta pluma_features_v2.sql.",
     "none": "Ninguna",
     "order": "Orden en la serie"
@@ -387,7 +427,23 @@
     "exists": "La categoría ya existe.",
     "added": "Categoría añadida.",
     "updated": "Categoría actualizada.",
-    "deleted": "Categoría eliminada."
+    "deleted": "Categoría eliminada.",
+    "deletedAll": "Categoría eliminada en todos los idiomas.",
+    "deleteLocale": "Eliminar este idioma",
+    "deleteLocaleTitle": "¿Eliminar este idioma?",
+    "deleteLocaleDescription": "Eliminar «{name}» solo para {locale}. Los demás idiomas se mantienen.",
+    "deleteLocaleBody": "Las publicaciones con esta categoría en este idioma quedarán sin categoría.",
+    "deleteAllLanguages": "Eliminar todos los idiomas",
+    "deleteAllTitle": "¿Eliminar la categoría en todas partes?",
+    "deleteAllDescription": "Se eliminará permanentemente «{name}» en todos los idiomas.",
+    "deleteAllBody": "Las publicaciones con esta categoría quedarán sin categoría. No se puede deshacer.",
+    "empty": "Aún no hay categorías. Añade una arriba.",
+    "manageLocaleHint": "Idioma de edición — añade traducciones con los chips de idioma.",
+    "addTranslation": "Añadir traducción",
+    "addTranslationFor": "Añadir traducción {locale}",
+    "translationName": "Nombre en {locale}",
+    "translationAdded": "Traducción de categoría añadida.",
+    "translationFailed": "No se pudo añadir la traducción."
   },
   "postForm": {
     "back": "Volver",
@@ -495,7 +551,8 @@
     "add": "Añadir",
     "cannotDisableCurrentLocale": "Cambia a otra versión de idioma antes de quitar esta.",
     "removeTranslationConfirm": "¿Eliminar la versión {locale} de esta entrada? No se puede deshacer.",
-    "translationRemoved": "Versión de idioma eliminada."
+    "translationRemoved": "Versión de idioma eliminada.",
+    "noCategoriesYet": "Aún no hay categorías para este idioma. Crea una para empezar."
   },
   "media": {
     "title": "Biblioteca de medios",
@@ -634,6 +691,14 @@
       "moveDown": "Bajar",
       "updated": "Marca actualizada",
       "saveFailed": "Error al guardar la marca",
+      "primary": "principal",
+      "manageLocaleHint": "Cambia de idioma para editar el nombre y la descripción. El handle de X y los enlaces sociales son compartidos.",
+      "editLocale": "Editar meta de {locale}",
+      "addTranslationFor": "Añadir traducción {locale}",
+      "deleteTranslation": "Eliminar esta traducción",
+      "translationDeleted": "Traducción eliminada",
+      "translationEmpty": "Introduce un nombre o una descripción para este idioma.",
+      "siteNameRequired": "El nombre del sitio es obligatorio para el idioma principal.",
       "iconGroups": {
         "social": "Social",
         "media": "Medios / Streaming",
@@ -689,17 +754,13 @@
     },
     "footerCredits": {
       "title": "Créditos y enlaces del pie",
-      "description": "Muestra u oculta las insignias \"Powered by\", RSS y el mapa del sitio.",
+      "description": "Muestra u oculta el crédito de Pluma, RSS y el mapa del sitio.",
       "updated": "Ajustes del pie actualizados",
       "saveFailed": "Error al guardar.",
       "options": {
         "plumaWatermark": {
           "label": "Marca de agua Pluma",
           "desc": "Mostrar el crédito de Pluma en el pie."
-        },
-        "poweredByStack": {
-          "label": "Insignias de stack",
-          "desc": "Mostrar insignias de Nuxt, Vue, Supabase y Tailwind."
         },
         "rss": {
           "label": "Enlace RSS",

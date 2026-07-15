@@ -86,15 +86,19 @@
 <script setup>
 const { t } = useI18n()
 const localePath = useLocalePath()
-
+const { contentLocale } = useContentLocale()
 
 import PostLoader from '@/components/PostLoader.vue'
 import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
+import { countLogicalPosts } from '@/lib/postCount'
+import { rssHref as buildRssHref } from '@/lib/feedUrls'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSettings } from '@/stores/settingsStore'
+import { useBranding } from '@/stores/brandingStore'
 const { featuresEnabled } = useSettings();
+const branding = useBranding()
 
 function openGlobalSearch() {
   const evt = new CustomEvent('pluma:open-global-search', { detail: { query: '' } })
@@ -116,7 +120,12 @@ const rssHref = computed(() => {
   if (typeof window === 'undefined') return ''
   const username = author.value?.username
   if (!username) return ''
-  return `${window.location.origin}/rss.xml?author=${encodeURIComponent(username)}`
+  const path = buildRssHref({
+    locale: contentLocale.value,
+    primaryLocale: branding.primaryLocale?.value || 'en',
+    author: username,
+  })
+  return `${window.location.origin}${path}`
 })
 
 async function fetchAuthor() {
@@ -131,11 +140,12 @@ async function fetchAuthor() {
     .single()
   if (!error && data) {
     author.value = data
-    const { count } = await supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'published')
-      .eq('author_id', data.id)
+    const { count } = await countLogicalPosts(supabase, (q) =>
+      q
+        .eq('status', 'published')
+        .eq('locale', contentLocale.value)
+        .eq('author_id', data.id)
+    )
     postCount.value = typeof count === 'number' ? count : 0
   }
   loading.value = false
@@ -147,4 +157,7 @@ function onAvatarError(e) {
 
 onMounted(fetchAuthor)
 watch(() => route.params.username, fetchAuthor)
+watch(contentLocale, () => {
+  if (author.value) fetchAuthor()
+})
 </script>

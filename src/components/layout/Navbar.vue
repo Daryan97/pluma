@@ -37,14 +37,14 @@
                 'v=' +
                 branding.logoVersion.value)
             "
-            :alt="(branding.siteName.value || projectInfo.name) + ' logo'"
+            :alt="(localizedSiteName) + ' logo'"
             class="h-10 w-auto object-contain select-none"
             draggable="false"
           />
           <span
             v-else
             class="text-xl font-bold text-gray-900 dark:text-gray-100"
-            >{{ branding.siteName.value || projectInfo.name }}</span
+            >{{ localizedSiteName }}</span
           >
         </NuxtLink>
       </div>
@@ -362,7 +362,6 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { supabase } from "@/services/supabase";
 import { useThemeStore } from "@/stores/themeStore";
-import { projectInfo } from "@/config/projectInfo";
 import { Icon } from "@iconify/vue";
 import UserDropdown from "@/components/UserDropdown.vue";
 import CategoriesDropdown from "../CategoriesDropdown.vue";
@@ -389,6 +388,9 @@ const mobileCategoriesOpen = ref(false);
 const mobileLocalesOpen = ref(false);
 const branding = useBranding();
 const localeSettings = useState("pluma-branding-locales", () => null);
+const localizedSiteName = computed(
+  () => branding.resolveLocalizedSiteName(locale.value) || ""
+);
 
 const toast = useToast();
 const router = useRouter();

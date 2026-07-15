@@ -38,7 +38,7 @@
           </div>
           <div v-if="currentMode === 'edit' && currentPostId" class="ml-auto">
             <router-link
-              :to="localePath(`/posts/${slug}`)"
+              :to="localePath(`/posts/${slug}`, postLocale)"
               target="_blank"
               class="inline-flex items-center gap-2 h-9 px-3 rounded bg-gray-100 dark:bg-gray-700/40 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700/60 focus:outline-none focus:ring-2 focus:ring-gray-400"
             >
@@ -508,7 +508,7 @@
               class="text-sm font-medium flex items-center gap-2 text-gray-800 dark:text-gray-100"
             >
               <Icon icon="mdi:format-list-bulleted" class="text-blue-500" />{{ t('postForm.category') }}</label>
-            <SelectRoot v-model="category" :disabled="fieldsLocked">
+            <SelectRoot v-model="categoryModel" :disabled="fieldsLocked">
               <SelectTrigger
                 class="w-full h-10 inline-flex items-center justify-between rounded-md px-3 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                 aria-label="Select category"
@@ -534,12 +534,26 @@
                   class="z-50 min-w-[var(--radix-select-trigger-width)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
                   :side-offset="4"
                 >
-                  <SelectViewport class="p-1">
+                  <SelectViewport class="p-1 max-h-60">
                     <SelectGroup>
+                      <SelectItem
+                        :value="CATEGORY_NONE"
+                        class="relative flex items-center gap-2 h-8 pl-8 pr-3 rounded text-sm cursor-pointer select-none text-gray-700 dark:text-gray-100 data-[highlighted]:bg-blue-600 data-[highlighted]:text-white data-[state=checked]:font-semibold"
+                      >
+                        <SelectItemIndicator
+                          class="absolute left-0 w-8 inline-flex items-center justify-center"
+                        >
+                          <Icon icon="radix-icons:check" class="w-4 h-4" />
+                        </SelectItemIndicator>
+                        <Icon icon="mdi:tag-off-outline" class="w-4 h-4 opacity-70" />
+                        <SelectItemText class="truncate">{{
+                          t('common.uncategorized')
+                        }}</SelectItemText>
+                      </SelectItem>
                       <SelectItem
                         v-for="cat in categories"
                         :key="cat.id"
-                        :value="cat.id"
+                        :value="String(cat.id)"
                         class="relative flex items-center gap-2 h-8 pl-8 pr-3 rounded text-sm cursor-pointer select-none text-gray-700 dark:text-gray-100 data-[highlighted]:bg-blue-600 data-[highlighted]:text-white data-[state=checked]:font-semibold"
                       >
                         <SelectItemIndicator
@@ -591,6 +605,38 @@
                 </SelectContent>
               </SelectPortal>
             </SelectRoot>
+            <!-- Always-visible add when the list is empty (Radix select can feel broken with only the footer). -->
+            <div
+              v-if="!categories.length"
+              class="rounded-md border border-dashed border-gray-300 dark:border-gray-600 p-3 space-y-2"
+            >
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ t('postForm.noCategoriesYet') }}
+              </p>
+              <div class="flex gap-2">
+                <input
+                  v-model.trim="newCategoryName"
+                  type="text"
+                  :placeholder="t('postForm.namePlaceholder')"
+                  :disabled="fieldsLocked || creatingCategory"
+                  class="flex-1 h-9 rounded-md px-2 text-sm bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  @keydown.enter.prevent="createCategoryInline"
+                />
+                <button
+                  type="button"
+                  :disabled="fieldsLocked || creatingCategory || !newCategoryName"
+                  class="inline-flex items-center gap-1 h-9 px-3 rounded-md text-sm font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60 disabled:opacity-50"
+                  @click="createCategoryInline"
+                >
+                  <Icon
+                    :icon="creatingCategory ? 'mdi:loading' : 'mdi:plus'"
+                    :class="creatingCategory ? 'animate-spin' : ''"
+                    class="text-base"
+                  />
+                  {{ t('postForm.add') }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-2">
@@ -1018,7 +1064,8 @@ import {
   SelectScrollUpButton,
   SelectScrollDownButton,
 } from "radix-vue";
-import { supabase } from "@/services/supabase";import { useBranding } from "@/stores/brandingStore";
+import { supabase } from "@/services/supabase";
+import { useBranding } from "@/stores/brandingStore";
 import { MdEditor } from "md-editor-v3";
 import { RadioGroup, RadioGroupOption } from "@headlessui/vue";
 import { Icon } from "@iconify/vue";
@@ -1070,6 +1117,13 @@ const tagItems = ref([]);
 const status = ref("published");
 const originalStatus = ref(null);
 const category = ref(null);
+const CATEGORY_NONE = "__none__";
+const categoryModel = computed({
+  get: () => (category.value ? String(category.value) : CATEGORY_NONE),
+  set: (v) => {
+    category.value = !v || v === CATEGORY_NONE ? null : v;
+  },
+});
 const thumbnailFile = ref(null);
 const fileInputRef = ref(null);
 const thumbnailUrl = ref("");
@@ -1279,38 +1333,124 @@ async function resolveCategoryForLocale(locale, sourceCategoryId) {
   if (!sourceCategoryId) return null;
   const { data: src } = await supabase
     .from("categories")
-    .select("id, locale, translation_group_id")
+    .select("id, name, slug, locale, translation_group_id")
     .eq("id", sourceCategoryId)
     .maybeSingle();
   if (!src) return null;
   if (src.locale === locale) return src.id;
-  if (!src.translation_group_id) return null;
+
+  let groupId = src.translation_group_id;
+  if (!groupId) {
+    groupId = crypto.randomUUID();
+    await supabase
+      .from("categories")
+      .update({ translation_group_id: groupId })
+      .eq("id", src.id);
+  }
+
   const { data: match } = await supabase
     .from("categories")
     .select("id")
-    .eq("translation_group_id", src.translation_group_id)
+    .eq("translation_group_id", groupId)
     .eq("locale", locale)
     .maybeSingle();
-  return match?.id || null;
+  if (match?.id) return match.id;
+
+  const { data: bySlug } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", src.slug)
+    .eq("locale", locale)
+    .maybeSingle();
+  if (bySlug?.id) {
+    await supabase
+      .from("categories")
+      .update({ translation_group_id: groupId })
+      .eq("id", bySlug.id);
+    return bySlug.id;
+  }
+
+  const { data: created, error } = await supabase
+    .from("categories")
+    .insert({
+      name: src.name,
+      slug: src.slug,
+      locale,
+      translation_group_id: groupId,
+    })
+    .select("id")
+    .single();
+  if (!error && created?.id) return created.id;
+
+  const { data: again } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("slug", src.slug)
+    .eq("locale", locale)
+    .maybeSingle();
+  return again?.id || src.id;
 }
 
 async function resolveSeriesForLocale(locale, sourceSeriesId) {
   if (!sourceSeriesId || sourceSeriesId === "none") return null;
   const { data: src } = await supabase
     .from("series")
-    .select("id, locale, translation_group_id")
+    .select("id, name, slug, locale, translation_group_id")
     .eq("id", sourceSeriesId)
     .maybeSingle();
   if (!src) return null;
   if (src.locale === locale) return src.id;
-  if (!src.translation_group_id) return null;
+
+  let groupId = src.translation_group_id;
+  if (!groupId) {
+    groupId = crypto.randomUUID();
+    await supabase
+      .from("series")
+      .update({ translation_group_id: groupId })
+      .eq("id", src.id);
+  }
+
   const { data: match } = await supabase
     .from("series")
     .select("id")
-    .eq("translation_group_id", src.translation_group_id)
+    .eq("translation_group_id", groupId)
     .eq("locale", locale)
     .maybeSingle();
-  return match?.id || null;
+  if (match?.id) return match.id;
+
+  const { data: bySlug } = await supabase
+    .from("series")
+    .select("id")
+    .eq("slug", src.slug)
+    .eq("locale", locale)
+    .maybeSingle();
+  if (bySlug?.id) {
+    await supabase
+      .from("series")
+      .update({ translation_group_id: groupId })
+      .eq("id", bySlug.id);
+    return bySlug.id;
+  }
+
+  const { data: created, error } = await supabase
+    .from("series")
+    .insert({
+      name: src.name,
+      slug: src.slug,
+      locale,
+      translation_group_id: groupId,
+    })
+    .select("id")
+    .single();
+  if (!error && created?.id) return created.id;
+
+  const { data: again } = await supabase
+    .from("series")
+    .select("id")
+    .eq("slug", src.slug)
+    .eq("locale", locale)
+    .maybeSingle();
+  return again?.id || src.id;
 }
 
 async function addTranslation(localeCode) {
@@ -1547,12 +1687,14 @@ const exclude = [
 ];
 
 const fetchCategories = async () => {
+  const loc = postLocale.value || "en";
   const { data, error } = await supabase
     .from("categories")
-    .select("*")
-    .eq("locale", postLocale.value || "en");
+    .select("id, name, slug, locale, translation_group_id")
+    .eq("locale", loc)
+    .order("name");
   if (error) toast.error(t('postForm.categoriesLoadFailed'));
-  else categories.value = data;
+  else categories.value = data || [];
 };
 
 const fetchSeries = async () => {
@@ -1595,7 +1737,7 @@ function openPreview() {
     toast.error(t('postForm.saveSlugFirst'));
     return;
   }
-  const path = localePath(`/posts/${slug.value}`);
+  const path = localePath(`/posts/${slug.value}`, postLocale.value);
   window.open(`${window.location.origin}${path}`, "_blank", "noopener");
 }
 
@@ -1613,7 +1755,7 @@ async function copyPreviewLink() {
       if (error) throw error;
       previewToken.value = token;
     }
-    const path = localePath(`/posts/${slug.value || "preview"}`);
+    const path = localePath(`/posts/${slug.value || "preview"}`, postLocale.value);
     const url = `${window.location.origin}${path}?preview=${token}`;
     await navigator.clipboard.writeText(url);
     toast.success(t('postForm.previewLinkCopied'));
@@ -1955,7 +2097,7 @@ const handleSubmit = async () => {
       originalStatus.value = primary.status || effectiveStatus;
       status.value = primary.status || effectiveStatus;
       postLocales.value = [primary.locale, ...localesToSave.filter((l) => l !== primary.locale)];
-      router.replace({ name: "EditPost", params: { id: primary.id } });
+      router.replace(localePath(`/dashboard/edit/${primary.id}`));
     } else {
       if (canChangeAuthor.value && authorId.value) {
         postPayload.author_id = authorId.value;
@@ -2090,7 +2232,7 @@ const handleSaveDraft = async () => {
         primary.locale,
         ...localesToSave.filter((l) => l !== primary.locale),
       ];
-      router.replace({ name: "EditPost", params: { id: primary.id } });
+      router.replace(localePath(`/dashboard/edit/${primary.id}`));
     } else {
       if (canChangeAuthor.value && authorId.value) {
         draftPayload.author_id = authorId.value;

@@ -5,7 +5,6 @@ import { allConfiguredLocaleCodes } from '@/config/contentLocales';
 
 export const DEFAULT_FOOTER_CREDITS = {
     plumaWatermark: true,
-    poweredByStack: true,
     rss: true,
     sitemap: true,
 };
@@ -18,10 +17,51 @@ function normalizeFooterCredits(raw) {
     const src = raw && typeof raw === 'object' ? raw : {};
     return {
         plumaWatermark: src.plumaWatermark !== false,
-        poweredByStack: src.poweredByStack !== false,
         rss: src.rss !== false,
         sitemap: src.sitemap !== false,
     };
+}
+
+/** Per-locale siteName / siteDescription map (primary lives at top-level). */
+export function normalizeMetaTranslations(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [code, entry] of Object.entries(raw)) {
+        if (!code || !entry || typeof entry !== 'object') continue;
+        const siteName =
+            typeof entry.siteName === 'string' ? entry.siteName.trim() || null : null;
+        const siteDescription =
+            typeof entry.siteDescription === 'string'
+                ? entry.siteDescription.trim() || null
+                : null;
+        if (siteName || siteDescription) {
+            out[code] = { siteName, siteDescription };
+        }
+    }
+    return out;
+}
+
+export function resolveLocalizedSiteName(locale) {
+    const primary = primaryLocale.value || 'en';
+    const code = locale || primary;
+    if (code !== primary) {
+        const tr = metaTranslations.value?.[code];
+        // Explicit translation: keep empty; no translation: inherit primary.
+        if (tr) return tr.siteName || null;
+        return siteName.value;
+    }
+    return siteName.value;
+}
+
+export function resolveLocalizedSiteDescription(locale) {
+    const primary = primaryLocale.value || 'en';
+    const code = locale || primary;
+    if (code !== primary) {
+        const tr = metaTranslations.value?.[code];
+        if (tr) return tr.siteDescription || null;
+        return siteDescription.value;
+    }
+    return siteDescription.value;
 }
 
 export function normalizeLocaleSettings(rawEnabled, rawPrimary) {
@@ -57,6 +97,7 @@ const faviconPath = ref(null);
 const logoVersion = ref(Date.now());
 const enabledLocales = ref(allConfiguredLocales());
 const primaryLocale = ref('en');
+const metaTranslations = ref({});
 
 export function isLocaleEnabled(code) {
     if (!code) return false;
@@ -119,6 +160,7 @@ export async function fetchBranding(force = false) {
         );
         enabledLocales.value = localesNorm.enabledLocales;
         primaryLocale.value = localesNorm.primaryLocale;
+        metaTranslations.value = normalizeMetaTranslations(value.metaTranslations);
         brandingLoaded.value = true;
     } catch (e) {
         console.error('[branding] fetch error', e);
@@ -150,6 +192,7 @@ export async function updateBranding({
     footerCredits: newFooterCredits,
     enabledLocales: newEnabledLocales,
     primaryLocale: newPrimaryLocale,
+    metaTranslations: newMetaTranslations,
 }) {
     let existingValue = {};
     const { data: existingRow } = await supabase
@@ -170,6 +213,9 @@ export async function updateBranding({
         newValue.footerCredits = normalizeFooterCredits(newFooterCredits);
     }
     if (Array.isArray(newSocialLinks)) newValue.socialLinks = newSocialLinks.filter(l => l && l.label && l.url);
+    if (newMetaTranslations !== undefined) {
+        newValue.metaTranslations = normalizeMetaTranslations(newMetaTranslations);
+    }
     if (Array.isArray(newEnabledLocales) || typeof newPrimaryLocale === 'string') {
         const localesNorm = normalizeLocaleSettings(
             Array.isArray(newEnabledLocales) ? newEnabledLocales : existingValue.enabledLocales,
@@ -180,6 +226,14 @@ export async function updateBranding({
         newValue.enabledLocales = localesNorm.enabledLocales;
         newValue.primaryLocale = localesNorm.primaryLocale;
         newValue.locale = localesNorm.primaryLocale;
+        // Drop translations for locales that are no longer enabled.
+        const kept = normalizeMetaTranslations(newValue.metaTranslations);
+        for (const code of Object.keys(kept)) {
+            if (!localesNorm.enabledLocales.includes(code) || code === localesNorm.primaryLocale) {
+                delete kept[code];
+            }
+        }
+        newValue.metaTranslations = kept;
     }
 
     async function uploadVariant(file, variant) {
@@ -296,10 +350,13 @@ export function useBranding() {
         logoVersion,
         enabledLocales,
         primaryLocale,
+        metaTranslations,
         fetchBranding,
         updateBranding,
         removeBrandingVariant,
         isLocaleEnabled,
         allConfiguredLocales,
+        resolveLocalizedSiteName,
+        resolveLocalizedSiteDescription,
     };
 }

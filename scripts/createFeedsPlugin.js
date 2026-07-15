@@ -39,10 +39,8 @@ export function createFeedsPlugin(options = {}) {
         try {
           const baseUrl = getOriginFromRequest(req, generator.defaultBaseUrl)
           const fullUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
-          const rssFilters = normalizedPath.startsWith('/rss')
-            ? parseFeedFilters(fullUrl.searchParams)
-            : undefined
-          const { sitemap, rss, robots } = await generator.generate({ baseUrl, rssFilters })
+          const feedFilters = parseFeedFilters(fullUrl.searchParams)
+          const { sitemap, rss, robots } = await generator.generate({ baseUrl, rssFilters: feedFilters })
           if (normalizedPath.startsWith('/sitemap')) {
             res.setHeader('Content-Type', 'application/xml; charset=utf-8')
             res.end(sitemap)

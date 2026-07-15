@@ -5,18 +5,7 @@
       <div class="absolute -top-32 -right-20 w-[28rem] h-[28rem] rounded-full bg-blue-200/30 dark:bg-blue-500/10 blur-3xl"></div>
       <div class="absolute -bottom-40 -left-40 w-[32rem] h-[32rem] rounded-full bg-indigo-200/30 dark:bg-indigo-500/10 blur-3xl"></div>
       <div class="max-w-6xl mx-auto px-4 pt-20 pb-14 lg:pt-28 lg:pb-20 relative">
-        <div v-if="loading" class="flex flex-col items-center text-center gap-8 animate-pulse">
-          <div class="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-gray-700" />
-          <div class="space-y-4 max-w-2xl w-full">
-            <div class="h-10 w-64 mx-auto rounded bg-gray-200 dark:bg-gray-700" />
-            <div class="flex justify-center gap-3">
-              <div class="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-              <div class="h-5 w-20 rounded bg-gray-200 dark:bg-gray-700" />
-            </div>
-          </div>
-          <div class="w-full max-w-xl h-12 rounded-xl bg-gray-200 dark:bg-gray-700" />
-        </div>
-        <div v-else class="flex flex-col items-center text-center gap-8">
+        <div class="flex flex-col items-center text-center gap-8">
           <div class="inline-flex flex-col items-center gap-5">
             <div class="w-20 h-20 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center shadow-sm">
               <Icon :icon="isUncategorized ? 'mdi:tag-off' : 'mdi:tag'" class="text-3xl" />
@@ -26,8 +15,17 @@
                 {{ displayName }}
               </h1>
               <div class="flex flex-wrap items-center justify-center gap-2 text-[11px] font-medium">
-                <span v-if="postCount !== null" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> {{ postCount }} {{ postCount === 1 ? 'Post' : 'Posts' }}
+                <span
+                  v-if="postCount !== null"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                >
+                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> {{ postCount }} {{ postCount === 1 ? t('posts.post') : t('posts.posts') }}
+                </span>
+                <span
+                  v-else-if="countLoading"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50/60 dark:bg-blue-900/20 text-blue-400 dark:text-blue-400 animate-pulse"
+                >
+                  <Icon icon="mdi:book-open-page-variant" class="text-sm" /> …
                 </span>
                 <span v-if="isUncategorized" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 dark:bg-gray-700/40 text-gray-600 dark:text-gray-400">
                   <Icon icon="mdi:alert-circle-outline" class="text-sm" /> {{ t('category.noCategory') }}
@@ -71,7 +69,7 @@
     <section class="border-b border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-sm sticky top-0 z-20" v-if="categoriesLoaded && categories.length">
       <div class="max-w-6xl mx-auto px-4 py-3 flex gap-2 overflow-x-auto scrollbar-thin scrollbar-track-transparent">
         <button @click="goToCategory('all')" :class="categoryActive === 'all' ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
-          <Icon icon="mdi:infinity" class="text-sm" /> All
+          <Icon icon="mdi:infinity" class="text-sm" /> {{ t('common.all') }}
         </button>
         <button v-for="c in categories" :key="c.slug || ('null-'+c.id)" @click="goToCategory(c.slug || 'uncategorized')" :class="categoryActive === (c.slug || 'uncategorized') ? activeCatClass : catClass" class="flex items-center gap-1 px-3 h-8 rounded-full whitespace-nowrap transition text-xs font-medium">
           <Icon icon="mdi:folder" class="text-sm" /> {{ c.name || 'Uncategorized' }}
@@ -90,20 +88,29 @@
 <script setup>
 const { t } = useI18n()
 const localePath = useLocalePath()
-
+const { contentLocale } = useContentLocale()
 
 import PostLoader from '@/components/PostLoader.vue'
 import { Icon } from '@iconify/vue'
 import { supabase } from '@/services/supabase'
+import { countLogicalPosts } from '@/lib/postCount'
+import { rssHref as buildRssHref } from '@/lib/feedUrls'
+import {
+  resolveCategoryFilter,
+  loadCategoriesForLocale,
+} from '@/lib/categoryScope'
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSettings } from '@/stores/settingsStore'
+import { useBranding } from '@/stores/brandingStore'
 
 const route = useRoute()
 const router = useRouter()
+const branding = useBranding()
 const category = ref(null)
-const loading = ref(false)
+const countLoading = ref(false)
 const postCount = ref(null)
+let fetchSeq = 0
 
 const categories = ref([])
 const categoriesLoaded = ref(false)
@@ -116,70 +123,94 @@ function openGlobalSearch(){
   window.dispatchEvent(evt)
 }
 
-
 const { featuresEnabled } = useSettings();
 const isUncategorized = computed(() => route.params.slug === 'uncategorized')
-const displayName = computed(() => isUncategorized.value ? 'Uncategorized' : (category.value?.name || route.params.slug))
+const displayName = computed(() => {
+  if (isUncategorized.value) return t('common.uncategorized')
+  return category.value?.name || route.params.slug
+})
 const rssHref = computed(() => {
   if (typeof window === 'undefined') return ''
-  const base = window.location.origin
   const slug = route.params.slug
-  if (!slug || slug === 'all') return `${base}/rss.xml`
-  return `${base}/rss.xml?category=${encodeURIComponent(slug)}`
+  const path = buildRssHref({
+    locale: contentLocale.value,
+    primaryLocale: branding.primaryLocale?.value || 'en',
+    category: !slug || slug === 'all' ? undefined : slug,
+  })
+  return `${window.location.origin}${path}`
 })
 
+function applyKnownCategory(slug) {
+  if (!slug || slug === 'uncategorized') {
+    category.value = null
+    return
+  }
+  const known = categories.value.find((c) => c.slug === slug)
+  if (known) category.value = known
+}
+
 async function fetchCategory() {
-  loading.value = true
-  category.value = null
+  const seq = ++fetchSeq
+  const slug = route.params.slug
+  countLoading.value = true
   postCount.value = null
+  applyKnownCategory(slug)
+
   if (!isUncategorized.value) {
-    let { data, error } = await supabase
-      .from('categories')
-      .select('id, name, slug')
-      .eq('slug', route.params.slug)
-      .single()
-    if (error || !data) {
-      const fallback = await supabase
-        .from('categories')
-        .select('id, name, slug')
-        .ilike('slug', route.params.slug)
-        .maybeSingle()
-      if (!fallback.error && fallback.data) {
-        data = fallback.data
-        error = null
-      }
+    const { category: resolved, categoryIds } = await resolveCategoryFilter(
+      supabase,
+      slug,
+      contentLocale.value
+    )
+    if (seq !== fetchSeq) return
+    if (resolved) {
+      category.value = resolved
     }
-    if (!error && data) {
-      category.value = data
-      const { count } = await supabase
-        .from('posts')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'published')
-        .eq('category_id', data.id)
+    if (categoryIds?.length) {
+      const { count } = await countLogicalPosts(supabase, (q) =>
+        q
+          .eq('status', 'published')
+          .eq('locale', contentLocale.value)
+          .in('category_id', categoryIds)
+      )
+      if (seq !== fetchSeq) return
       postCount.value = typeof count === 'number' ? count : 0
+    } else {
+      postCount.value = 0
     }
   } else {
-    const { count } = await supabase
-      .from('posts')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'published')
-      .is('category_id', null)
+    category.value = null
+    const { count } = await countLogicalPosts(supabase, (q) =>
+      q
+        .eq('status', 'published')
+        .eq('locale', contentLocale.value)
+        .is('category_id', null)
+    )
+    if (seq !== fetchSeq) return
     postCount.value = typeof count === 'number' ? count : 0
   }
-  loading.value = false
+  countLoading.value = false
 }
 
 async function loadCategories(){
-  const { data, error } = await supabase.from('categories').select('id,name,slug').order('name')
-  if(!error && data){ categories.value = data }
+  categories.value = await loadCategoriesForLocale(supabase, contentLocale.value)
   categoriesLoaded.value = true
+  applyKnownCategory(route.params.slug)
 }
 function goToCategory(slug){
-  if(slug==='all'){ categoryActive.value='all'; router.push('/'); return; }
+  if(slug==='all'){ categoryActive.value='all'; router.push(localePath('/')); return; }
   categoryActive.value = slug
   router.push(localePath(`/category/${slug}`))
 }
 
 onMounted(()=>{ fetchCategory(); loadCategories(); })
-watch(() => route.params.slug, (val)=>{ categoryActive.value = val || 'all'; fetchCategory(); })
+watch(() => route.params.slug, (val)=>{
+  categoryActive.value = val || 'all'
+  applyKnownCategory(val)
+  fetchCategory()
+})
+watch(contentLocale, () => {
+  loadCategories()
+  fetchCategory()
+})
 </script>

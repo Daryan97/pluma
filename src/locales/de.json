@@ -20,7 +20,7 @@
   "footer": {
     "follow": "Folgen",
     "rights": "Alle Rechte vorbehalten.",
-    "poweredBy": "Betrieben mit:",
+    "poweredBy": "Betrieben mit",
     "rss": "RSS",
     "sitemap": "Sitemap"
   },
@@ -79,6 +79,27 @@
     "upload": "Hochladen",
     "done": "Fertig",
     "generate": "Erzeugen"
+  },
+  "error": {
+    "403": {
+      "title": "Zugriff verweigert",
+      "description": "Du hast keine Berechtigung, diese Seite anzuzeigen."
+    },
+    "404": {
+      "title": "Seite nicht gefunden",
+      "description": "Die gesuchte Seite existiert nicht oder wurde verschoben."
+    },
+    "500": {
+      "title": "Etwas ist schiefgelaufen",
+      "description": "Auf unserer Seite ist ein unerwarteter Fehler aufgetreten. Bitte versuche es gleich noch einmal."
+    },
+    "goHome": "Zur Startseite",
+    "goBack": "Zurück",
+    "tryAgain": "Erneut versuchen",
+    "generic": {
+      "title": "Unerwarteter Fehler",
+      "description": "Beim Laden dieser Seite ist etwas schiefgelaufen."
+    }
   },
   "home": {
     "welcome": "Willkommen",
@@ -373,7 +394,26 @@
     "newName": "Name der neuen Serie",
     "add": "Serie hinzufügen",
     "created": "Serie erstellt",
+    "updated": "Serie aktualisiert",
     "removed": "Serie entfernt",
+    "deletedAll": "Serie in allen Sprachen gelöscht.",
+    "exists": "Serie existiert bereits.",
+    "empty": "Noch keine Serien. Füge oben eine hinzu.",
+    "searchPlaceholder": "Serien suchen…",
+    "manageLocaleHint": "Bearbeitungssprache — Übersetzungen über die Sprach-Chips hinzufügen.",
+    "addTranslation": "Übersetzung hinzufügen",
+    "addTranslationFor": "{locale}-Übersetzung hinzufügen",
+    "translationName": "Name auf {locale}",
+    "translationAdded": "Serien-Übersetzung hinzugefügt.",
+    "translationFailed": "Serien-Übersetzung fehlgeschlagen.",
+    "deleteLocale": "Diese Sprache löschen",
+    "deleteLocaleTitle": "Diese Sprache löschen?",
+    "deleteLocaleDescription": "„{name}“ nur für {locale} entfernen. Andere Sprachen bleiben.",
+    "deleteLocaleBody": "Beiträge mit dieser Serie in dieser Sprache verlieren die Serien-Verknüpfung.",
+    "deleteAllLanguages": "Alle Sprachen löschen",
+    "deleteAllTitle": "Serie überall löschen?",
+    "deleteAllDescription": "„{name}“ wird dauerhaft in jeder Sprache entfernt.",
+    "deleteAllBody": "Beiträge mit dieser Serie verlieren ihre Serien-Verknüpfung. Dies kann nicht rückgängig gemacht werden.",
     "installHint": "Serien sind in pluma_initial.sql enthalten. Bei einer älteren DB pluma_features_v2.sql ausführen.",
     "none": "Keine",
     "order": "Reihenfolge in der Serie"
@@ -387,7 +427,23 @@
     "exists": "Kategorie existiert bereits.",
     "added": "Kategorie hinzugefügt.",
     "updated": "Kategorie aktualisiert.",
-    "deleted": "Kategorie gelöscht."
+    "deleted": "Kategorie gelöscht.",
+    "deletedAll": "Kategorie in allen Sprachen gelöscht.",
+    "deleteLocale": "Diese Sprache löschen",
+    "deleteLocaleTitle": "Diese Sprache löschen?",
+    "deleteLocaleDescription": "„{name}“ nur für {locale} entfernen. Andere Sprachen bleiben.",
+    "deleteLocaleBody": "Beiträge mit dieser Kategorie in dieser Sprache werden unkategorisiert.",
+    "deleteAllLanguages": "Alle Sprachen löschen",
+    "deleteAllTitle": "Kategorie überall löschen?",
+    "deleteAllDescription": "„{name}“ wird dauerhaft in jeder Sprache entfernt.",
+    "deleteAllBody": "Beiträge mit dieser Kategorie werden unkategorisiert. Dies kann nicht rückgängig gemacht werden.",
+    "empty": "Noch keine Kategorien. Füge oben eine hinzu.",
+    "manageLocaleHint": "Bearbeitungssprache — Übersetzungen über die Sprach-Chips hinzufügen.",
+    "addTranslation": "Übersetzung hinzufügen",
+    "addTranslationFor": "{locale}-Übersetzung hinzufügen",
+    "translationName": "Name auf {locale}",
+    "translationAdded": "Kategorie-Übersetzung hinzugefügt.",
+    "translationFailed": "Kategorie-Übersetzung fehlgeschlagen."
   },
   "postForm": {
     "back": "Zurück",
@@ -495,7 +551,8 @@
     "add": "Hinzufügen",
     "cannotDisableCurrentLocale": "Wechseln Sie zu einer anderen Sprachversion, bevor Sie diese entfernen.",
     "removeTranslationConfirm": "{locale}-Version dieses Beitrags entfernen? Das kann nicht rückgängig gemacht werden.",
-    "translationRemoved": "Sprachversion entfernt."
+    "translationRemoved": "Sprachversion entfernt.",
+    "noCategoriesYet": "Noch keine Kategorien für diese Sprache. Lege eine an, um zu starten."
   },
   "media": {
     "title": "Medienbibliothek",
@@ -634,6 +691,14 @@
       "moveDown": "Nach unten",
       "updated": "Branding aktualisiert",
       "saveFailed": "Fehler beim Speichern des Brandings",
+      "primary": "primär",
+      "manageLocaleHint": "Sprache wechseln, um Name und Beschreibung für diese Locale zu bearbeiten. X-Handle und Social-Links sind gemeinsam.",
+      "editLocale": "{locale}-Meta bearbeiten",
+      "addTranslationFor": "{locale}-Übersetzung hinzufügen",
+      "deleteTranslation": "Diese Übersetzung löschen",
+      "translationDeleted": "Übersetzung gelöscht",
+      "translationEmpty": "Gib einen Seitennamen oder eine Beschreibung für diese Sprache ein.",
+      "siteNameRequired": "Seitenname ist für die Primärsprache erforderlich.",
       "iconGroups": {
         "social": "Social",
         "media": "Medien / Streaming",
@@ -689,17 +754,13 @@
     },
     "footerCredits": {
       "title": "Footer-Credits & Links",
-      "description": "Ein- oder Ausblenden der „Powered by“-Badges, RSS und Sitemap-Links im Footer.",
+      "description": "Ein- oder Ausblenden des Pluma-Credits, RSS und Sitemap-Links im Footer.",
       "updated": "Footer-Einstellungen aktualisiert",
       "saveFailed": "Speichern fehlgeschlagen.",
       "options": {
         "plumaWatermark": {
           "label": "Pluma-Wasserzeichen",
-          "desc": "Pluma-Credit-Badge im Footer anzeigen."
-        },
-        "poweredByStack": {
-          "label": "Stack-Badges",
-          "desc": "Nuxt-, Vue-, Supabase- und Tailwind-Badges anzeigen."
+          "desc": "Pluma-Credit im Footer anzeigen."
         },
         "rss": {
           "label": "RSS-Link",

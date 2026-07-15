@@ -60,6 +60,7 @@ declare global {
   const navigateTo: typeof import('../../node_modules/nuxt/dist/app/composables/router').navigateTo
   const nextTick: typeof import('vue').nextTick
   const normalizeLocaleSettings: typeof import('../../src/stores/brandingStore').normalizeLocaleSettings
+  const normalizeMetaTranslations: typeof import('../../src/stores/brandingStore').normalizeMetaTranslations
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
   const onBeforeRouteLeave: typeof import('vue-router').onBeforeRouteLeave
@@ -95,6 +96,8 @@ declare global {
   const removeBrandingVariant: typeof import('../../src/stores/brandingStore').removeBrandingVariant
   const requestIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').requestIdleCallback
   const resolveComponent: typeof import('vue').resolveComponent
+  const resolveLocalizedSiteDescription: typeof import('../../src/stores/brandingStore').resolveLocalizedSiteDescription
+  const resolveLocalizedSiteName: typeof import('../../src/stores/brandingStore').resolveLocalizedSiteName
   const saveProvidersEnabled: typeof import('../../src/stores/settingsStore').saveProvidersEnabled
   const setInterval: typeof import('../../node_modules/nuxt/dist/app/compat/interval').setInterval
   const setPageLayout: typeof import('../../node_modules/nuxt/dist/app/composables/router').setPageLayout
@@ -294,6 +297,7 @@ declare module 'vue' {
     readonly navigateTo: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['navigateTo']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly normalizeLocaleSettings: UnwrapRef<typeof import('../../src/stores/brandingStore')['normalizeLocaleSettings']>
+    readonly normalizeMetaTranslations: UnwrapRef<typeof import('../../src/stores/brandingStore')['normalizeMetaTranslations']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
     readonly onBeforeRouteLeave: UnwrapRef<typeof import('vue-router')['onBeforeRouteLeave']>
@@ -329,6 +333,8 @@ declare module 'vue' {
     readonly removeBrandingVariant: UnwrapRef<typeof import('../../src/stores/brandingStore')['removeBrandingVariant']>
     readonly requestIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['requestIdleCallback']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveLocalizedSiteDescription: UnwrapRef<typeof import('../../src/stores/brandingStore')['resolveLocalizedSiteDescription']>
+    readonly resolveLocalizedSiteName: UnwrapRef<typeof import('../../src/stores/brandingStore')['resolveLocalizedSiteName']>
     readonly saveProvidersEnabled: UnwrapRef<typeof import('../../src/stores/settingsStore')['saveProvidersEnabled']>
     readonly setInterval: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/interval')['setInterval']>
     readonly setPageLayout: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['setPageLayout']>

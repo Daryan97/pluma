@@ -21,6 +21,9 @@ declare module "nitropack/types" {
     '/sitemap.xml': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/sitemap.xml').default>>>>
     }
+    '/sw.js': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../src/server/routes/sw.js').default>>>>
+    }
     '/__nuxt_error': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../node_modules/@nuxt/nitro-server/dist/runtime/handlers/renderer').default>>>>
     }

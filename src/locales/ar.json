@@ -20,7 +20,7 @@
   "footer": {
     "follow": "تابعنا",
     "rights": "جميع الحقوق محفوظة.",
-    "poweredBy": "يعمل بواسطة:",
+    "poweredBy": "يعمل بواسطة",
     "rss": "RSS",
     "sitemap": "خريطة الموقع"
   },
@@ -79,6 +79,27 @@
     "upload": "رفع",
     "done": "تم",
     "generate": "إنشاء"
+  },
+  "error": {
+    "403": {
+      "title": "الوصول مرفوض",
+      "description": "ليس لديك صلاحية لعرض هذه الصفحة."
+    },
+    "404": {
+      "title": "الصفحة غير موجودة",
+      "description": "الصفحة التي تبحث عنها غير موجودة أو ربما نُقلت."
+    },
+    "500": {
+      "title": "حدث خطأ ما",
+      "description": "حدث خطأ غير متوقع من جانبنا. يرجى المحاولة بعد قليل."
+    },
+    "goHome": "العودة إلى الصفحة الرئيسية",
+    "goBack": "رجوع",
+    "tryAgain": "حاول مرة أخرى",
+    "generic": {
+      "title": "خطأ غير متوقع",
+      "description": "حدث خطأ أثناء تحميل هذه الصفحة."
+    }
   },
   "home": {
     "welcome": "مرحبًا",
@@ -373,7 +394,26 @@
     "newName": "اسم السلسلة الجديدة",
     "add": "إضافة سلسلة",
     "created": "تم إنشاء السلسلة",
+    "updated": "تم تحديث السلسلة",
     "removed": "تمت إزالة السلسلة",
+    "deletedAll": "تم حذف السلسلة لجميع اللغات.",
+    "exists": "السلسلة موجودة بالفعل.",
+    "empty": "لا توجد سلاسل بعد. أضف واحدة أعلاه.",
+    "searchPlaceholder": "البحث في السلاسل…",
+    "manageLocaleHint": "لغة التحرير — أضف الترجمات عبر شارات اللغة لكل سلسلة.",
+    "addTranslation": "إضافة ترجمة",
+    "addTranslationFor": "إضافة ترجمة {locale}",
+    "translationName": "الاسم بـ {locale}",
+    "translationAdded": "تمت إضافة ترجمة السلسلة.",
+    "translationFailed": "فشل إضافة ترجمة السلسلة.",
+    "deleteLocale": "حذف هذه اللغة",
+    "deleteLocaleTitle": "حذف هذه اللغة؟",
+    "deleteLocaleDescription": "إزالة «{name}» لـ {locale} فقط. تبقى اللغات الأخرى.",
+    "deleteLocaleBody": "المقالات المرتبطة بهذه السلسلة في هذه اللغة ستفقد الرابط.",
+    "deleteAllLanguages": "حذف جميع اللغات",
+    "deleteAllTitle": "حذف السلسلة في كل مكان؟",
+    "deleteAllDescription": "سيُزال «{name}» نهائيًا في كل لغة.",
+    "deleteAllBody": "المقالات التي تستخدم هذه السلسلة ستفقد الرابط. لا يمكن التراجع.",
     "installHint": "السلاسل مضمّنة في pluma_initial.sql. على قاعدة قديمة شغّل pluma_features_v2.sql.",
     "none": "لا شيء",
     "order": "الترتيب في السلسلة"
@@ -387,7 +427,23 @@
     "exists": "التصنيف موجود بالفعل.",
     "added": "تمت إضافة التصنيف.",
     "updated": "تم تحديث التصنيف.",
-    "deleted": "تم حذف التصنيف."
+    "deleted": "تم حذف التصنيف.",
+    "deletedAll": "تم حذف التصنيف لجميع اللغات.",
+    "deleteLocale": "حذف هذه اللغة",
+    "deleteLocaleTitle": "حذف هذه اللغة؟",
+    "deleteLocaleDescription": "إزالة «{name}» لـ {locale} فقط. تبقى اللغات الأخرى.",
+    "deleteLocaleBody": "المقالات التي تستخدم هذا التصنيف في هذه اللغة ستصبح بلا تصنيف.",
+    "deleteAllLanguages": "حذف جميع اللغات",
+    "deleteAllTitle": "حذف التصنيف في كل مكان؟",
+    "deleteAllDescription": "سيُزال «{name}» نهائيًا في كل لغة.",
+    "deleteAllBody": "المقالات التي تستخدم هذا التصنيف ستصبح بلا تصنيف. لا يمكن التراجع.",
+    "empty": "لا توجد فئات بعد. أضف واحدة أعلاه.",
+    "manageLocaleHint": "لغة التحرير — أضف الترجمات عبر شارات اللغة لكل فئة.",
+    "addTranslation": "إضافة ترجمة",
+    "addTranslationFor": "إضافة ترجمة {locale}",
+    "translationName": "الاسم بـ {locale}",
+    "translationAdded": "تمت إضافة ترجمة الفئة.",
+    "translationFailed": "فشل إضافة ترجمة الفئة."
   },
   "postForm": {
     "back": "رجوع",
@@ -495,7 +551,8 @@
     "add": "إضافة",
     "cannotDisableCurrentLocale": "انتقل إلى نسخة لغة أخرى قبل إزالة هذه.",
     "removeTranslationConfirm": "إزالة نسخة {locale} من هذا المنشور؟ لا يمكن التراجع.",
-    "translationRemoved": "تمت إزالة نسخة اللغة."
+    "translationRemoved": "تمت إزالة نسخة اللغة.",
+    "noCategoriesYet": "لا توجد فئات لهذه اللغة بعد. أنشئ واحدة للبدء."
   },
   "media": {
     "title": "مكتبة الوسائط",
@@ -634,6 +691,14 @@
       "moveDown": "تحريك لأسفل",
       "updated": "تم تحديث الهوية",
       "saveFailed": "خطأ في حفظ الهوية",
+      "primary": "أساسية",
+      "manageLocaleHint": "بدّل اللغة لتعديل الاسم والوصف. حساب X والروابط الاجتماعية مشتركة.",
+      "editLocale": "تعديل بيانات {locale}",
+      "addTranslationFor": "إضافة ترجمة {locale}",
+      "deleteTranslation": "حذف هذه الترجمة",
+      "translationDeleted": "تم حذف الترجمة",
+      "translationEmpty": "أدخل اسم الموقع أو وصفًا لهذه اللغة.",
+      "siteNameRequired": "اسم الموقع مطلوب للغة الأساسية.",
       "iconGroups": {
         "social": "اجتماعي",
         "media": "وسائط / بث",
@@ -689,17 +754,13 @@
     },
     "footerCredits": {
       "title": "اعتمادات وروابط التذييل",
-      "description": "إظهار أو إخفاء شارات \"مدعوم بواسطة\" وRSS وخريطة الموقع في التذييل.",
+      "description": "إظهار أو إخفاء اعتماد Pluma وRSS وخريطة الموقع في التذييل.",
       "updated": "تم تحديث إعدادات التذييل",
       "saveFailed": "فشل الحفظ.",
       "options": {
         "plumaWatermark": {
           "label": "علامة Pluma",
-          "desc": "إظهار شارة اعتماد Pluma في التذييل."
-        },
-        "poweredByStack": {
-          "label": "شارات التقنيات",
-          "desc": "إظهار شارات Nuxt وVue وSupabase وTailwind."
+          "desc": "إظهار اعتماد Pluma في التذييل."
         },
         "rss": {
           "label": "رابط RSS",

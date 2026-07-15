@@ -26,6 +26,7 @@
 <script setup>
 const { t } = useI18n()
 const localePath = useLocalePath()
+const { contentLocale } = useContentLocale()
 
 import { ref, watch } from "vue";
 import { Icon } from "@iconify/vue";
@@ -43,8 +44,8 @@ const user = ref(null);
 const slug = ref(route.params.slug);
 
 watch(
-  () => route.params.slug,
-  (newSlug) => {
+  () => [route.params.slug, contentLocale.value],
+  ([newSlug]) => {
     slug.value = newSlug;
     fetchPost();
   },
@@ -82,9 +83,11 @@ async function fetchPost() {
       id,
       title,
       content,
+      locale,
       category:categories (
         id,
-        name
+        name,
+        locale
       ),
       tags,
       slug,
@@ -101,7 +104,8 @@ async function fetchPost() {
     `
     )
     .eq("slug", slug.value)
-    .single();
+    .eq("locale", contentLocale.value)
+    .maybeSingle();
 
   if (error) {
     post.value = null;

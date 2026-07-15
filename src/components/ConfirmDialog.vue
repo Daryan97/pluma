@@ -1,10 +1,11 @@
 <template>
-  <Dialog :open="open" @close="setIsOpen" class="relative z-50">
+  <Dialog :open="open" @close="setIsOpen" class="relative z-[60]">
     <div class="fixed inset-0 bg-black/30 backdrop-blur-sm" />
 
     <div class="fixed inset-0 flex items-center justify-center p-4">
       <DialogPanel
         class="w-full max-w-md rounded-xl bg-white dark:bg-gray-800 p-6 shadow-xl"
+        @click.stop
       >
         <DialogTitle class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
           <Icon
@@ -27,6 +28,8 @@
 
         <div class="mt-6 flex justify-end gap-3">
           <button
+            type="button"
+            @pointerdown.prevent
             @click="cancel"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium focus:outline-none focus:ring-2"
             :class="
@@ -43,6 +46,8 @@
             <span>{{ cancelText }}</span>
           </button>
           <button
+            type="button"
+            @pointerdown.prevent
             @click="confirm"
             class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium focus:outline-none focus:ring-2"
             :class="

@@ -49,11 +49,7 @@ async function clampLocaleToEnabled() {
 onMounted(async () => {
   try {
     await branding.fetchBranding(true);
-    projectInfo.applyBranding({
-      siteName: branding.siteName.value,
-      siteDescription: branding.siteDescription.value,
-      socialLinks: branding.socialLinks.value,
-    });
+    applyLocalizedBranding();
     await clampLocaleToEnabled();
   } catch (e) {
     console.warn("[app] branding fetch failed", e);
@@ -65,6 +61,28 @@ onMounted(async () => {
     /* ignore */
   }
 });
+
+function applyLocalizedBranding() {
+  projectInfo.applyBranding({
+    siteName: branding.resolveLocalizedSiteName(unref(locale)),
+    siteDescription: branding.resolveLocalizedSiteDescription(unref(locale)),
+    socialLinks: branding.socialLinks.value,
+  });
+}
+
+watch(
+  () => [
+    unref(locale),
+    branding.siteName?.value,
+    branding.siteDescription?.value,
+    branding.metaTranslations?.value,
+    branding.socialLinks?.value,
+  ],
+  () => {
+    if (branding.brandingLoaded?.value) applyLocalizedBranding();
+  },
+  { deep: true }
+);
 
 watch(
   () => [branding.enabledLocales?.value, branding.primaryLocale?.value],

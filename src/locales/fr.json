@@ -20,7 +20,7 @@
   "footer": {
     "follow": "Suivre",
     "rights": "Tous droits réservés.",
-    "poweredBy": "Propulsé par :",
+    "poweredBy": "Propulsé par",
     "rss": "RSS",
     "sitemap": "Plan du site"
   },
@@ -79,6 +79,27 @@
     "upload": "Téléverser",
     "done": "Terminé",
     "generate": "Générer"
+  },
+  "error": {
+    "403": {
+      "title": "Accès refusé",
+      "description": "Vous n’avez pas l’autorisation de voir cette page."
+    },
+    "404": {
+      "title": "Page introuvable",
+      "description": "La page que vous cherchez n’existe pas ou a peut-être été déplacée."
+    },
+    "500": {
+      "title": "Une erreur est survenue",
+      "description": "Une erreur inattendue s’est produite. Réessayez dans un instant."
+    },
+    "goHome": "Retour à l’accueil",
+    "goBack": "Retour",
+    "tryAgain": "Réessayer",
+    "generic": {
+      "title": "Erreur inattendue",
+      "description": "Un problème est survenu lors du chargement de cette page."
+    }
   },
   "home": {
     "welcome": "Bienvenue",
@@ -373,7 +394,26 @@
     "newName": "Nom de la nouvelle série",
     "add": "Ajouter une série",
     "created": "Série créée",
+    "updated": "Série mise à jour",
     "removed": "Série supprimée",
+    "deletedAll": "Série supprimée dans toutes les langues.",
+    "exists": "La série existe déjà.",
+    "empty": "Aucune série pour le moment. Ajoutez-en une ci-dessus.",
+    "searchPlaceholder": "Rechercher des séries…",
+    "manageLocaleHint": "Langue d’édition — ajoutez des traductions via les pastilles de langue.",
+    "addTranslation": "Ajouter une traduction",
+    "addTranslationFor": "Ajouter la traduction {locale}",
+    "translationName": "Nom en {locale}",
+    "translationAdded": "Traduction de série ajoutée.",
+    "translationFailed": "Échec de l’ajout de la traduction.",
+    "deleteLocale": "Supprimer cette langue",
+    "deleteLocaleTitle": "Supprimer cette langue ?",
+    "deleteLocaleDescription": "Supprimer « {name} » pour {locale} uniquement. Les autres langues restent.",
+    "deleteLocaleBody": "Les articles liés à cette série dans cette langue perdront le lien de série.",
+    "deleteAllLanguages": "Supprimer toutes les langues",
+    "deleteAllTitle": "Supprimer la série partout ?",
+    "deleteAllDescription": "« {name} » sera définitivement supprimée dans toutes les langues.",
+    "deleteAllBody": "Les articles utilisant cette série perdront leur lien. Cette action est irréversible.",
     "installHint": "Les séries sont incluses dans pluma_initial.sql. Sur une ancienne base, exécutez pluma_features_v2.sql.",
     "none": "Aucune",
     "order": "Ordre dans la série"
@@ -387,7 +427,23 @@
     "exists": "La catégorie existe déjà.",
     "added": "Catégorie ajoutée.",
     "updated": "Catégorie mise à jour.",
-    "deleted": "Catégorie supprimée."
+    "deleted": "Catégorie supprimée.",
+    "deletedAll": "Catégorie supprimée dans toutes les langues.",
+    "deleteLocale": "Supprimer cette langue",
+    "deleteLocaleTitle": "Supprimer cette langue ?",
+    "deleteLocaleDescription": "Supprimer « {name} » pour {locale} uniquement. Les autres langues restent.",
+    "deleteLocaleBody": "Les articles utilisant cette catégorie dans cette langue passeront sans catégorie.",
+    "deleteAllLanguages": "Supprimer toutes les langues",
+    "deleteAllTitle": "Supprimer la catégorie partout ?",
+    "deleteAllDescription": "« {name} » sera définitivement supprimée dans toutes les langues.",
+    "deleteAllBody": "Les articles utilisant cette catégorie passeront sans catégorie. Cette action est irréversible.",
+    "empty": "Aucune catégorie pour le moment. Ajoutez-en une ci-dessus.",
+    "manageLocaleHint": "Langue d’édition — ajoutez des traductions via les pastilles de langue.",
+    "addTranslation": "Ajouter une traduction",
+    "addTranslationFor": "Ajouter la traduction {locale}",
+    "translationName": "Nom en {locale}",
+    "translationAdded": "Traduction de catégorie ajoutée.",
+    "translationFailed": "Échec de l’ajout de la traduction."
   },
   "postForm": {
     "back": "Retour",
@@ -495,7 +551,8 @@
     "add": "Ajouter",
     "cannotDisableCurrentLocale": "Passez à une autre version avant de retirer celle-ci.",
     "removeTranslationConfirm": "Supprimer la version {locale} de cet article ? Irréversible.",
-    "translationRemoved": "Version linguistique supprimée."
+    "translationRemoved": "Version linguistique supprimée.",
+    "noCategoriesYet": "Pas encore de catégories pour cette langue. Créez-en une pour commencer."
   },
   "media": {
     "title": "Bibliothèque multimédia",
@@ -634,6 +691,14 @@
       "moveDown": "Descendre",
       "updated": "Identité mise à jour",
       "saveFailed": "Erreur lors de l’enregistrement",
+      "primary": "principale",
+      "manageLocaleHint": "Changez de langue pour modifier le nom et la description. Le compte X et les liens sociaux sont partagés.",
+      "editLocale": "Modifier les métas {locale}",
+      "addTranslationFor": "Ajouter la traduction {locale}",
+      "deleteTranslation": "Supprimer cette traduction",
+      "translationDeleted": "Traduction supprimée",
+      "translationEmpty": "Saisissez un nom ou une description pour cette langue.",
+      "siteNameRequired": "Le nom du site est requis pour la langue principale.",
       "iconGroups": {
         "social": "Social",
         "media": "Médias / Streaming",
@@ -689,17 +754,13 @@
     },
     "footerCredits": {
       "title": "Crédits et liens du pied de page",
-      "description": "Afficher ou masquer les badges « Propulsé par », RSS et plan du site.",
+      "description": "Afficher ou masquer le crédit Pluma, RSS et plan du site.",
       "updated": "Paramètres du pied de page mis à jour",
       "saveFailed": "Échec de l’enregistrement.",
       "options": {
         "plumaWatermark": {
           "label": "Filigrane Pluma",
-          "desc": "Afficher le badge Pluma dans le pied de page."
-        },
-        "poweredByStack": {
-          "label": "Badges de stack",
-          "desc": "Afficher les badges Nuxt, Vue, Supabase et Tailwind."
+          "desc": "Afficher le crédit Pluma dans le pied de page."
         },
         "rss": {
           "label": "Lien RSS",

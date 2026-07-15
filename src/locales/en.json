@@ -20,7 +20,7 @@
   "footer": {
     "follow": "Follow",
     "rights": "All rights reserved.",
-    "poweredBy": "Powered by:",
+    "poweredBy": "Powered by",
     "rss": "RSS",
     "sitemap": "Sitemap"
   },
@@ -79,6 +79,27 @@
     "upload": "Upload",
     "done": "Done",
     "generate": "Generate"
+  },
+  "error": {
+    "403": {
+      "title": "Access denied",
+      "description": "You do not have permission to view this page."
+    },
+    "404": {
+      "title": "Page not found",
+      "description": "The page you are looking for does not exist or may have been moved."
+    },
+    "500": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred on our side. Please try again in a moment."
+    },
+    "goHome": "Back to home",
+    "goBack": "Go back",
+    "tryAgain": "Try again",
+    "generic": {
+      "title": "Unexpected error",
+      "description": "Something went wrong while loading this page."
+    }
   },
   "home": {
     "welcome": "Welcome",
@@ -373,7 +394,26 @@
     "newName": "New series name",
     "add": "Add series",
     "created": "Series created",
+    "updated": "Series updated",
     "removed": "Series removed",
+    "deletedAll": "Series deleted for every language.",
+    "exists": "Series already exists.",
+    "empty": "No series yet. Add one above.",
+    "searchPlaceholder": "Search series...",
+    "manageLocaleHint": "Editing language — add translations with the language chips on each series.",
+    "addTranslation": "Add translation",
+    "addTranslationFor": "Add {locale} translation",
+    "translationName": "Name in {locale}",
+    "translationAdded": "Series translation added.",
+    "translationFailed": "Failed to add series translation.",
+    "deleteLocale": "Delete this language",
+    "deleteLocaleTitle": "Delete this language?",
+    "deleteLocaleDescription": "Remove “{name}” for {locale} only. Other languages stay.",
+    "deleteLocaleBody": "Posts linked to this series in this language will lose the series link.",
+    "deleteAllLanguages": "Delete all languages",
+    "deleteAllTitle": "Delete series everywhere?",
+    "deleteAllDescription": "This will permanently remove “{name}” in every language.",
+    "deleteAllBody": "Posts using this series will lose their series link. This cannot be undone.",
     "installHint": "Series ships with pluma_initial.sql. On an older DB, run pluma_features_v2.sql.",
     "none": "None",
     "order": "Order in series"
@@ -387,7 +427,23 @@
     "exists": "Category already exists.",
     "added": "Category added.",
     "updated": "Category updated.",
-    "deleted": "Category deleted."
+    "deleted": "Category deleted.",
+    "deletedAll": "Category deleted for every language.",
+    "deleteLocale": "Delete this language",
+    "deleteLocaleTitle": "Delete this language?",
+    "deleteLocaleDescription": "Remove “{name}” for {locale} only. Other languages stay.",
+    "deleteLocaleBody": "Posts using this category in this language will become uncategorized.",
+    "deleteAllLanguages": "Delete all languages",
+    "deleteAllTitle": "Delete category everywhere?",
+    "deleteAllDescription": "This will permanently remove “{name}” in every language.",
+    "deleteAllBody": "Posts using this category will become uncategorized. This cannot be undone.",
+    "empty": "No categories yet. Add one above.",
+    "manageLocaleHint": "Editing language — add translations with the language chips on each category.",
+    "addTranslation": "Add translation",
+    "addTranslationFor": "Add {locale} translation",
+    "translationName": "Name in {locale}",
+    "translationAdded": "Category translation added.",
+    "translationFailed": "Failed to add category translation."
   },
   "postForm": {
     "back": "Back",
@@ -495,7 +551,8 @@
     "order": "Order in series",
     "archivedLabel": "Archived",
     "categoryCreated": "Category created",
-    "add": "Add"
+    "add": "Add",
+    "noCategoriesYet": "No categories for this language yet. Create one to get started."
   },
   "media": {
     "title": "Media Library",
@@ -634,6 +691,14 @@
       "moveDown": "Move down",
       "updated": "Branding updated",
       "saveFailed": "Error saving branding",
+      "primary": "primary",
+      "manageLocaleHint": "Switch language to edit the site name and description for that locale. Twitter handle and social links are shared.",
+      "editLocale": "Edit {locale} meta",
+      "addTranslationFor": "Add {locale} translation",
+      "deleteTranslation": "Delete this translation",
+      "translationDeleted": "Translation deleted",
+      "translationEmpty": "Enter a site name or description for this language.",
+      "siteNameRequired": "Site name is required for the primary language.",
       "iconGroups": {
         "social": "Social",
         "media": "Media / Streaming",
@@ -689,17 +754,13 @@
     },
     "footerCredits": {
       "title": "Footer Credits & Links",
-      "description": "Show or hide the \"Powered by\" badges, RSS, and sitemap links in the site footer.",
+      "description": "Show or hide the Pluma credit, RSS, and sitemap links in the site footer.",
       "updated": "Footer settings updated",
       "saveFailed": "Failed to save.",
       "options": {
         "plumaWatermark": {
           "label": "Pluma watermark",
-          "desc": "Show the Pluma credit badge in the footer."
-        },
-        "poweredByStack": {
-          "label": "Tech stack badges",
-          "desc": "Show Nuxt, Vue, Supabase, and Tailwind badges."
+          "desc": "Show the Pluma credit in the footer."
         },
         "rss": {
           "label": "RSS link",
