@@ -1,40 +1,8 @@
+# Nuxt / Nitro SSR on Netlify (auto-detects when NETLIFY=true).
+# Do not publish "dist" or SPA-redirect /* to a document function —
+# that serves HTML for /_nuxt/*.js and crashes the app.
 [build]
   command = "npm run build"
-  publish = "dist"
-  functions = "netlify/functions"
 
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/.netlify/functions/sitemap"
-  status = 200
-
-[[redirects]]
-  from = "/rss.xml"
-  to = "/.netlify/functions/rss"
-  status = 200
-
-[[redirects]]
-  from = "/robots.txt"
-  to = "/.netlify/functions/robots"
-  status = 200
-
-[[redirects]]
-  from = "/env"
-  to = "/.netlify/functions/env"
-  status = 200
-
-[[redirects]]
-  from = "/healthz"
-  to = "/.netlify/functions/health"
-  status = 200
-
-[[redirects]]
-  from = "/readyz"
-  to = "/.netlify/functions/ready"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/document"
-  status = 200
-  force = false
+[build.environment]
+  NODE_VERSION = "20"

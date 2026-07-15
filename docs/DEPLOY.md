@@ -65,11 +65,10 @@ Configure enabled locales and primary locale under **Dashboard → Branding / lo
 
 ## Vercel / Netlify
 
-**Vercel:** use Nuxt’s zero-config SSR deploy. Keep `vercel.json` minimal (`framework: nuxtjs`) — do **not** set Output Directory to `dist` or add SPA catch-all rewrites. Those send `/_nuxt/*.js` as HTML and cause a white screen / MIME errors. Nitro serves `/sitemap.xml`, `/rss.xml`, `/robots.txt`, `/env`, `/healthz`, and `/readyz` from `src/server/routes`.
+**Vercel & Netlify:** use Nuxt’s zero-config SSR deploy. Nitro serves `/sitemap.xml`, `/rss.xml`, `/robots.txt`, `/env`, `/healthz`, and `/readyz` from `src/server/routes`.
 
-In the Vercel project settings, clear any manual **Output Directory** override so auto-detection can use `.vercel/output`.
-
-**Netlify:** `netlify.toml` still uses the legacy SPA + functions layout under `netlify/functions`. Prefer Docker or Vercel for full Nuxt SSR until that file is migrated.
+- **Vercel:** keep `vercel.json` minimal (`framework: nuxtjs`). Clear any manual **Output Directory** override (`dist` breaks `/_nuxt` assets).
+- **Netlify:** keep `netlify.toml` minimal (build command only). Do **not** publish `dist` or SPA-redirect `/*` to a document function — same MIME / white-screen failure as the old Vercel setup. Legacy helpers under `api/` and `netlify/functions/` are unused by the SSR path.
 
 Use the same `VITE_*` / `NUXT_PUBLIC_*` env vars as Docker.
 

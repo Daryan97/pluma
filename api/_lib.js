@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const libDir = path.dirname(fileURLToPath(import.meta.url))
 
 let generator
 export function getGenerator() {
@@ -64,7 +64,7 @@ function findIndexHtml() {
   const candidates = [
     path.join(process.cwd(), 'dist', 'index.html'),
     path.join(process.cwd(), 'index.html'),
-    path.join(__dirname, '..', 'dist', 'index.html'),
+    path.join(libDir, '..', 'dist', 'index.html'),
   ]
   for (const p of candidates) {
     if (fs.existsSync(p)) return fs.readFileSync(p, 'utf8')
