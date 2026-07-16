@@ -62,6 +62,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
       if (import.meta.server) return
       auth.clearAuthCache()
       await supabase.auth.signOut()
+      if (import.meta.client) {
+        window.location.assign(localePath('/login'))
+        return abortNavigation()
+      }
       return navigateTo(lp('/login'))
     }
     console.warn('[install-gate] unexpected error:', e?.message || e)
@@ -78,6 +82,58 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const user = await auth.ensureSession(supabase)
   const userId = user?.id || auth.sessionUserId.value
 
+  const isResetPasswordRoute =
+    to.path.includes('/reset-password') || to.name?.toString?.().includes('reset-password')
+
+  // Recovery flow: allow password reset without profile/role gates.
+  if (isResetPasswordRoute) {
+    return
+  }
+
+  // If recovery tokens landed on Site URL (/), send user to reset page.
+  // Skip after a successful reset (?reset=1) or when recovery was completed.
+  if (import.meta.client) {
+    let recoveryDone = false
+    try {
+      recoveryDone = sessionStorage.getItem('pluma-password-recovery-done') === '1'
+    } catch {
+      /* ignore */
+    }
+    if (to.query.reset === '1' || recoveryDone) {
+      // fall through — allow login/home after password update
+    } else {
+      let recoveryPending = useState('password-recovery-pending', () => false).value
+      if (!recoveryPending) {
+        try {
+          recoveryPending = sessionStorage.getItem('pluma-password-recovery') === '1'
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!recoveryPending) {
+        try {
+          const hash = (window.location.hash || '').replace(/^#/, '')
+          const search = (window.location.search || '').replace(/^\?/, '')
+          const type =
+            new URLSearchParams(hash).get('type') ||
+            new URLSearchParams(search).get('type')
+          recoveryPending = type === 'recovery'
+        } catch {
+          /* ignore */
+        }
+      }
+      if (recoveryPending) {
+        useState('password-recovery-pending', () => false).value = true
+        try {
+          sessionStorage.setItem('pluma-password-recovery', '1')
+        } catch {
+          /* ignore */
+        }
+        return navigateTo(lp('/reset-password'))
+      }
+    }
+  }
+
   if (userId && !to.path.includes('/profile')) {
     const prof = await auth.ensureProfile(supabase, userId, {
       force: needsRoleCheck && !auth.profileCache.value?.role,
@@ -91,6 +147,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
       auth.clearAuthCache()
       await supabase.auth.signOut()
       if ($toast) $toast.error($i18n.t('profile.accountDisabled'))
+      if (import.meta.client) {
+        window.location.assign(localePath('/login'))
+        return abortNavigation()
+      }
       return navigateTo(lp('/login'))
     }
   }
@@ -103,6 +163,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(lp('/'))
   }
   if (requiresAuth && !userId) {
+    // Full page load — client navigations into /login were leaving auth
+    // pages with a broken (left-aligned) layout after dashboard/logout.
+    if (import.meta.client) {
+      const loginPath = localePath('/login')
+      const dest = `${loginPath}?redirect=${encodeURIComponent(to.fullPath)}`
+      window.location.assign(dest)
+      return abortNavigation()
+    }
     return navigateTo(lp('/login', { redirect: to.fullPath }))
   }
 

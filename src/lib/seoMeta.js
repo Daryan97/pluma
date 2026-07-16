@@ -69,6 +69,7 @@ export function robotsForClientPath(path = '/') {
     '/signup',
     '/install',
     '/change-password',
+    '/reset-password',
     '/test',
   ]
   if (noindex.some((prefix) => p === prefix || p.startsWith(`${prefix}/`))) {

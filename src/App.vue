@@ -1,16 +1,10 @@
 <template>
-  <div class="relative min-h-screen text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
-    <Navbar />
-    <main>
-      <NuxtPage />
-    </main>
-    <Footer />
-  </div>
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup>
-import Navbar from "@/components/layout/Navbar.vue";
-import Footer from "@/components/layout/Footer.vue";
 import { useBranding } from "@/stores/brandingStore";
 import { projectInfo } from "@/config/projectInfo";
 import { useThemeStore } from "@/stores/themeStore";

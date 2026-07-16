@@ -82,7 +82,7 @@ Run in order only if that upgrade has not been applied yet:
 |-------|--------|------|
 | 1 | [`pluma_features_v2.sql`](../src/install/pluma_features_v2.sql) | Scheduling, preview tokens, series |
 | 2 | [`pluma_i18n_v3.sql`](../src/install/pluma_i18n_v3.sql) | Content `locale` + translation groups |
-| — | [`pluma_login_lookup.sql`](../src/install/pluma_login_lookup.sql) | Multi-step login email → profile lookup RPC |
+| — | [`pluma_login_lookup.sql`](../src/install/pluma_login_lookup.sql) | Multi-step login email → profile lookup RPC (includes `role`; blocks disabled for login/reset/magic link) |
 | — | [`pluma_rls_fix.sql`](../src/install/pluma_rls_fix.sql) | Storage/settings RLS fixes after a restore |
 
 Do **not** re-run v2/v3 after a fresh `pluma_initial.sql` install unless you know you need them.
@@ -106,11 +106,17 @@ In Supabase → Authentication → URL configuration:
 
 ```text
 https://blog.example.com/**
+https://blog.example.com/reset-password
 https://blog.example.com/change-password
 https://blog.example.com/profile
 http://localhost:3000/**
+http://localhost:3000/reset-password
 http://localhost:3000/change-password
 ```
+
+Password reset emails use `redirect_to` → `/reset-password` (recovery flow). Logged-in users change their password at `/change-password`. Both paths should be on the Redirect URLs allow list.
+
+**If `/reset-password` is missing from Redirect URLs**, Supabase silently rewrites `redirect_to` to the Site URL (e.g. `http://localhost:3000`). The app still detects `type=recovery` in the URL hash and routes you to `/reset-password`, but you should add the path to the allow list and request a **new** reset email so the link targets `/reset-password` directly.
 
 Magic links and password resets send `redirect_to` from the app using `VITE_SITE_URL` (via `/env` + Nuxt runtimeConfig), **not** whatever host you typed in the browser. So if you open the app at `http://localhost:3000` but `VITE_SITE_URL=https://blog.example.com`, email links should still redirect to the public site.
 

@@ -191,6 +191,6 @@ const logout = async () => {
     /* ignore */
   }
   await supabase.auth.signOut();
-  window.location.href = localePath("/");
+  window.location.assign(localePath("/login"));
 };
 </script>

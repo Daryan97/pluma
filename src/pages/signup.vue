@@ -1,14 +1,25 @@
 <template>
-  <div class="max-w-md mx-auto mt-14 mb-20">
-    <div class="mb-8 text-center">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4">
-        <Icon icon="mdi:account-plus" class="text-3xl" />
+  <div class="w-full px-4 py-14 grid place-items-center">
+    <div class="w-full" style="max-width: 28rem">
+      <div class="mb-8 text-center">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4"
+        >
+          <Icon icon="mdi:account-plus" class="text-3xl" />
+        </div>
+        <h1
+          class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
+        >
+          {{ t("auth.createAccount") }}
+        </h1>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          {{ t("auth.joinTagline") }}
+        </p>
       </div>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{{ t("auth.createAccount") }}</h1>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ t("auth.joinTagline") }}</p>
-    </div>
 
-    <div class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+      <div
+        class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+      >
       <form @submit.prevent="handleSignup" class="space-y-5" novalidate>
         <div>
           <label class="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -110,6 +121,7 @@
           >
         </p>
       </form>
+      </div>
     </div>
   </div>
 </template>
@@ -119,7 +131,8 @@ definePageMeta({ requireAnonymous: true, ssr: false })
 
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '@/services/supabase';import { Icon } from '@iconify/vue';
+import { supabase } from '@/services/supabase';
+import { Icon } from '@iconify/vue';
 
 const { t } = useI18n();
 const toast = useToast();

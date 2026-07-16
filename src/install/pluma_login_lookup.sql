@@ -1,11 +1,15 @@
 -- Public login helper: resolve display profile for an email without exposing auth details.
 -- Safe for anon (returns no rows when unknown). Does not reveal password state.
+-- Includes role so the client can block disabled accounts (login / reset / magic link).
 
-create or replace function public.lookup_login_profile(p_email text)
+drop function if exists public.lookup_login_profile(text);
+
+create function public.lookup_login_profile(p_email text)
 returns table (
   display_name text,
   username text,
-  avatar_url text
+  avatar_url text,
+  role text
 )
 language plpgsql
 security definer
@@ -37,7 +41,8 @@ begin
       split_part(normalized, '@', 1)
     )::text as display_name,
     pr.username::text,
-    pr.avatar_url::text
+    pr.avatar_url::text,
+    pr.role::text
   from public.profiles pr
   where pr.id = uid;
 end;

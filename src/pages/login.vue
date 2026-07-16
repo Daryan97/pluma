@@ -1,24 +1,33 @@
 <template>
-  <div class="max-w-md mx-auto mt-14 mb-20">
-    <div class="mb-8 text-center">
-      <div
-        class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4"
-      >
-        <Icon icon="mdi:login" class="text-3xl" />
+  <div class="w-full px-4 py-14 grid place-items-center">
+    <div class="w-full" style="max-width: 28rem">
+      <div class="mb-8 text-center">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 shadow-sm mb-4"
+        >
+          <Icon icon="mdi:login" class="text-3xl" />
+        </div>
+        <h1
+          class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
+        >
+          {{
+            step === 1
+              ? t("auth.welcomeBack")
+              : t("auth.welcomeUser", { name: profileName })
+          }}
+        </h1>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          {{
+            step === 1
+              ? t("auth.signInContinue")
+              : t("auth.enterPasswordContinue")
+          }}
+        </p>
       </div>
-      <h1
-        class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight"
-      >
-        {{ step === 1 ? t("auth.welcomeBack") : t("auth.welcomeUser", { name: profileName }) }}
-      </h1>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-        {{ step === 1 ? t("auth.signInContinue") : t("auth.enterPasswordContinue") }}
-      </p>
-    </div>
 
-    <div
-      class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
-    >
+      <div
+        class="p-6 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm"
+      >
       <!-- Step 1: email -->
       <form
         v-if="step === 1"
@@ -245,6 +254,7 @@
           }}</span>
         </button>
       </form>
+      </div>
     </div>
   </div>
 </template>
@@ -313,6 +323,16 @@ const profileName = computed(
 
 onMounted(async () => {
   await fetchSettings();
+  try {
+    sessionStorage.removeItem("pluma-password-recovery-done");
+    sessionStorage.removeItem("pluma-password-recovery");
+  } catch {
+    /* ignore */
+  }
+  if (route.query.reset === "1") {
+    toast.success(t("auth.passwordUpdatedSignIn"));
+    router.replace({ path: route.path, query: {} });
+  }
 });
 
 function goBackToEmail() {
@@ -339,6 +359,7 @@ async function continueWithEmail() {
         display_name: email.value.split("@")[0],
         username: null,
         avatar_url: null,
+        role: null,
       };
       step.value = 2;
       return;
@@ -346,6 +367,10 @@ async function continueWithEmail() {
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) {
       toast.error(t("auth.accountNotFound"));
+      return;
+    }
+    if (row.role === "disabled") {
+      toast.error(t("profile.accountDisabled"));
       return;
     }
     foundProfile.value = row;
@@ -357,6 +382,28 @@ async function continueWithEmail() {
   } finally {
     lookupLoading.value = false;
   }
+}
+
+/** Returns false if the account is disabled or missing (and shows a toast). */
+async function ensureAccountAllowsAuthEmail() {
+  const { data, error } = await supabase.rpc("lookup_login_profile", {
+    p_email: email.value.trim(),
+  });
+  if (error) {
+    // Older DB without updated RPC — cannot verify role; allow through.
+    console.warn("[login] lookup_login_profile:", error.message);
+    return true;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) {
+    toast.error(t("auth.accountNotFound"));
+    return false;
+  }
+  if (row.role === "disabled") {
+    toast.error(t("profile.accountDisabled"));
+    return false;
+  }
+  return true;
 }
 
 async function signInWithProvider(provider) {
@@ -374,15 +421,25 @@ async function forgotPassword() {
     return;
   }
   forgotLoading.value = true;
-  const origin = await resolveSiteOrigin();
-  const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
-    redirectTo: `${origin}/change-password`,
-  });
-  forgotLoading.value = false;
-  if (error) {
-    toast.error(error.message);
-  } else {
-    toast.success(t("auth.resetLinkSent"));
+  try {
+    if (foundProfile.value?.role === "disabled") {
+      toast.error(t("profile.accountDisabled"));
+      return;
+    }
+    const allowed = await ensureAccountAllowsAuthEmail();
+    if (!allowed) return;
+
+    const origin = await resolveSiteOrigin();
+    const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
+      redirectTo: `${origin}/reset-password`,
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(t("auth.resetLinkSent"));
+    }
+  } finally {
+    forgotLoading.value = false;
   }
 }
 
@@ -392,16 +449,26 @@ async function sendMagicLink() {
     return;
   }
   magicLinkLoading.value = true;
-  const origin = await resolveSiteOrigin();
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email.value,
-    options: { shouldCreateUser: false, emailRedirectTo: origin },
-  });
-  magicLinkLoading.value = false;
-  if (error) {
-    toast.error(error.message);
-  } else {
-    toast.success(t("auth.magicLinkSent"));
+  try {
+    if (foundProfile.value?.role === "disabled") {
+      toast.error(t("profile.accountDisabled"));
+      return;
+    }
+    const allowed = await ensureAccountAllowsAuthEmail();
+    if (!allowed) return;
+
+    const origin = await resolveSiteOrigin();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.value,
+      options: { shouldCreateUser: false, emailRedirectTo: origin },
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(t("auth.magicLinkSent"));
+    }
+  } finally {
+    magicLinkLoading.value = false;
   }
 }
 

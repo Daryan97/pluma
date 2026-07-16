@@ -606,7 +606,8 @@ async function logout() {
   role.value = "";
   avatar_url.value = null;
   await supabase.auth.signOut();
-  window.location.href = localePath("/");
+  // Full reload so login/home never inherit a broken SPA layout from dashboard.
+  window.location.assign(localePath("/login"));
 }
 
 function go(path) {

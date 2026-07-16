@@ -2514,7 +2514,22 @@ const plugins = [
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {};
+const assets = {
+  "/index.mjs": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"232a1-caLGUmkDUjk/T86r80gNPq4zC/8\"",
+    "mtime": "2026-07-15T23:17:20.283Z",
+    "size": 144033,
+    "path": "index.mjs"
+  },
+  "/index.mjs.map": {
+    "type": "application/json",
+    "etag": "\"8ac35-eX1RxPJUAO4YWIBWH7s7eQLPz8M\"",
+    "mtime": "2026-07-15T23:17:20.283Z",
+    "size": 568373,
+    "path": "index.mjs.map"
+  }
+};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -3953,6 +3968,7 @@ function buildRobots(baseUrl) {
     "Disallow: /signup",
     "Disallow: /install",
     "Disallow: /change-password",
+    "Disallow: /reset-password",
     "Disallow: /test",
     `Sitemap: ${baseUrl}/sitemap.xml`
   ].join("\n");

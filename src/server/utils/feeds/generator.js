@@ -442,6 +442,7 @@ function buildRobots(baseUrl) {
     'Disallow: /signup',
     'Disallow: /install',
     'Disallow: /change-password',
+    'Disallow: /reset-password',
     'Disallow: /test',
     `Sitemap: ${baseUrl}/sitemap.xml`,
   ].join('\n')

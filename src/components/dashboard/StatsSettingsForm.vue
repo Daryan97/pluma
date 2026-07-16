@@ -148,7 +148,7 @@
           </button>
         </div>
       </div>
-      <div class="flex gap-2 pt-4 items-center justify-end">
+      <div class="flex flex-col items-end gap-2 pt-4">
         <button
           type="submit"
           class="inline-flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 disabled:opacity-50 border border-blue-200/70 dark:border-blue-800/40 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -156,7 +156,13 @@
           <Icon icon="mdi:content-save" class="text-base" />
           <span>{{ t('common.save') }}</span>
         </button>
-        <span v-if="error" class="text-red-600 text-sm">{{ error }}</span>
+        <p
+          v-if="error"
+          class="w-full text-sm text-red-600 dark:text-red-400 text-end"
+          role="alert"
+        >
+          {{ error }}
+        </p>
       </div>
     </form>
   </div>

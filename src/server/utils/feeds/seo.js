@@ -20,6 +20,7 @@ const NOINDEX_PREFIXES = [
   '/signup',
   '/install',
   '/change-password',
+  '/reset-password',
   '/test',
 ]
 
